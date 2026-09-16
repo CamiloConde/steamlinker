@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/radii.dart';
 import '../core/utils/relacion_helper.dart';
 
 class RelacionStatusChip extends StatelessWidget {
@@ -17,7 +18,7 @@ class RelacionStatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: color.withOpacity(0.5)),
       ),
       child: Text(
@@ -59,7 +60,7 @@ class RelacionStatusRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: color.withOpacity(0.35)),
       ),
       child: Row(

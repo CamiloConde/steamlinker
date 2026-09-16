@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 void showSteamToast(BuildContext context, String message, Color color) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -22,7 +23,7 @@ void showSteamToast(BuildContext context, String message, Color color) {
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         side: BorderSide(color: color),
       ),
       duration: const Duration(seconds: 3),
@@ -55,7 +56,7 @@ void showSteamToastWithMessenger(
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         side: BorderSide(color: color),
       ),
       duration: const Duration(seconds: 3),

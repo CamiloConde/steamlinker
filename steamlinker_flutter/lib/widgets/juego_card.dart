@@ -2,6 +2,7 @@
 // Se usa en perfil, busqueda y publicaciones
 
 import 'package:flutter/material.dart';
+import '../theme/radii.dart';
 
 class JuegoCard extends StatelessWidget {
   final Map<String, dynamic> juego;
@@ -23,7 +24,7 @@ class JuegoCard extends StatelessWidget {
         width: 180,
         decoration: BoxDecoration(
           color: const Color(0xFF13181F),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
           border: Border.all(color: const Color(0xFF30363D)),
         ),
         child: Column(

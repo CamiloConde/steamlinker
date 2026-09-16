@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 enum FieldState { idle, valid, invalid }
 
@@ -137,11 +138,11 @@ class _ValidatedFieldState extends State<ValidatedField> {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
               borderSide: BorderSide(color: _borderColor),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
               borderSide: BorderSide(
                 color: _state == FieldState.idle
                     ? SteamColors.blue

@@ -51,16 +51,19 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     _NavEntry('Perfil', Icons.person_outline, Icons.person_rounded),
   ];
 
-  final List<Widget> _pages = const [
-    HomeScreen(),
-    DescubrirGamersScreen(),
-    PublicacionesScreen(),
-    AmistadScreen(),
-    BusquedaScreen(),
-    ChatScreen(),
-    NotificationsScreen(),
-    PerfilScreen(),
-  ];
+  // No es const: HomeScreen recibe el callback para que sus tarjetas de
+  // acceso rápido cambien de sección del sidebar en vez de empujar una
+  // pantalla nueva por encima (ver home_screen.dart).
+  List<Widget> get _pages => [
+        HomeScreen(onNavigateIndex: _onSelect),
+        const DescubrirGamersScreen(),
+        const PublicacionesScreen(),
+        const AmistadScreen(),
+        const BusquedaScreen(),
+        const ChatScreen(),
+        const NotificationsScreen(),
+        const PerfilScreen(),
+      ];
 
   bool _esEscritorio(BuildContext context) =>
       MediaQuery.of(context).size.width >= kDesktopBreakpoint;

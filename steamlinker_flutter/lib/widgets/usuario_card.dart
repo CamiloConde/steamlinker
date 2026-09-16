@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/pais_util.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 class UsuarioCard extends StatelessWidget {
   final Map<String, dynamic> usuario;
@@ -29,14 +30,14 @@ class UsuarioCard extends StatelessWidget {
 
     return Material(
       color: SteamColors.bgPanel,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(SteamRadii.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: SteamColors.border),
           ),
           child: Row(

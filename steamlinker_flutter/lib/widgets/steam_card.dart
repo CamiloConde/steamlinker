@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 class SteamCard extends StatelessWidget {
   final IconData icon;
@@ -20,7 +21,7 @@ class SteamCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: SteamColors.bgCard,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
       child: Column(

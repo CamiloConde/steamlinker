@@ -13,13 +13,28 @@ import '../../perfil/screens/perfil_screen.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  /// Cuando se embebe en el sidebar de escritorio (ResponsiveShell), las
+  /// tarjetas de acceso rápido cambian de sección en vez de empujar una
+  /// pantalla nueva sobre el sidebar. En móvil queda null y se usa
+  /// Navigator.push como siempre.
+  final ValueChanged<int>? onNavigateIndex;
+
+  const HomeScreen({super.key, this.onNavigateIndex});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  void _ir(int indiceEscritorio, Widget pantalla) {
+    final onNavigateIndex = widget.onNavigateIndex;
+    if (onNavigateIndex != null) {
+      onNavigateIndex(indiceEscritorio);
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => pantalla));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,13 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Descubre Gamers',
                   description: 'Encuentra compañeros de juego',
                   color: SteamColors.purple,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const DescubrirGamersScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(1, const DescubrirGamersScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -201,13 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Amigos',
                   description: 'Solicitudes y lista de amigos',
                   color: SteamColors.green,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const AmistadScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(3, const AmistadScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -215,13 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Buscar juegos',
                   description: 'Explora la tienda Steam',
                   color: SteamColors.teal,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const BusquedaScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(4, const BusquedaScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -229,13 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Mis Juegos',
                   description: 'Administra tu biblioteca',
                   color: SteamColors.teal,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const PerfilScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(7, const PerfilScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -243,13 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Mensajes',
                   description: 'Comunícate con otros usuarios',
                   color: SteamColors.blue,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ChatScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(5, const ChatScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -257,13 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: 'Publicaciones',
                   description: 'Explora avisos y ofertas de juego',
                   color: SteamColors.orange,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const PublicacionesScreen(),
-                      ),
-                    );
-                  },
+                  onTap: () => _ir(2, const PublicacionesScreen()),
                 ),
 
                 const SizedBox(height: 32),

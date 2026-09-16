@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 class NotificationTile extends StatelessWidget {
   final NotificationModel notif;
@@ -41,7 +42,7 @@ class NotificationTile extends StatelessWidget {
       position: position,
       color: SteamColors.bgPanel,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         side: const BorderSide(color: SteamColors.border),
       ),
       items: [
@@ -134,7 +135,7 @@ class NotificationTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                   gradient: LinearGradient(
                     colors: [
                       notif.typeColor.withOpacity(0.25),
@@ -191,7 +192,7 @@ class NotificationTile extends StatelessWidget {
                           horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: notif.typeColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(SteamRadii.sm),
                       ),
                       child: Text(
                         notif.typeLabel,

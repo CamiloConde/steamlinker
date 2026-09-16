@@ -346,11 +346,27 @@ suficiente y no requiere infraestructura nueva — dejar WebSockets para más ad
 solo si el uso real lo justifica (conexiones persistentes = más complejidad de
 backend que no vale la pena anticipar sin datos de uso).
 
-**Fase 5 — Pulido de pantallas existentes para web**
-- [ ] Ajustar layout de las pantallas ya funcionales (perfil, descubrir, publicaciones,
-      matches, amistad, chat, admin) para verse bien en ancho de escritorio — es un
-      pase de CSS/layout sobre lo que ya funciona, no reconstrucción de funcionalidad
-- [ ] Aplicar el sistema de diseño de la Fase 3 como skin
+**Fase 5 — Pulido de pantallas existentes para web: primera tanda hecha, falta más**
+- [x] Arreglado el pendiente de Fase 4: las tarjetas del dashboard de "Inicio"
+      (`screens/home_screen.dart`) ahora reciben `onNavigateIndex` desde
+      `ResponsiveShell` — en escritorio cambian de sección del sidebar en vez de
+      empujar una pantalla encima; en móvil siguen usando `Navigator.push` igual que
+      siempre (el callback es `null` cuando `MainShell` construye `HomeScreen` sin él).
+      Verificado en navegador en ambos anchos, sin regresión móvil.
+- [x] Retrofit de `SteamRadii.sm` en los **widgets compartidos**
+      (`lib/widgets/*.dart` — 12 archivos, 25 usos de `BorderRadius.circular(N)`
+      reemplazados): `steam_card`, `steam_buttons`, `steam_app_bar`, `drop_field`,
+      `steam_toast`, `notification_tile`, `publicacion_card`, `usuario_card`,
+      `relacion_status_chip`, `juego_card`, `validated_field`, `strength_bar`. Como son
+      compartidos, esto ya cascadea el radio recto a casi todas las pantallas sin
+      tocarlas una por una. Verificado con `flutter analyze` (0 errores) y visualmente.
+- [ ] **Sigue pendiente** (no se tocó esta vuelta, son cambios dentro de cada pantalla
+      individual, no en widgets compartidos): radios sueltos que estén hardcodeados
+      directamente en los archivos de `lib/features/*/screens/` (fuera de los widgets
+      compartidos); ancho máximo/centrado del contenido en pantallas de lista de una
+      sola columna para que no se vean estiradas de borde a borde en monitores anchos;
+      mayúsculas+tracking en tags al estilo Steam fuera de lo que ya heredan los
+      widgets compartidos; panel de admin (no revisado en esta fase).
 
 **Fase 6 — No funcional**
 - [ ] Tests básicos + CI (hoy no hay nada real, solo el placeholder de plantilla)

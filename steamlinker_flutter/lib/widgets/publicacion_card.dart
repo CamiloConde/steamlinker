@@ -3,6 +3,7 @@ import '../core/constants/pais_util.dart';
 import '../core/constants/publicacion_constants.dart';
 import '../core/utils/relacion_helper.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 import 'relacion_status_chip.dart';
 
 class PublicacionCard extends StatelessWidget {
@@ -32,11 +33,11 @@ class PublicacionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         child: Container(
           decoration: BoxDecoration(
             color: SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: SteamColors.border),
           ),
           padding: const EdgeInsets.all(14),
@@ -49,7 +50,7 @@ class PublicacionCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: SteamColors.blue.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
                     child: Text(
                       PublicacionConstants.etiquetaTipo(publicacion['tipo_publi']),
@@ -102,7 +103,7 @@ class PublicacionCard extends StatelessWidget {
                 children: [
                   InkWell(
                     onTap: onTapAutor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     child: _InfoPill(
                       icon: Icons.person_outline,
                       label: publicacion['username_usu'] ?? 'Autor',
@@ -167,7 +168,7 @@ class _InfoPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: SteamColors.bgCard,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

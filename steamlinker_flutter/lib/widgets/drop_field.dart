@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 /// Selector simple (estable en Flutter web; evita FormField + initialValue).
 class DropField extends StatelessWidget {
@@ -42,7 +43,7 @@ class DropField extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: SteamColors.bgInput,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: SteamColors.border),
           ),
           child: DropdownButtonHideUnderline(

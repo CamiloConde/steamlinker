@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 /// Botón primario (azul). [fullWidth] para formularios; [compact] para listas o filas estrechas.
 class SteamButtonPrimary extends StatelessWidget {
@@ -33,7 +34,7 @@ class SteamButtonPrimary extends StatelessWidget {
           horizontal: compact ? 10 : 16,
           vertical: compact ? 8 : 12,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
       ),
       child: _ButtonLabel(label: label, icon: icon, compact: compact, onPrimary: true),
     );
@@ -79,7 +80,7 @@ class SteamButtonOutline extends StatelessWidget {
           horizontal: compact ? 10 : 16,
           vertical: compact ? 8 : 12,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
       ),
       child: _ButtonLabel(label: label, icon: icon, compact: compact),
     );
@@ -119,7 +120,7 @@ class SteamButtonDanger extends StatelessWidget {
         side: BorderSide(color: SteamColors.red.withOpacity(0.6)),
         minimumSize: const Size(64, 44),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
       ),
       child: _ButtonLabel(label: label, icon: icon, compact: false),
     );

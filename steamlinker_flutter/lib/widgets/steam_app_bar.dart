@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 import '../features/auth/providers/auth_provider.dart';
 
 class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -160,7 +161,7 @@ class _UserActions extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                   gradient: const LinearGradient(
                     colors: [Color(0xFF2A4A6B), SteamColors.teal],
                     begin: Alignment.topLeft,

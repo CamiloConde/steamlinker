@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
+import '../theme/radii.dart';
 
 class StrengthBar extends StatelessWidget {
   final String password;
@@ -34,7 +35,7 @@ class StrengthBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
           child: TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: pct),
             duration: const Duration(milliseconds: 350),
