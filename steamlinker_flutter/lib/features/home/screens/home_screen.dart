@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../core/auth/user_role.dart';
@@ -83,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     border: Border.all(color: SteamColors.blue, width: 1),
                   ),
                   padding: const EdgeInsets.all(20),
@@ -119,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(SteamRadii.sm),
                               color: SteamColors.blue.withAlpha(51),
                               border: Border.all(color: SteamColors.blue, width: 2),
                             ),
@@ -157,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: SteamColors.bgCard,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     border: Border.all(color: SteamColors.border),
                   ),
                   padding: const EdgeInsets.all(16),
@@ -320,14 +321,14 @@ class _QuickAccessCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: SteamColors.bgCard,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -337,7 +338,7 @@ class _QuickAccessCard extends StatelessWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     color: color.withAlpha(38),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     border: Border.all(color: color, width: 1.5),
                   ),
                   child: Center(

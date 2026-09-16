@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_card.dart';
 import '../../../widgets/steam_buttons.dart';
@@ -169,7 +170,7 @@ class _BusquedaScreenState extends State<BusquedaScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(SteamRadii.sm),
                           image: juego['headerimg'] != null &&
                                   juego['headerimg'].toString().isNotEmpty
                               ? DecorationImage(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/notification_model.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/notification_tile.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../core/navigation/app_navigator.dart';
@@ -132,7 +134,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           ),
         ],
       ),
-      body: Column(
+      body: DesktopBodyWidth(child: Column(
         children: [
           Container(
             color: SteamColors.bgPanel,
@@ -198,7 +200,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                           ),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -214,7 +216,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
                 color: badgeColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(SteamRadii.sm),
               ),
               child: Text(
                 '$count',

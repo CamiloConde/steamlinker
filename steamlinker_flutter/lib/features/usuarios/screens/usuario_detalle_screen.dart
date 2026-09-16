@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/utils/relacion_helper.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/relacion_status_chip.dart';
 import '../../../widgets/calificar_dialog.dart';
 import '../../../widgets/reportar_usuario_dialog.dart';
@@ -330,7 +331,7 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: SteamColors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(SteamRadii.sm),
                           border: Border.all(color: SteamColors.orange.withOpacity(0.4)),
                         ),
                         child: Row(
@@ -486,7 +487,7 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(SteamRadii.sm),
                                           color: SteamColors.bgPanel,
                                           image: (j['headerimg']?.toString().isNotEmpty == true)
                                               ? DecorationImage(
@@ -537,7 +538,7 @@ class _ChipInfo extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
       ),
       child: Text(
         label,

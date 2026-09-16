@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 
 class CompararBibliotecaScreen extends StatelessWidget {
@@ -29,7 +30,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: SteamColors.bgPanel,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
               border: Border.all(color: SteamColors.border),
             ),
             child: Column(
@@ -47,7 +48,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: (esSteam ? SteamColors.teal : SteamColors.blue).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                   ),
                   child: Text(
                     esSteam ? 'Datos en vivo · Steam API' : 'Datos del perfil',
@@ -99,7 +100,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: SteamColors.bgCard,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                   border: Border.all(color: SteamColors.border),
                 ),
                 child: Row(
@@ -108,7 +109,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
                       width: 56,
                       height: 32,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(SteamRadii.sm),
                         color: SteamColors.bgPanel,
                         image: juego['headerimg']?.toString().isNotEmpty == true
                             ? DecorationImage(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/calificar_dialog.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_toast.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -94,7 +96,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ],
       ),
-      body: SafeArea(
+      body: DesktopBodyWidth(child: SafeArea(
         child: Column(
           children: [
             Padding(
@@ -128,7 +130,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 
@@ -216,7 +218,7 @@ class _TabButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: selected ? SteamColors.blue : SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: selected ? SteamColors.blue : SteamColors.border),
           ),
           child: Text(
@@ -267,14 +269,14 @@ class _MatchCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: SteamColors.bgPanel,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(SteamRadii.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: SteamColors.border),
           ),
           child: Column(
@@ -296,7 +298,7 @@ class _MatchCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _estadoColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
                     child: Text(
                       estado,
@@ -319,7 +321,7 @@ class _MatchCard extends StatelessWidget {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SteamColors.green,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
                         ),
                         onPressed: onAccept,
                         child: const Text('Aceptar'),
@@ -330,7 +332,7 @@ class _MatchCard extends StatelessWidget {
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: SteamColors.red),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
                         ),
                         onPressed: onReject,
                         child: const Text('Rechazar', style: TextStyle(color: SteamColors.red)),

@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/relacion_helper.dart';
@@ -257,7 +258,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
-      body: SafeArea(
+      body: DesktopBodyWidth(child: SafeArea(
         child: Column(
           children: [
             if (publicacionesProv.tieneFiltrosActivos)
@@ -282,7 +283,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

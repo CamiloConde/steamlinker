@@ -360,13 +360,37 @@ backend que no vale la pena anticipar sin datos de uso).
       `relacion_status_chip`, `juego_card`, `validated_field`, `strength_bar`. Como son
       compartidos, esto ya cascadea el radio recto a casi todas las pantallas sin
       tocarlas una por una. Verificado con `flutter analyze` (0 errores) y visualmente.
-- [ ] **Sigue pendiente** (no se tocó esta vuelta, son cambios dentro de cada pantalla
-      individual, no en widgets compartidos): radios sueltos que estén hardcodeados
-      directamente en los archivos de `lib/features/*/screens/` (fuera de los widgets
-      compartidos); ancho máximo/centrado del contenido en pantallas de lista de una
-      sola columna para que no se vean estiradas de borde a borde en monitores anchos;
-      mayúsculas+tracking en tags al estilo Steam fuera de lo que ya heredan los
-      widgets compartidos; panel de admin (no revisado en esta fase).
+- [x] Retrofit de `SteamRadii.sm` en **pantallas individuales** (14 archivos de
+      `lib/features/*/screens/` + `admin_panel_section.dart`, 49 usos de
+      `BorderRadius.circular(N)` reemplazados). Se dejó fuera a propósito
+      `login_dev_server_chip.dart` (chip de debug solo-desarrollo, no es UI de
+      producto). Verificado con `flutter analyze` (0 errores).
+- [x] **Ancho máximo en pantallas de lista de una columna** — nuevo widget
+      `lib/widgets/desktop_body_width.dart` (`DesktopBodyWidth`, `LayoutBuilder` que
+      centra el contenido a 720px cuando el espacio disponible es mayor; en móvil no
+      hace nada, pasa el child tal cual). Aplicado envolviendo el `body:` de
+      Publicaciones, Descubrir, Amigos, Matches, Chat (lista) y Notificaciones —
+      confirmado visualmente en el navegador: las cards ya no se estiran de borde a
+      borde en pantallas anchas, quedan centradas con márgenes.
+- [x] **Panel de admin revisado** — es una app HTML/CSS/JS estática aparte
+      (`steamlinker_back/public/admin/`), no Flutter, con su propio sistema de
+      diseño ya coherente (tokens CSS propios, tipografía Chakra Petch + JetBrains
+      Mono, paleta oscura propia). No es "genérico de IA" y no comparte código con
+      la app — **decisión: no rediseñarlo para que combine pixel a pixel con
+      SteamColors**, es una herramienta interna, no cara al usuario final, y ya se ve
+      profesional. Revisar esta decisión solo si en algún momento se decide que el
+      admin panel también debe verse como el resto del producto.
+- [ ] **Sigue pendiente**: mayúsculas+tracking en tags al estilo Steam fuera de lo
+      que ya heredan los widgets compartidos; aplicar `DesktopBodyWidth` a más
+      pantallas si hace falta (perfil, usuarios, etc. — no se revisaron todas).
+
+**Nota operativa importante para cualquier sesión futura que use el build web
+local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
+de cada `flutter build web`, **la primera carga en el navegador puede servir la
+build anterior** — hace falta un segundo `navigate`/recarga para ver los cambios
+reales. Pasó varias veces en esta sesión y generó falsos negativos ("el cambio no
+se aplicó") que en realidad sí estaban aplicados. Si algo no se ve reflejado tras un
+rebuild, recarga una segunda vez antes de asumir que el código está mal.
 
 **Fase 6 — No funcional**
 - [ ] Tests básicos + CI (hoy no hay nada real, solo el placeholder de plantilla)

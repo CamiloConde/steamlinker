@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../theme/colors.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/drop_field.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/usuario_card.dart';
@@ -195,7 +196,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: DesktopBodyWidth(child: Column(
         children: [
           if (_filtroTipoEtiqueta != null ||
               _filtroPaisEtiqueta != null ||
@@ -290,7 +291,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 

@@ -218,7 +218,7 @@ class _SidebarItem extends StatelessWidget {
                   height: 16,
                   decoration: BoxDecoration(
                     color: activo ? SteamColors.blue : Colors.transparent,
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                   ),
                 ),
                 const SizedBox(width: 10),

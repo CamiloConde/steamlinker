@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../screens/home_screen.dart';
 import '../../notifications/screens/notifications_screen.dart';
@@ -193,7 +194,7 @@ class _NavItem extends StatelessWidget {
               width: _active ? 24 : 0,
               decoration: BoxDecoration(
                 color: SteamColors.blue,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(SteamRadii.sm),
               ),
             ),
           ],

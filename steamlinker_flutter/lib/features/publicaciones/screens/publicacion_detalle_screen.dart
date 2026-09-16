@@ -4,6 +4,7 @@ import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/relacion_helper.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/relacion_status_chip.dart' show RelacionStatusChip, RelacionStatusRow;
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_buttons.dart';
@@ -243,7 +244,7 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: SteamColors.blue.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                                 ),
                                 child: Text(
                                   PublicacionConstants.etiquetaTipo(pub['tipo_publi']),
@@ -430,7 +431,7 @@ class _ComentariosSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: SteamColors.bgCard,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
             ),
             child: Row(
               children: [
@@ -583,7 +584,7 @@ class _ComentarioBubble extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: esMio ? SteamColors.blue.withOpacity(0.12) : SteamColors.bgPanel,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
       child: Column(
@@ -641,7 +642,7 @@ class _EstadoCerrada extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: SteamColors.red.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
       ),
       child: const Text(
         'Cerrada',
@@ -662,12 +663,12 @@ class _AutorSection extends StatelessWidget {
     final repu = pub['repu_usu'];
     return InkWell(
       onTap: onTapPerfil,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(SteamRadii.sm),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: SteamColors.bgPanel,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
           border: Border.all(color: SteamColors.border),
         ),
         child: Row(
@@ -743,7 +744,7 @@ class _JuegosLista extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: SteamColors.bgPanel,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
               border: Border.all(color: SteamColors.border),
             ),
             child: Row(
@@ -752,7 +753,7 @@ class _JuegosLista extends StatelessWidget {
                   width: 56,
                   height: 32,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     color: SteamColors.bgCard,
                     image: header != null && header.isNotEmpty
                         ? DecorationImage(

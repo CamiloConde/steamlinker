@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../theme/radii.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_dev_server_chip.dart';
 
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: const Color(0xFF161B22),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     border: Border.all(color: const Color(0xFF30363D)),
                   ),
                   child: Column(
@@ -219,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(SteamRadii.sm),
                             border: Border.all(color: Colors.red.withOpacity(0.3)),
                           ),
                           child: Row(

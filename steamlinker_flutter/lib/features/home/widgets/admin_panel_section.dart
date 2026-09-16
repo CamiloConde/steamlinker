@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_config.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 
 /// Bloque visible solo para cuentas con rol administrador.
 class AdminPanelSection extends StatelessWidget {
@@ -68,7 +69,7 @@ class AdminPanelSection extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.orange.withOpacity(0.55), width: 1.2),
       ),
       padding: const EdgeInsets.all(18),
@@ -82,7 +83,7 @@ class AdminPanelSection extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: SteamColors.orange.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                   border: Border.all(color: SteamColors.orange, width: 1.2),
                 ),
                 child: const Icon(
@@ -152,7 +153,7 @@ class AdminPanelSection extends StatelessWidget {
                 foregroundColor: SteamColors.bgDeep,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                 ),
               ),
             ),

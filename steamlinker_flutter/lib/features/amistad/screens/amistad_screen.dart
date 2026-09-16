@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_buttons.dart';
 import '../../../widgets/usuario_card.dart';
@@ -44,7 +46,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: DesktopBodyWidth(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -76,7 +78,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
                     : _buildAmigos(prov),
           ),
         ],
-      ),
+      )),
     );
   }
 
@@ -193,7 +195,7 @@ class _TabChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: selected ? SteamColors.blue : SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: Border.all(color: selected ? SteamColors.blue : SteamColors.border),
           ),
           child: Text(

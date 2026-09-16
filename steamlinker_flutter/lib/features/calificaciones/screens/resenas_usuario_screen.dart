@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../providers/calificaciones_provider.dart';
 
@@ -96,7 +97,7 @@ class _ResumenCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: SteamColors.bgPanel,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
       child: Column(
@@ -145,7 +146,7 @@ class _ResenaTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: SteamColors.bgPanel,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
       child: Column(

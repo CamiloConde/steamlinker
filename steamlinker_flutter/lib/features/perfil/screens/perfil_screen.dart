@@ -2,6 +2,7 @@
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_card.dart';
 import '../../../widgets/steam_toast.dart';
@@ -311,7 +312,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
             border: juego['favorito'] == true
                 ? Border.all(color: SteamColors.red, width: 2)
                 : null,
@@ -747,7 +748,7 @@ class _InfoChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
           ),
           child: Text(
             value,

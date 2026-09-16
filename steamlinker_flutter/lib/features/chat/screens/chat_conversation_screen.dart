@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
@@ -289,15 +290,15 @@ class _Composer extends StatelessWidget {
                     vertical: 10,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     borderSide: const BorderSide(color: SteamColors.border),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     borderSide: const BorderSide(color: SteamColors.border),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
                     borderSide: const BorderSide(color: SteamColors.blue),
                   ),
                 ),
@@ -312,7 +313,7 @@ class _Composer extends StatelessWidget {
                 disabledForegroundColor: SteamColors.muted,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
                 ),
               ),
               onPressed: enviando ? null : onEnviar,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
+import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../providers/chat_provider.dart';
 import 'chat_conversation_screen.dart';
@@ -59,12 +60,12 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: DesktopBodyWidth(child: RefreshIndicator(
         color: SteamColors.blue,
         backgroundColor: SteamColors.bgDeep,
         onRefresh: () => chatProv.cargarConversaciones(),
         child: _buildBody(chatProv),
-      ),
+      )),
     );
   }
 
