@@ -7,18 +7,31 @@ class PublicacionConstants {
   static const Map<String, String> tipoEtiquetas = {
     'busco_familia': 'Busco familia',
     'busco_miembros': 'Busco miembros',
+    'busco_companero': 'Busco compañero de juego',
     'otro': 'Otro',
   };
+
+  // Tipos que exigen tener Steam vinculado para publicar/matchear (ver
+  // HANDOFF.md seccion 5: compartir biblioteca es de alto riesgo si el
+  // usuario no es quien dice ser; jugar juntos no lo es).
+  static const List<String> tiposRequierenSteam = [
+    'busco_familia',
+    'busco_miembros',
+  ];
+
+  static bool requiereSteam(String tipo) => tiposRequierenSteam.contains(tipo);
 
   static const List<String> tiposCrearEtiquetas = [
     'Busco familia',
     'Busco miembros',
+    'Busco compañero de juego',
     'Otro',
   ];
 
   static const List<String> tiposCrearValores = [
     'busco_familia',
     'busco_miembros',
+    'busco_companero',
     'otro',
   ];
 
@@ -26,6 +39,7 @@ class PublicacionConstants {
     'Todos los tipos',
     'Busco familia',
     'Busco miembros',
+    'Busco compañero de juego',
     'Otro',
   ];
 
@@ -33,6 +47,7 @@ class PublicacionConstants {
     '',
     'busco_familia',
     'busco_miembros',
+    'busco_companero',
     'otro',
   ];
 

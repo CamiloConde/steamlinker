@@ -23,6 +23,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _busquedaController = TextEditingController();
+  final _cuposController = TextEditingController();
 
   String _tipoEtiqueta = PublicacionConstants.tiposCrearEtiquetas.first;
   String _paisEtiqueta = PaisUtil.todos;
@@ -52,6 +53,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     _tituloController.dispose();
     _descripcionController.dispose();
     _busquedaController.dispose();
+    _cuposController.dispose();
     super.dispose();
   }
 
@@ -104,13 +106,20 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
         ? null
         : PaisUtil.nombreACodigo(_paisEtiqueta);
 
+    final tipo = PublicacionConstants.valorTipoCrear(_tipoEtiqueta);
+    final cuposTexto = _cuposController.text.trim();
+    final cuposTotales = tipo != 'otro' && cuposTexto.isNotEmpty
+        ? int.tryParse(cuposTexto)
+        : null;
+
     final exito = await context.read<PublicacionesProvider>().crear(
-      tipo: PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
+      tipo: tipo,
       titulo: titulo,
       descripcion: _descripcionController.text.trim().isEmpty
           ? null
           : _descripcionController.text.trim(),
       pais: pais,
+      cuposTotales: cuposTotales,
       juegos: _juegosSeleccionados,
     );
 
@@ -148,6 +157,30 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   items: PublicacionConstants.tiposCrearEtiquetas,
                   onChanged: (v) => setState(() => _tipoEtiqueta = v),
                 ),
+                if (PublicacionConstants.requiereSteam(
+                  PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
+                ))
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 8),
+                    child: Text(
+                      'Necesitas tu cuenta de Steam vinculada para publicar esto.',
+                      style: TextStyle(color: SteamColors.textSec, fontSize: 11),
+                    ),
+                  ),
+                if (PublicacionConstants.valorTipoCrear(_tipoEtiqueta) != 'otro') ...[
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: _cuposController,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: SteamColors.light),
+                    decoration: const InputDecoration(
+                      labelText: 'Cupos buscados (opcional, familia = 6 por defecto)',
+                      filled: true,
+                      fillColor: SteamColors.bgInput,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
                 TextField(
                   controller: _tituloController,
                   style: const TextStyle(color: SteamColors.light),

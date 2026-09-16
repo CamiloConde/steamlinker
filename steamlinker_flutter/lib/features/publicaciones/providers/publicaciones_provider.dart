@@ -94,6 +94,7 @@ class PublicacionesProvider extends ChangeNotifier {
     required String titulo,
     String? descripcion,
     String? pais,
+    int? cuposTotales,
     List<Map<String, dynamic>> juegos = const [],
   }) async {
     _error = null;
@@ -103,6 +104,7 @@ class PublicacionesProvider extends ChangeNotifier {
         'titulo': titulo,
         'descripcion': descripcion,
         'pais': pais,
+        if (cuposTotales != null) 'cupos_totales': cuposTotales,
         'juegos': juegos,
       });
       await buscar();

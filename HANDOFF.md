@@ -129,20 +129,30 @@ flujo se vuelve obligatoria**:
 
 - Registro (email/password) → cuenta creada, fricción baja, cualquiera entra.
 - Comunidad → abierta sin necesidad de Steam vinculado (no depende de biblioteca).
-- Familia / Compañeros → **confirmado con el usuario: requerido**, no solo recomendado.
-  Explorar/mirar listings queda libre sin vincular nada, pero publicar un listing o
-  participar en un match sí exige biblioteca importada — no es una barrera de
-  confianza arbitraria, es un requisito funcional: `publicacion_juegos` necesita saber
-  qué juegos tiene la persona, y esa info solo puede salir de
-  `perfil/steam/importar` (no se va a construir un formulario de "escribe a mano tus
-  juegos", porque eso reintroduce el modelo de foro genérico que el producto busca
-  superar). La insignia "verificado ✓" se usa como refuerzo visual en perfiles/posts,
-  no como sustituto del requisito.
+- Familia → **requerido**, confirmado con el usuario. Explorar/mirar listings queda
+  libre, pero publicar un listing de tipo `busco_familia`/`busco_miembros` o mandar un
+  match hacia uno de esos listings sí exige biblioteca importada — no es una barrera de
+  confianza arbitraria, es un requisito funcional (`publicacion_juegos` necesita saber
+  qué juegos tiene la persona) y de riesgo real: compartir acceso a biblioteca pagada
+  con un desconocido tiene costo real si la otra persona miente.
+- Compañeros → **revisado y afinado con el usuario: NO requerido.** A diferencia de
+  Familia, jugar juntos no involucra compartir acceso a nada — el costo de que alguien
+  exagere qué tiene es bajo (un chat incómodo, no un fraude). Cualquiera con cuenta
+  puede publicar/matchear en Compañeros eligiendo el juego del catálogo (buscador de
+  juegos ya existente en la app, no requiere biblioteca importada). Si el usuario sí
+  tiene Steam vinculado, se le puede mostrar la insignia "verificado ✓" como plus de
+  confianza, pero nunca como requisito para esta pestaña.
 
-**Decidido — nada pendiente aquí.** Queda para Fase 2 implementar el middleware/check
-que bloquea `POST /publicaciones/crear` (tipo familia/miembros/compañero) y
-`POST /matches/enviar` si el usuario no tiene fila en `perfiles_steam`, con el mensaje
-de error guiando a vincular Steam primero.
+**Implementado en esta sesión (Fase 2):**
+- `steamlinker_back/src/utils/verificacion.js` — helper `tieneSteamVinculado` +
+  `TIPOS_REQUIEREN_STEAM = ['busco_familia', 'busco_miembros']` (Compañeros
+  deliberadamente fuera de esa lista).
+- `POST /publicaciones/crear` — 403 `STEAM_REQUERIDO` si el tipo requiere Steam y el
+  usuario no lo tiene vinculado; valida `tipo` contra la lista permitida.
+- `POST /matches/enviar` — mismo 403 si `id_publi` apunta a una publicación de tipo
+  familia y el que envía el match no tiene Steam vinculado.
+- Probado end-to-end con curl: `busco_familia` sin Steam → 403; `busco_companero` sin
+  Steam → 201; tipo inválido → 400.
 
 ## 6. Seguridad — resuelto
 
@@ -223,15 +233,28 @@ González). Confirma y afina varias cosas ya encontradas en el código:
 - [x] Gateo de Steam por función (sección 5) → confirmado: requerido para publicar/
       match en Familia/Compañeros, libre en Comunidad y para explorar
 
-**Fase 2 — Backend/datos: pequeña, no un rediseño**
-- [ ] Agregar valor `tipo_publi` para "busco compañero de juego"
-- [ ] Agregar `cupos_totales` a `publicaciones` (default 6 para familia, variable para
-      compañeros); derivar `cupos_ocupados` contando matches aceptados
-- [ ] Auto-cerrar (`estado_publi = false`) cuando `cupos_ocupados >= cupos_totales`
-- [ ] Aplicar el gateo de Steam vinculado antes de publicar/ver matches en
-      Familia/Compañeros (backend + Flutter)
+**Fase 2 — Backend/datos: implementada y probada (migración 006 + rutas + Flutter)**
+- [x] Agregar valor `tipo_publi = 'busco_companero'` — migración
+      `db_migrations/006_companero_y_cupos.sql`, aplicada en el Postgres local
+- [x] Agregar `cupos_totales` a `publicaciones` (default 6 en backend si el tipo es
+      familia/miembros y no se manda; libre para compañeros; NULL para `otro`).
+      `cupos_ocupados` se deriva en `GET /publicaciones/:id` contando matches con
+      `estado_match = 'Aceptada'` para ese `id_publi` (no es columna aparte)
+- [x] Auto-cerrar (`estado_publi = FALSE`) en `PUT /matches/:id/responder` cuando al
+      aceptar se alcanza `cupos_totales`
+- [x] Gateo de Steam — solo Familia (`busco_familia`/`busco_miembros`), NO Compañeros
+      (ver sección 5 para el porqué). Implementado en backend
+      (`publicaciones.js`, `matches.js`, `utils/verificacion.js`) y en Flutter
+      (`publicacion_constants.dart`: `tiposRequierenSteam`/`requiereSteam`;
+      `crear_publicacion_screen.dart` muestra el aviso y el campo de cupos;
+      `publicaciones_provider.dart` envía `cupos_totales`)
+- [ ] **Sin verificar:** los cambios de Flutter no se compilaron — Flutter/Dart no
+      está instalado en esta máquina. Correr `flutter analyze` en la primera sesión
+      que sí tenga el SDK, sobre todo `crear_publicacion_screen.dart`
 - [ ] Revisar si falta filtro por fecha de publicación en `GET /publicaciones/buscar`
       (el SRS lo pide, no confirmé si ya está)
+- [ ] Pendiente (no bloqueante): mostrar insignia "verificado ✓" en perfiles/posts de
+      quien sí tiene Steam vinculado, como refuerzo de confianza en Compañeros
 
 **Fase 3 — Diseño**
 - [ ] Sistema de diseño concreto (tipografía, paleta refinada, radios/espaciado,

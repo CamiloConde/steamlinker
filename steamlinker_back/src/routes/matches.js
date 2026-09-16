@@ -5,6 +5,7 @@ const express = require('express');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const { crearNotificacion, usernameDe } = require('../services/notificacionesService');
+const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verificacion');
 
 const router = express.Router();
 
@@ -23,6 +24,26 @@ router.post('/enviar', verificarToken, async (req, res) => {
     }
 
     try {
+        // Si el match es hacia una publicacion de Familia, quien envia tambien
+        // necesita Steam vinculado (va a compartir/recibir acceso a biblioteca real).
+        if (id_publi) {
+            const publi = await pool.query(
+                'SELECT tipo_publi FROM publicaciones WHERE id_publi = $1',
+                [id_publi]
+            );
+            const tipoPubli = publi.rows[0]?.tipo_publi;
+            if (
+                tipoPubli &&
+                TIPOS_REQUIEREN_STEAM.includes(tipoPubli) &&
+                !(await tieneSteamVinculado(req.usuario.id))
+            ) {
+                return res.status(403).json({
+                    error: 'Debes vincular tu cuenta de Steam antes de solicitar unirte a una Familia',
+                    codigo: 'STEAM_REQUERIDO',
+                });
+            }
+        }
+
         // Verificar que no exista ya un match pendiente entre estos dos usuarios
         const existe = await pool.query(
             `SELECT id_match FROM matches 
@@ -199,6 +220,24 @@ router.put('/:id/responder', verificarToken, async (req, res) => {
                  ON CONFLICT DO NOTHING`,
                 [match.id_solicitante, match.id_receptor]
             );
+
+            // Si el match viene de una publicacion con cupos, cerrarla
+            // automaticamente al llenarse.
+            if (match.id_publi) {
+                try {
+                    await pool.query(
+                        `UPDATE publicaciones SET estado_publi = FALSE
+                         WHERE id_publi = $1
+                           AND estado_publi = TRUE
+                           AND cupos_totales IS NOT NULL
+                           AND cupos_totales <= (
+                               SELECT COUNT(*) FROM matches
+                               WHERE id_publi = $1 AND estado_match = 'Aceptada'
+                           )`,
+                        [match.id_publi]
+                    );
+                } catch (_) { /* no bloquear la aceptacion del match */ }
+            }
 
             try {
                 const receptor = await usernameDe(req.usuario.id);

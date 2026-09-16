@@ -5,25 +5,52 @@ const express = require('express');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const { crearNotificacion, usernameDe } = require('../services/notificacionesService');
+const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verificacion');
 
 const router = express.Router();
+
+const TIPOS_VALIDOS = ['busco_familia', 'busco_miembros', 'busco_companero', 'otro'];
+const CUPOS_DEFAULT_FAMILIA = 6; // tamano real de una Familia de Steam
 
 // POST /publicaciones/crear
 // Crea una nueva publicacion con sus juegos asociados
 router.post('/crear', verificarToken, async (req, res) => {
     const { tipo, titulo, descripcion, pais, juegos } = req.body;
+    let { cupos_totales: cuposTotales } = req.body;
 
     if (!tipo || !titulo) {
         return res.status(400).json({ error: 'tipo y titulo son obligatorios' });
     }
 
+    if (!TIPOS_VALIDOS.includes(tipo)) {
+        return res.status(400).json({ error: `tipo debe ser uno de: ${TIPOS_VALIDOS.join(', ')}` });
+    }
+
+    if (TIPOS_REQUIEREN_STEAM.includes(tipo) && !(await tieneSteamVinculado(req.usuario.id))) {
+        return res.status(403).json({
+            error: 'Debes vincular tu cuenta de Steam antes de publicar en Familia',
+            codigo: 'STEAM_REQUERIDO',
+        });
+    }
+
+    if (cuposTotales != null) {
+        cuposTotales = parseInt(cuposTotales, 10);
+        if (Number.isNaN(cuposTotales) || cuposTotales <= 0) {
+            return res.status(400).json({ error: 'cupos_totales debe ser un entero positivo' });
+        }
+    } else if (TIPOS_REQUIEREN_STEAM.includes(tipo)) {
+        cuposTotales = CUPOS_DEFAULT_FAMILIA;
+    } else {
+        cuposTotales = null;
+    }
+
     try {
         // Crear la publicacion
         const resultado = await pool.query(
-            `INSERT INTO publicaciones (id_usu, tipo_publi, titulo_publi, descrip_publi, paisfiltro_publi)
-             VALUES ($1, $2, $3, $4, $5)
+            `INSERT INTO publicaciones (id_usu, tipo_publi, titulo_publi, descrip_publi, paisfiltro_publi, cupos_totales)
+             VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING *`,
-            [req.usuario.id, tipo, titulo, descripcion || null, pais || null]
+            [req.usuario.id, tipo, titulo, descripcion || null, pais || null, cuposTotales]
         );
 
         const publicacion = resultado.rows[0];
@@ -279,7 +306,17 @@ router.get('/:id', async (req, res) => {
             [req.params.id]
         );
 
-        res.json({ ...resultado.rows[0], juegos: juegos.rows });
+        const ocupados = await pool.query(
+            `SELECT COUNT(*)::int AS n FROM matches
+             WHERE id_publi = $1 AND estado_match = 'Aceptada'`,
+            [req.params.id]
+        );
+
+        res.json({
+            ...resultado.rows[0],
+            juegos: juegos.rows,
+            cupos_ocupados: ocupados.rows[0].n,
+        });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
