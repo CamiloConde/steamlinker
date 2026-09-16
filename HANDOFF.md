@@ -198,7 +198,54 @@ placeholder vacíos).
 Las imágenes no viajan entre sesiones — pedir que las reenvíe si hace falta volver a
 verlas.
 
-## 9. Fuente de verdad del alcance funcional: el SRS académico
+**Actualización: la dirección de diseño ya se decidió — ver sección 9.** Se exploraron
+4 direcciones visuales (canvas de Artifact) y el usuario confirmó explícitamente:
+**"esa es, sigamos con esa dirección"**, refiriéndose a la dirección **"Fiel a Steam"**.
+
+## 9. Sistema de diseño (Fase 3) — decidido e implementado
+
+Se probaron 4 direcciones visuales en un canvas de diseño (tipografía + radios +
+tratamiento de tags, todas sobre la misma paleta `SteamColors`): táctico/competitivo
+(Rajdhani+Barlow, radio 4px), editorial (Space Grotesk+IBM Plex Sans, radio 10px),
+comunidad/cálido (Bricolage Grotesque+Work Sans, radio 16px), y **fiel a Steam**. El
+usuario eligió explícitamente esta última — razón: **SteamMatch está inspirado en
+Steam, tiene sentido que se sienta familiar a su lenguaje visual real, no a una
+identidad genérica inventada.**
+
+**Dirección elegida — "Fiel a Steam":**
+- **Una sola familia tipográfica en toda la app** (no una display + una de texto) —
+  así es como el propio Steam lo hace, cambia peso/tamaño, no de fuente.
+- Fuente: **Source Sans 3** — sustituto abierto de Motiva Sans (la fuente propietaria
+  real de Steam; no se puede licenciar para terceros, y copiarla al pixel sería
+  imitar demasiado de cerca la marca de Valve, lo que ya se descartó por la misma
+  razón del disclaimer de no afiliación).
+- **Radio casi recto (2px)** en cards, botones, inputs y tags — Steam prácticamente no
+  redondea esquinas.
+- **Etiquetas en mayúsculas con letter-spacing** para tipo de publicación, país, tags
+  de género — patrón real de la tienda de Steam.
+- Azul de acento actualizado a **`#66C0F4`** (el azul real de acento de Steam), en vez
+  del `#4C91C9` más apagado que se usaba antes.
+
+**Implementado en esta sesión (a nivel de tokens del theme, no pantalla por
+pantalla):**
+- `steamlinker_flutter/pubspec.yaml` — agregado `google_fonts: ^6.2.1` (resuelto a
+  6.3.3).
+- `lib/theme/app_theme.dart` — `fontFamily`/`textTheme` ahora usan
+  `GoogleFonts.sourceSans3TextTheme(...)` en vez de `'Roboto'`.
+- `lib/theme/colors.dart` — `SteamColors.blue` actualizado a `0xFF66C0F4` (cascada
+  automática a los ~27 archivos que ya referencian ese token).
+- `lib/theme/radii.dart` (nuevo) — `SteamRadii.sm = 2` documentado como el radio
+  estándar a usar en vez de valores sueltos (`BorderRadius.circular(6)`, `(10)`, etc.)
+  cuando se toquen las pantallas.
+- Verificado con `flutter analyze`: 0 errores.
+
+**Deliberadamente NO hecho en este paso** (es trabajo de Fase 5, "pulido de
+pantallas", no de Fase 3): no se reemplazaron los radios sueltos ya hardcodeados en
+cada widget/pantalla por `SteamRadii.sm`, ni se aplicaron las etiquetas en mayúsculas
+al resto de la UI. Fase 3 deja el *sistema* listo (tokens centralizados); aplicarlo
+pantalla por pantalla es la Fase 5.
+
+## 10. Fuente de verdad del alcance funcional: el SRS académico
 
 El usuario compartió `Plantilla_SRS (2).docx` (presentado en la materia, nota 5/5,
 17/02/2026, equipo: Miguel Jácome, Camilo Conde, Christian Benitez, Sean Martínez, Jesús
@@ -219,7 +266,7 @@ González). Confirma y afina varias cosas ya encontradas en el código:
   dispositivo" (ya estaba en el alcance original, no es invención de ahora), HTTPS,
   disponibilidad ≥95%, escalabilidad progresiva.
 
-## 10. Roadmap actualizado
+## 11. Roadmap actualizado
 
 **Fase 0 — Seguridad: cerrada**
 - [x] Rotar credenciales filtradas
@@ -261,10 +308,13 @@ González). Confirma y afina varias cosas ya encontradas en el código:
 - [ ] Pendiente (no bloqueante): mostrar insignia "verificado ✓" en perfiles/posts de
       quien sí tiene Steam vinculado, como refuerzo de confianza en Compañeros
 
-**Fase 3 — Diseño**
-- [ ] Sistema de diseño concreto (tipografía, paleta refinada, radios/espaciado,
-      tratamiento de avatares/imágenes, iconografía) documentado antes de tocar UI —
-      partiendo de `SteamColors` actual, no de los wireframes
+**Fase 3 — Diseño: decidida e implementada a nivel de tokens (ver sección 9)**
+- [x] Dirección elegida: "Fiel a Steam" — Source Sans 3 (una sola familia), radio 2px,
+      azul `#66C0F4`, etiquetas en mayúsculas con tracking
+- [x] `google_fonts`, `app_theme.dart`, `colors.dart`, `radii.dart` actualizados y
+      verificados con `flutter analyze` (0 errores)
+- [ ] Retrofit pantalla por pantalla (reemplazar radios sueltos por `SteamRadii.sm`,
+      aplicar mayúsculas/tracking a tags) — deferido a Fase 5 a propósito
 
 **Fase 4 — Shell web responsive**
 - [ ] Breakpoints en `MainShell` (o su reemplazo) para desktop: nav superior/sidebar en
@@ -287,16 +337,16 @@ González). Confirma y afina varias cosas ya encontradas en el código:
       Android/iOS/Desktop (Flutter ya los soporta con el mismo código — ahí no hay
       trabajo de plataforma nuevo, es empaque y QA)
 
-## 11. Cómo retomar
+## 12. Cómo retomar
 
-1. Sigue el checklist de la sección 10 en orden — Fase 1 está prácticamente cerrada,
-   el siguiente trabajo real empieza en Fase 2 (migración pequeña) o Fase 3 (sistema de
-   diseño), lo que el usuario prefiera primero.
+1. Sigue el checklist de la sección 11 en orden — Fases 1, 2 y 3 (a nivel de tokens)
+   están cerradas. El siguiente trabajo real es Fase 4 (shell responsive) o el retrofit
+   de Fase 5 (aplicar `SteamRadii`/tipografía pantalla por pantalla).
 2. No asumas que falta construir infraestructura de matching/listings — revisa el
    código real (`steamlinker_back/src/routes/`, `Steamlinker BD/scrip bd.sql`) antes de
    proponer cambios grandes; casi todo lo "aspiracional" que parece faltar en
    README/wireframes ya existe en el código.
-3. Los wireframes (sección 8) y el SRS (sección 9) son referencias, no specs a seguir
+3. Los wireframes (sección 8) y el SRS (sección 10) son referencias, no specs a seguir
    al pie de la letra — el SRS es más confiable como fuente de requisitos porque
    describe lo que efectivamente se construyó y evaluó.
 4. Todos los commits van a nombre de `Steamlinker <camilandre0510@gmail.com>` (sección

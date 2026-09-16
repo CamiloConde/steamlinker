@@ -8,7 +8,8 @@ class SteamColors {
   static const bgCard  = Color(0xFF16202D);
   static const bgInput = Color(0xFF0D1117);
   static const border  = Color(0xFF2A3F5A);
-  static const blue    = Color(0xFF4C91C9);
+  // Azul de acento real de Steam (store/cliente), no una aproximación.
+  static const blue    = Color(0xFF66C0F4);
   static const teal    = Color(0xFF1B9AAA);
   static const light   = Color(0xFFC7D5E0);
   static const muted   = Color(0xFF7A9AB0);
