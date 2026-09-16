@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/screens/account_settings_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
-import '../../features/home/screens/main_shell.dart';
+import '../../features/home/screens/responsive_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,7 +26,7 @@ GoRouter createAppRouter(AuthProvider auth) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const MainShell(),
+        builder: (context, state) => const ResponsiveShell(),
       ),
       GoRoute(
         path: '/configuracion',

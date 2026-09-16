@@ -316,10 +316,35 @@ González). Confirma y afina varias cosas ya encontradas en el código:
 - [ ] Retrofit pantalla por pantalla (reemplazar radios sueltos por `SteamRadii.sm`,
       aplicar mayúsculas/tracking a tags) — deferido a Fase 5 a propósito
 
-**Fase 4 — Shell web responsive**
-- [ ] Breakpoints en `MainShell` (o su reemplazo) para desktop: nav superior/sidebar en
-      vez de bottom-nav, manteniendo el bottom-nav actual en móvil — un solo codebase
-- [ ] Evaluar si el chat actual (polling) alcanza para web o hace falta WebSockets
+**Fase 4 — Shell web responsive: implementada y verificada en navegador**
+- [x] `ResponsiveShell` (nuevo, `lib/features/home/screens/responsive_shell.dart`) en
+      el breakpoint 768px: **< 768 delega tal cual en `MainShell`** (bottom-nav de 3
+      tabs sin ningún cambio — verificado, cero regresión); **≥ 768 muestra un sidebar
+      persistente** (232px, logo, 8 destinos: Inicio/Descubrir/Publicaciones/Amigos/
+      Buscar juegos/Mensajes/Notificaciones/Perfil, badge de no-leídos, footer de
+      usuario con logout) + `IndexedStack` de las pantallas ya existentes sin
+      Navigator.push — cambiar de sección no recarga ni pierde el sidebar.
+- [x] `app_router.dart` — ruta `/home` apunta a `ResponsiveShell` (antes `MainShell`
+      directo).
+- [x] Eliminado `lib/features/home/home_screen.dart` (código muerto: un intento previo
+      de shell responsive con breakpoint propio que nunca se conectó al router — no lo
+      confundas con `lib/features/home/screens/home_screen.dart`, que sí es el
+      dashboard de tarjetas real y se sigue usando tal cual, embebido como "Inicio").
+- [x] Verificado con `flutter analyze` (0 errores) y en el navegador en ambos anchos
+      (1300px → sidebar; 375px → bottom-nav idéntico a antes).
+- **Conocido, no bloqueante:** las tarjetas del dashboard de "Inicio"
+      (`screens/home_screen.dart`) siguen usando `Navigator.push` — en desktop eso
+      abre la pantalla tapando el sidebar en vez de solo cambiar de sección. No se
+      tocó a propósito (es scope de Fase 5, pulido pantalla por pantalla).
+
+**Evaluación del chat (polling vs WebSockets):** revisado el código real —
+`ChatProvider`/`chat_conversation_screen.dart` **no tienen ningún `Timer`/polling
+hoy**, solo cargan mensajes una vez al abrir la conversación. El HANDOFF anterior
+asumía polling que no existe. Recomendación: para la beta de Web 1.0, agregar un
+`Timer.periodic` simple (cada 4-6s mientras la conversación está abierta) es
+suficiente y no requiere infraestructura nueva — dejar WebSockets para más adelante,
+solo si el uso real lo justifica (conexiones persistentes = más complejidad de
+backend que no vale la pena anticipar sin datos de uso).
 
 **Fase 5 — Pulido de pantallas existentes para web**
 - [ ] Ajustar layout de las pantallas ya funcionales (perfil, descubrir, publicaciones,
