@@ -248,9 +248,14 @@ González). Confirma y afina varias cosas ya encontradas en el código:
       (`publicacion_constants.dart`: `tiposRequierenSteam`/`requiereSteam`;
       `crear_publicacion_screen.dart` muestra el aviso y el campo de cupos;
       `publicaciones_provider.dart` envía `cupos_totales`)
-- [ ] **Sin verificar:** los cambios de Flutter no se compilaron — Flutter/Dart no
-      está instalado en esta máquina. Correr `flutter analyze` en la primera sesión
-      que sí tenga el SDK, sobre todo `crear_publicacion_screen.dart`
+- [x] Flutter SDK instalado en esta máquina (`C:\flutter`, 3.47.4 stable) y verificado:
+      `flutter analyze` sobre los archivos de esta fase → 0 errores, solo 2 infos de
+      estilo (mismo patrón que ya usaba el archivo). `flutter doctor`: Chrome (web) y
+      Windows (desktop) disponibles; Android SDK y Visual Studio NO instalados (no
+      bloquea Web 1.0, sí bloqueará empacar Android/Windows desktop más adelante).
+      Nota: hay una segunda instalación de Flutter en `C:\dev\flutter` en el PATH del
+      usuario, no tocada — si algo se comporta raro con versión de Flutter, revisar
+      cuál de las dos está activa en el PATH.
 - [ ] Revisar si falta filtro por fecha de publicación en `GET /publicaciones/buscar`
       (el SRS lo pide, no confirmé si ya está)
 - [ ] Pendiente (no bloqueante): mostrar insignia "verificado ✓" en perfiles/posts de
