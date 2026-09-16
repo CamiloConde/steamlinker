@@ -1,257 +1,269 @@
-# Handoff — continuidad de sesión Claude
+# Handoff — continuidad del proyecto Steamlinker / SteamMatch
 
-Este archivo resume todo lo que se decidió y se hizo en una sesión previa de Claude Code
-(en la nube) para que una sesión nueva (local, en otro PC) pueda seguir exactamente donde
-se quedó, sin tener que redescubrir nada. Bórralo o muévelo a `docs/` cuando el proyecto
-ya no lo necesite como referencia activa.
+Este archivo resume el estado real del proyecto y las decisiones tomadas, para que
+cualquier sesión de Claude (en la nube o local, en cualquier PC) pueda seguir sin
+redescubrir nada. Se actualiza en cada sesión relevante — no es un log histórico,
+es el estado actual. Bórralo o muévelo a `docs/` solo cuando el proyecto ya no lo
+necesite como referencia activa.
 
-**Rama de trabajo:** `claude/fervent-cori-2bt1jm` (ya pusheada a `origin`, este archivo
-va sobre esa misma rama).
-
-**Identidad de commits:** todos los commits de esta sesión se hicieron a nombre de
-`Steamlinker <camilandre0510@gmail.com>` (el dueño del proyecto), sin ningún rastro de
-Claude en autoría ni en los mensajes — así lo pidió explícitamente. Para lograrlo sin
-tocar la config global de git se usó, en cada commit:
-
-```
-GIT_AUTHOR_NAME="Steamlinker" GIT_AUTHOR_EMAIL="camilandre0510@gmail.com" \
-GIT_COMMITTER_NAME="Steamlinker" GIT_COMMITTER_EMAIL="camilandre0510@gmail.com" \
-git commit --author="Steamlinker <camilandre0510@gmail.com>" -m "..."
-```
-
-Si la sesión local tiene otras instrucciones de atribución (por ejemplo, un
-`Co-Authored-By: Claude ...` que el harness quiera agregar por defecto), el usuario ya
-pidió expresamente que no se incluya — respeta esa preferencia salvo que él diga lo
-contrario.
+**Identidad de commits:** todos los commits van a nombre de
+`Steamlinker <camilandre0510@gmail.com>` (el dueño del proyecto), sin rastro de Claude
+en autoría ni mensajes — así lo pidió explícitamente. Sin footer de atribución, sin
+`Co-Authored-By: Claude`.
 
 ---
 
-## 1. Qué es el proyecto
+## 1. Qué es el proyecto — y qué NO es
 
-Steamlinker (nombre nuevo decidido: **SteamMatch**, ver sección 3) es un sitio
-especializado para dos cosas:
+**SteamMatch** (nombre nuevo decidido, ver sección 3; el repo y la app todavía dicen
+"Steamlinker") es un sitio especializado para dos cosas, validado por el SRS académico
+original (`Plantilla_SRS.docx`, ver sección 9):
 
-1. **Encontrar/formar grupos de Steam Family Sharing.** Hoy esto se resuelve en foros
-   genéricos (Reddit, Discord, grupos de Facebook) donde la gente publica "tengo esta
-   biblioteca, busco N personas" o "busco entrar a una familia con estos juegos". El
-   proyecto le da a eso un espacio dedicado, con datos de Steam verificados (biblioteca
-   real vía Steam API, no lo que la persona diga tener).
-2. **Encontrar compañeros de juego.** Aprovechando la misma infraestructura de
-   biblioteca + matching, la gente también puede buscar con quién jugar tal juego
-   específico (no para compartir cuenta, para jugar juntos).
+1. **Encontrar/formar grupos de Steam Family Sharing.** Una "Familia" en el sistema son
+   **6 usuarios** (el dueño + 5, el límite real de Steam Family Sharing) que comparten
+   biblioteca. Hoy esto se resuelve en foros genéricos (Reddit, Discord, grupos de
+   Facebook); el proyecto da un espacio dedicado con biblioteca **verificada** vía Steam
+   Web API, no lo que la persona diga tener.
+2. **Encontrar compañeros de juego** (no para compartir cuenta, para jugar juntos) —
+   esto estaba en el alcance **desde el SRS original** (requisito FR9: publicaciones
+   "de otro tema no específico, como por ejemplo gente que quiera conectarse con alguien
+   para jugar"), no es una idea nueva de esta sesión.
 
-Importante: **no es una integración oficial con Valve ni automatiza el Family Sharing
-en sí** — Steam no expone eso. El producto es la capa de coordinación/matchmaking
-alrededor, no un cliente que activa el sharing por ti.
+**No es una integración oficial con Valve ni automatiza el Family Sharing en sí** —
+Steam no expone eso. El producto es la capa de coordinación/matchmaking alrededor.
 
-Nació como proyecto universitario (Ing. de Sistemas, Universidad Tecnológica de
-Bolívar, Cartagena) con la obligación de entregarse como app. El usuario ahora quiere
-llevarlo más allá del alcance académico: **Beta actual → Web 1.0 → Mobile (Android/iOS)
-→ Desktop**.
+**Importante — el proyecto NO está en pañales.** Ya es funcional de punta a punta:
+se presentó en la materia de Desarrollo de Software (UTB Cartagena) corriendo en
+Android, con nota 5/5. Tiene backend completo, sistema de match, reputación, admin
+panel, todo operativo. El trabajo que sigue es **llevarlo a Web 1.0** (Beta actual →
+Web 1.0 → Mobile Android/iOS empaquetado formalmente → Desktop), no reconstruirlo.
+Flutter ya compila a los 6 targets desde el mismo código — "Web 1.0" es en gran parte
+`flutter build web` + una capa de layout responsive + pulir lo que ya existe, no un
+proyecto nuevo.
 
-## 2. Arquitectura actual (no hace falta reescribir nada de base)
+## 2. Arquitectura actual (verificada contra el código real, no solo docs)
 
-- `steamlinker_flutter/` — Frontend en **Flutter/Dart**. Ya tiene targets para
-  `web/`, `android/`, `ios/`, `windows/`, `linux/`, `macos/` en el propio repo. Es decir:
-  **"Web 1.0" no requiere cambiar de stack**, es en gran parte `flutter build web` +
-  darle una capa de layout responsive nueva.
-  - Arquitectura por features (`lib/features/<dominio>/{screens,providers}`), estado con
-    `provider`, ruteo con `go_router`, HTTP con `dio`.
-  - Theming centralizado en `lib/theme/colors.dart` (`SteamColors`) y
-    `lib/theme/app_theme.dart` — paleta oscura ya alineada con el lenguaje visual de
-    Steam (bien encaminada, el problema no es el color).
-  - Navegación actual: `MainShell` (bottom nav de 3 tabs: Inicio/Notificaciones/Perfil,
-    patrón de app móvil). **No tiene breakpoints responsive** (casi no hay
-    `LayoutBuilder`/`MediaQuery` en el código) — en pantalla ancha se ve una app de
-    celular estirada.
-- `steamlinker_back/` — Backend **Node.js + Express**, JWT + bcrypt, rutas separadas por
-  dominio (`auth`, `users`, `games`, `amistad`, `matches`, `chat`, `publicaciones`,
-  `calificaciones`, `notificaciones`, `reportes`, `admin`). El README de esta carpeta
-  documenta un flujo completo de **login con Steam OpenID** (`/auth/steam`) que el
-  frontend Flutter actual no usa (el login de Flutter es solo email/password) — ver
-  sección 5.
-- `Steamlinker BD/` — Esquema **PostgreSQL** (12 tablas): `usuarios`, `perfiles_steam`,
-  `juegos`, `usuarios_juegos`, `publicaciones`, `publicacion_juegos`, `matches`,
-  `calificaciones`, `chat`, `mensaje`, `reportes`, `amistad`. **No existe ninguna tabla
-  de "familia"/"grupo"** — ver sección 4, es el hallazgo más importante de esta sesión.
+- **`steamlinker_flutter/`** — Flutter/Dart. Arquitectura por features
+  (`lib/features/<dominio>/{screens,providers}`), estado con `provider`, ruteo con
+  `go_router`, HTTP con `dio`. Theming centralizado en `lib/theme/colors.dart`
+  (`SteamColors`) — paleta oscura ya alineada con el lenguaje visual de Steam.
+  Navegación actual: `MainShell` con bottom nav (patrón de app móvil), **sin
+  breakpoints responsive** — en pantalla ancha se ve una app de celular estirada. Eso
+  es lo principal por resolver para Web 1.0, no la lógica de negocio.
+
+- **`steamlinker_back/`** — Node.js + Express, JWT + bcrypt, rutas por dominio (`auth`,
+  `users`, `games`, `amistad`, `matches`, `chat`, `publicaciones`, `perfil`,
+  `calificaciones`, `notificaciones`, `reportes`, `admin`).
+
+- **`Steamlinker BD/`** — PostgreSQL, 12 tablas. Ver sección 4 para el detalle de
+  `publicaciones`/`matches` que es el corazón del producto.
+
+- **Setup local:** confirmado funcionando de punta a punta en esta máquina —
+  `.env` completo, base `steamlinker` creada, migraciones aplicadas
+  (`npm run migrate`), backend responde en `/health` con `"database":"connected"`.
+  Nada pendiente de infraestructura para desarrollar localmente.
 
 ## 3. Naming
 
 Decidido: **SteamMatch** (mejor que "Steamlinker", que suena a "vincular tu cuenta",
-no a lo que el producto hace). Pendiente de ejecutar (no se hizo en esta sesión, es
-trabajo futuro — task #3 del roadmap está "completed" solo en cuanto a la *decisión*,
-no en cuanto a la ejecución del rebranding):
+no a lo que el producto hace). Pendiente de **ejecutar** (no hecho todavía):
 
 - Actualizar nombre en `pubspec.yaml`, `package.json`, README, bundle IDs, etc.
-- Agregar disclaimer de no afiliación con Valve en el footer/landing (usar "Steam" en el
-  nombre de un producto no oficial tiene roce con las guías de marca de Valve; hay
+- Agregar disclaimer de no afiliación con Valve en el footer/landing (usar "Steam" en
+  el nombre de un producto no oficial tiene roce con las guías de marca de Valve; hay
   precedentes que lo toleran — SteamDB, SteamGifts, SteamTrades — siempre que quede
   claro que no es oficial).
-- Se recomendó atar esta migración de nombre a la decisión de repo (ver sección 6), para
-  resolver dos cosas de una vez.
+- Se recomienda atar esta migración de nombre a la decisión de repo nuevo (sección 7),
+  para resolver nombre + historial de secretos viejos de una sola vez.
 
-## 4. El hallazgo de producto más importante: falta el modelo de "listing"
+## 4. El modelo de datos real — mucho más completo de lo que parecía al principio
 
-El README original promete "crear y gestionar tu propio grupo de Family Sharing", pero
-en la base de datos **todo pasa por `publicaciones`** (posts de muro genérico con texto,
-imagen, like, comentario) + `amistad` (relación 1 a 1). No hay noción de "oferta de
-cupo en familia", "busco cupo", cupos disponibles/ocupados, ni estado abierto/cerrado.
+**Corrección importante sobre esta misma sesión:** al principio se pensó que faltaba
+crear una entidad "listing" desde cero para Familia/Compañeros. Al revisar el código
+real (no el README, que está desactualizado), **eso ya existe en gran parte**:
 
-Reinterpretación acordada con el usuario: la tabla `publicaciones` que ya existe (con
-`publicacion_juegos`, comentarios, likes) **no hay que tirarla** — encaja perfecto como
-contenido de la pestaña **Comunidad** (muro general de discusión, no ligado a un
-cupo/anuncio específico). Lo que falta crear es una entidad nueva de **"listing"**
-específicamente para **Familia** y **Compañeros**, con campos tipo:
+- `publicaciones`: `tipo_publi` (`CHECK IN ('busco_familia','busco_miembros','otro')`),
+  `paisfiltro_publi` (filtro de país), `estado_publi` (abierto/cerrado), y
+  `publicacion_juegos` (juegos ligados, N a N). Backend ya expone
+  `GET /publicaciones/buscar` filtrando por tipo/país/appid.
+- `matches`: `id_solicitante`, `id_receptor`, **`id_publi` (opcional, liga el match a
+  una publicación específica)**, `estado_match` (Pendiente/Aceptada/Rechazada). Al
+  aceptar, se crea un chat automáticamente. Esto es exactamente el mecanismo de
+  "alguien publica que busca gente para Helldivers → otro lo encuentra filtrando por
+  ese juego → manda match desde ese post → si acepta, chat automático" — **ya
+  construido**, no hay que inventarlo.
+- `amistad`: sistema de solicitud/aceptar **separado a propósito** de `matches`
+  (confirmado con el usuario) — `amistad` es agregar amigo en general (como en Steam);
+  `matches` es conectar específicamente por una publicación de familia/compañero. No
+  son duplicados a limpiar, son dos conceptos distintos que se quedan como están.
 
-- `tipo`: oferta_cupo | busco_cupo | busco_companero
-- `juegos` (relación a `juegos`, igual que ya existe `publicacion_juegos`)
-- `cupos_totales` / `cupos_ocupados`
-- `estado`: abierto | cerrado
-- referencia al usuario autor
+**Gaps reales (pequeños, no una tabla nueva):**
 
-Esto es lo que permite que Steamlinker/SteamMatch sea mejor que un post de Reddit:
-filtrar por juego, ver qué tan llena está una familia, cerrar automáticamente un listing
-cuando se llenan los cupos — nada de eso se puede hacer hoy con el modelo de
-publicaciones genéricas.
+1. Falta un valor de `tipo_publi` para "busco compañero de juego" — hoy solo hay
+   `busco_familia`/`busco_miembros`/`otro`. Sin esto, un post de Helldivers cae en
+   `otro` y se mezcla con Comunidad.
+2. Falta `cupos_totales` en `publicaciones` — hoy el cierre de una publicación es
+   manual (`PUT /publicaciones/:id/cerrar`), no automático al llenarse. Con el dato del
+   SRS, el default natural para `tipo_publi = 'busco_familia'`/`'busco_miembros'` es
+   **6** (tamaño real de una Familia Steam); para el tipo de compañeros sería variable
+   (2 a N, lo define quien publica). `cupos_ocupados` se puede derivar contando
+   `matches` con `estado_match = 'Aceptada'` para ese `id_publi`, no hace falta
+   columna aparte.
 
-**Esto es la Fase 1/2 del roadmap y bloquea el trabajo de UI de Familia/Compañeros** —
-no tiene sentido construir esas pantallas nuevas sobre el modelo de datos viejo.
+Esto es una migración pequeña (un `ALTER TABLE` + un nuevo valor de `CHECK`), no un
+rediseño de esquema.
 
-## 5. Auth: decisión pendiente de confirmar con el usuario
+## 5. Verificación de Steam — ya construida, falta decidir cuándo exigirla
 
-Hay dos flujos de identidad conviviendo sin resolver:
+**Corrección importante:** no existe (ni hace falta construir) un login OAuth "Steam
+OpenID" — eso era una promesa del README desactualizada, no código real. Lo que sí
+existe y funciona:
 
-- Backend: documenta Steam OpenID completo (`/auth/steam`, `/auth/steam/callback`,
-  `/auth/me`).
-- Frontend Flutter: solo implementa registro/login con email + password
-  (`lib/features/auth/screens/login_screen.dart`).
+- `POST /perfil/steam/vincular` — recibe un SteamID o URL de perfil, lo resuelve y
+  verifica contra la Steam Web API pública.
+- `POST /perfil/steam/importar` — importa la biblioteca real del SteamID vinculado.
 
-**Recomendación dada (pendiente de confirmación explícita del usuario):** Steam OpenID
-como identidad primaria obligatoria antes de publicar un listing o ver matches (así se
-garantiza que la biblioteca mostrada es real — es la ventaja central del producto sobre
-un foro). Dejar email/password solo como fricción reducida en el registro inicial antes
-de vincular Steam, si acaso.
+Es decir, la verificación (el diferenciador central del producto frente a un foro
+genérico) **ya está construida**. Lo único pendiente de decidir es **en qué punto del
+flujo se vuelve obligatoria**:
 
-## 6. Seguridad — qué se hizo y qué falta
+- Registro (email/password) → cuenta creada, fricción baja, cualquiera entra.
+- Comunidad → abierta sin necesidad de Steam vinculado (no depende de biblioteca).
+- Familia / Compañeros → **debería exigir Steam vinculado** antes de publicar o ver
+  matches, porque el mecanismo (comparar juegos, mostrar biblioteca real) no tiene
+  sentido sin ese dato. Esto resuelve también la pregunta de "¿qué pasa con un usuario
+  que no tiene nada que ver con Steam?" — no gatea toda la plataforma, solo las dos
+  funciones que literalmente dependen de datos de Steam.
 
-Se encontró `steamlinker_back/.env` **trackeado en git con secretos reales** desde el
-commit inicial del repo (Steam API key, `JWT_SECRET`, `SESSION_SECRET`, password de
-Postgres). Acciones tomadas en esta sesión:
+**Pendiente de confirmación explícita del usuario:** ¿de acuerdo con este gateo por
+función (no global)?
 
-- ✅ `git rm --cached steamlinker_back/.env` (el archivo sigue existiendo localmente,
-  `.gitignore` ya lo excluía, solo faltaba destrackearlo).
-- ✅ Generados nuevos `JWT_SECRET` y `SESSION_SECRET` (random hex de 32 bytes).
-- ✅ Usuario revocó la Steam API key vieja y generó una nueva.
-- ✅ Usuario cambió el password de Postgres en su instancia local.
-- ⏳ **El `.env` de esta sesión en la nube se actualizó con los valores nuevos, pero es
-  un archivo distinto al `.env` de la máquina local del usuario** — confirma con él que
-  su `.env` local también tiene los 4 valores nuevos (Steam API key, JWT_SECRET,
-  SESSION_SECRET, DB_PASSWORD) antes de dar esto por cerrado. **No hay que pedirle que
-  pegue esos valores reales en el chat de nuevo ni escribirlos en ningún archivo que se
-  vaya a commitear** — eso repetiría el problema original.
-- ⏳ **El historial de git todavía contiene los secretos viejos** (ya revocados/rotados,
-  así que no son explotables, pero siguen visibles con `git log -p`). Se decidió
-  **posponer** la limpieza de historial (`git filter-repo`/BFG) y resolverla cuando se
-  haga la migración de repo a SteamMatch (ver sección siguiente) — así no se hace un
-  rewrite disruptivo del repo actual sin necesidad.
+## 6. Seguridad — resuelto
 
-**Regla para cualquier sesión futura: nunca vuelvas a commitear `.env` ni pegues
-secretos reales dentro de archivos versionados (como este mismo HANDOFF.md). Si hace
-falta documentar qué variable existe, documenta el nombre, no el valor.**
+- ✅ `steamlinker_back/.env` destrackeado de git (`.gitignore` ya lo cubre).
+- ✅ Steam API key vieja revocada, nueva generada y puesta en `.env` local.
+- ✅ `JWT_SECRET`/`SESSION_SECRET` nuevos generados (random hex 32 bytes) y puestos en
+  `.env` local.
+- ✅ Password de Postgres local confirmado y funcionando (`DB_PASSWORD` en `.env`
+  coincide con el rol `postgres` de esta máquina).
+- ⏳ El historial de git todavía contiene los secretos viejos (ya revocados/rotados,
+  no explotables, pero visibles con `git log -p`). Pospuesto a propósito — se resuelve
+  gratis si se migra a un repo nuevo con el rebranding a SteamMatch (sección 7), en vez
+  de forzar un `filter-repo`/BFG + force-push disruptivo sobre "steamlinker" ahora.
+
+**Regla permanente: nunca commitear `.env` ni pegar secretos reales en archivos
+versionados (incluido este mismo HANDOFF.md). Documentar el nombre de la variable, no
+el valor.**
 
 ## 7. Pendiente de decidir: repo nuevo vs seguir en este
 
-Task #2, todavía sin resolver. La recomendación dada: si van a ejecutar el rebranding a
-SteamMatch, aprovechar ese momento para arrancar un repo nuevo bajo el nombre
-definitivo — resuelve el nombre y el historial con secretos viejos de una sola vez, en
-vez de forzar un `filter-repo` + force-push disruptivo sobre "steamlinker" ahora.
+Sin resolver todavía. Recomendación: si se ejecuta el rebranding a SteamMatch,
+aprovechar ese momento para arrancar un repo nuevo bajo el nombre definitivo — resuelve
+nombre + historial de secretos viejos de una sola vez.
 
-## 8. Dirección de diseño (de los wireframes que el usuario compartió)
+## 8. Dirección de diseño — los wireframes son lenguaje visual, NO especificación
 
-El usuario compartió 5 mockups (imágenes, no llegan a una sesión nueva salvo que las
-vuelva a adjuntar — **pídele que las reenvíe si vas a trabajar en UI**). Descripción para
-tener contexto mientras tanto:
+El usuario compartió 5 mockups hechos por un amigo como referencia de estética/idea de
+IA de navegación — **explícitamente no son la regla ni el diseño final**. La versión
+real que se quiere llevar adelante es **la que ya existe y funciona en Steamlinker
+actual** (probada en clase, nota 5/5), mejorada, no reemplazada por lo que muestran las
+imágenes. Antes de tocar cualquier pantalla, revisar el código/IA real en
+`lib/features/`, no asumir desde las imágenes.
 
-1. **Landing pública (deslogueado):** título "¿Con quién quieres conectar?" sobre un
-   collage de carátulas de juegos de fondo, dos CTAs grandes lado a lado: "Buscar
-   familia" / "Buscar compañeros", con una foto de un gamer con audífonos al lado
-   derecho.
-2. **Modal de login:** usuario/contraseña, un QR de acceso rápido a la derecha, y abajo
-   opciones de "Ingresar con Google" / "Ingresar con Steam", más link de registro.
-3. **Vista "Familia" (logueado):** nav superior con 4 pestañas (**Perfil | Familia |
-   Compañeros | Comunidad**), sidebar izquierdo (Juegos de la familia, Matchs,
-   Discusiones, Guardados), un muro central tipo Facebook (caja "comparte algo con tu
-   familia Steam", posts con imagen del juego, like/comentar), y un panel derecho de
-   "Chats" con lista de contactos.
-4. Misma vista con una **ventana de chat flotante** superpuesta (estilo Messenger),
-   anclada abajo a la derecha, con su propio header, historial y campo de envío.
-5. **Perfil de usuario:** banner grande de imagen, avatar circular superpuesto,
-   contadores de Amigos/Reputación (estrellas) a los lados del nombre, bio, botones
-   "Agregar amigo" / "Mensaje", y abajo una grilla "Juegos Steam Db" con carátulas
-   reales.
+Lo que sí vale la pena rescatar de los wireframes como *idea* de dirección visual (no
+como spec de funcionalidad): nav superior en vez de bottom-nav en desktop, panel de
+chat lateral/flotante, tratamiento de perfil con banner+avatar. Estética: usar el
+lenguaje propio de Steam (ya encaminado en `SteamColors`) combinado con algo más
+editorial — tipografía con carácter, carátulas reales de juegos como elemento visual
+fuerte (nunca fotos de stock genéricas), iconografía propia, radios/espaciado
+consistentes. Evitar el look "genérico de IA" (gradientes azul-morado difusos, avatares
+placeholder vacíos).
 
-**Aclaración explícita del usuario:** estos wireframes son *dirección/idea*, no diseño
-final — puede haber incoherencias, y específicamente no quiere que el resultado final se
-vea "genérico de IA" (gradientes azul-morado difusos, fotos de stock genéricas, avatares
-placeholder vacíos). Lo que sí es información real de producto y vale la pena portar tal
-cual: la IA de navegación de 4 pestañas arriba, el sidebar de Familia, el panel de chats
-con ventanas flotantes. La estética final todavía está abierta — usar el lenguaje propio
-de Steam (ya encaminado en `SteamColors`) combinado con algo más editorial: tipografía
-con carácter (no Roboto default), las carátulas reales de los juegos como elemento
-visual fuerte (evitar fotos de stock), iconografía propia, radios/espaciado consistentes.
+Las imágenes no viajan entre sesiones — pedir que las reenvíe si hace falta volver a
+verlas.
 
-## 9. Roadmap completo (con estado actual)
+## 9. Fuente de verdad del alcance funcional: el SRS académico
 
-Fase 0 — Seguridad:
-- [x] #1 Rotar credenciales filtradas
-- [ ] #2 Decidir estrategia de historial/repo (pospuesto, atado al rebranding)
+El usuario compartió `Plantilla_SRS (2).docx` (presentado en la materia, nota 5/5,
+17/02/2026, equipo: Miguel Jácome, Camilo Conde, Christian Benitez, Sean Martínez, Jesús
+González). Confirma y afina varias cosas ya encontradas en el código:
 
-Fase 1 — Definición de producto:
-- [x] #3 Nombre final del producto → SteamMatch (decisión tomada, ejecución pendiente)
-- [ ] #4 Alcance de la pestaña Comunidad → propuesta dada (reusar `publicaciones` tal
-      cual), falta confirmación explícita del usuario
-- [ ] #5 Estrategia de identidad/auth → propuesta dada (Steam OpenID primario), falta
-      confirmación explícita del usuario
+- Familia = **6 usuarios** compartiendo biblioteca.
+- Reputación: calificación **0-5 estrellas** con preguntas cualitativas ("¿se logró el
+  cometido?", "¿era estafador/mentiroso?") — ya en la tabla `calificaciones`.
+- Filtros: juego, país, reputación, **fecha de publicación** (este último no confirmé
+  si está implementado en `GET /publicaciones/buscar` — revisar antes de asumir).
+- Publicaciones cubre desde el requisito original tanto familia/miembros como "otro
+  tema no específico... gente que quiera conectarse con alguien para jugar" — el caso
+  Helldivers estaba contemplado desde el diseño original, no es una idea nueva.
+- Fuera de alcance a propósito (documentado, no es negligencia): creación automática de
+  familias en Steam, almacenamiento de credenciales externas, mensajería en tiempo real
+  *permanente*, transacciones económicas.
+- No funcionales relevantes para Web 1.0: responsive "independientemente del
+  dispositivo" (ya estaba en el alcance original, no es invención de ahora), HTTPS,
+  disponibilidad ≥95%, escalabilidad progresiva.
 
-Fase 2 — Backend/datos:
-- [ ] #6 Diseñar modelo de datos de "listings" (Familia/Compañeros) — ver sección 4
-- [ ] #7 Migrar backend a endpoints de listings
-- [ ] #8 Actualizar providers/modelos Flutter para listings
+## 10. Roadmap actualizado
 
-Fase 3 — Diseño:
-- [ ] #9 Definir sistema de diseño concreto (tipografía, paleta refinada, escala de
-      espaciado/radios, tratamiento de avatares/imágenes, iconografía) — documentar
-      antes de tocar UI
+**Fase 0 — Seguridad: cerrada**
+- [x] Rotar credenciales filtradas
+- [ ] Decidir estrategia de historial de git (pospuesto, atado al rebranding — no
+      urgente, las credenciales viejas ya están muertas)
 
-Fase 4 — Shell web:
-- [ ] #10 Shell de navegación responsive (web + móvil, un solo codebase Flutter):
-      top-nav de 4 pestañas + sidebar + rail de chat en desktop, mismo bottom-nav actual
-      en móvil
-- [ ] #11 Chat flotante estilo Messenger para web (evaluar si el chat actual por
-      polling alcanza o si hace falta WebSockets para que no se sienta muerto)
+**Fase 1 — Definición de producto: prácticamente cerrada**
+- [x] Nombre final → SteamMatch (decisión tomada, ejecución pendiente)
+- [x] Alcance de Comunidad → confirmado, reusar `publicaciones` (tipo `otro`) tal cual
+- [x] `matches` vs `amistad` → confirmado, son distintos a propósito, ambos se quedan
+- [ ] Confirmar el gateo de Steam por función (sección 5) — propuesto, falta el sí
+      explícito del usuario
 
-Fase 5 — Pantallas:
-- [ ] #12 Reconstruir Familia / Compañeros / Perfil / Landing / Login según la nueva IA
-      y el sistema de diseño
+**Fase 2 — Backend/datos: pequeña, no un rediseño**
+- [ ] Agregar valor `tipo_publi` para "busco compañero de juego"
+- [ ] Agregar `cupos_totales` a `publicaciones` (default 6 para familia, variable para
+      compañeros); derivar `cupos_ocupados` contando matches aceptados
+- [ ] Auto-cerrar (`estado_publi = false`) cuando `cupos_ocupados >= cupos_totales`
+- [ ] Aplicar el gateo de Steam vinculado antes de publicar/ver matches en
+      Familia/Compañeros (backend + Flutter)
+- [ ] Revisar si falta filtro por fecha de publicación en `GET /publicaciones/buscar`
+      (el SRS lo pide, no confirmé si ya está)
 
-Fase 6 — No funcional:
-- [ ] #13 Tests automatizados básicos + CI (hoy no hay nada real, solo el placeholder
-      de plantilla `widget_test.dart`)
-- [ ] #14 Despliegue de la Web 1.0 (hosting backend Node + Postgres + `flutter build
-      web`, dominio, variables de entorno de producción)
+**Fase 3 — Diseño**
+- [ ] Sistema de diseño concreto (tipografía, paleta refinada, radios/espaciado,
+      tratamiento de avatares/imágenes, iconografía) documentado antes de tocar UI —
+      partiendo de `SteamColors` actual, no de los wireframes
 
-Fase 7 — Lanzamiento:
-- [ ] #15 Beta web pública, recoger feedback real antes de empaquetar formalmente
+**Fase 4 — Shell web responsive**
+- [ ] Breakpoints en `MainShell` (o su reemplazo) para desktop: nav superior/sidebar en
+      vez de bottom-nav, manteniendo el bottom-nav actual en móvil — un solo codebase
+- [ ] Evaluar si el chat actual (polling) alcanza para web o hace falta WebSockets
+
+**Fase 5 — Pulido de pantallas existentes para web**
+- [ ] Ajustar layout de las pantallas ya funcionales (perfil, descubrir, publicaciones,
+      matches, amistad, chat, admin) para verse bien en ancho de escritorio — es un
+      pase de CSS/layout sobre lo que ya funciona, no reconstrucción de funcionalidad
+- [ ] Aplicar el sistema de diseño de la Fase 3 como skin
+
+**Fase 6 — No funcional**
+- [ ] Tests básicos + CI (hoy no hay nada real, solo el placeholder de plantilla)
+- [ ] Despliegue de Web 1.0 (hosting backend Node + Postgres + `flutter build web`,
+      dominio, variables de entorno de producción, secrets de prod separados de dev)
+
+**Fase 7 — Lanzamiento**
+- [ ] Beta web pública, recoger feedback real antes de empaquetar formalmente
       Android/iOS/Desktop (Flutter ya los soporta con el mismo código — ahí no hay
       trabajo de plataforma nuevo, es empaque y QA)
 
-## 10. Cómo retomar
+## 11. Cómo retomar
 
-1. Recrea esta lista de tareas con `TaskCreate`/`TaskList` si tu harness lo soporta, o
-   simplemente sigue el checklist de la sección 9 en orden.
-2. Confirma con el usuario los dos puntos abiertos de Fase 1 (#4 alcance de Comunidad,
-   #5 estrategia de auth) antes de tocar el modelo de datos — mis recomendaciones están
-   dadas arriba, pero no hubo confirmación explícita todavía.
-3. Pide que reenvíe los wireframes si vas a trabajar en las pantallas (sección 8).
+1. Sigue el checklist de la sección 10 en orden — Fase 1 está prácticamente cerrada,
+   el siguiente trabajo real empieza en Fase 2 (migración pequeña) o Fase 3 (sistema de
+   diseño), lo que el usuario prefiera primero.
+2. No asumas que falta construir infraestructura de matching/listings — revisa el
+   código real (`steamlinker_back/src/routes/`, `Steamlinker BD/scrip bd.sql`) antes de
+   proponer cambios grandes; casi todo lo "aspiracional" que parece faltar en
+   README/wireframes ya existe en el código.
+3. Los wireframes (sección 8) y el SRS (sección 9) son referencias, no specs a seguir
+   al pie de la letra — el SRS es más confiable como fuente de requisitos porque
+   describe lo que efectivamente se construyó y evaluó.
 4. Todos los commits van a nombre de `Steamlinker <camilandre0510@gmail.com>` (sección
-   inicial) salvo que el usuario diga lo contrario en la nueva sesión.
+   inicial) salvo que el usuario diga lo contrario.
