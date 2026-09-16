@@ -129,14 +129,20 @@ flujo se vuelve obligatoria**:
 
 - Registro (email/password) → cuenta creada, fricción baja, cualquiera entra.
 - Comunidad → abierta sin necesidad de Steam vinculado (no depende de biblioteca).
-- Familia / Compañeros → **debería exigir Steam vinculado** antes de publicar o ver
-  matches, porque el mecanismo (comparar juegos, mostrar biblioteca real) no tiene
-  sentido sin ese dato. Esto resuelve también la pregunta de "¿qué pasa con un usuario
-  que no tiene nada que ver con Steam?" — no gatea toda la plataforma, solo las dos
-  funciones que literalmente dependen de datos de Steam.
+- Familia / Compañeros → **confirmado con el usuario: requerido**, no solo recomendado.
+  Explorar/mirar listings queda libre sin vincular nada, pero publicar un listing o
+  participar en un match sí exige biblioteca importada — no es una barrera de
+  confianza arbitraria, es un requisito funcional: `publicacion_juegos` necesita saber
+  qué juegos tiene la persona, y esa info solo puede salir de
+  `perfil/steam/importar` (no se va a construir un formulario de "escribe a mano tus
+  juegos", porque eso reintroduce el modelo de foro genérico que el producto busca
+  superar). La insignia "verificado ✓" se usa como refuerzo visual en perfiles/posts,
+  no como sustituto del requisito.
 
-**Pendiente de confirmación explícita del usuario:** ¿de acuerdo con este gateo por
-función (no global)?
+**Decidido — nada pendiente aquí.** Queda para Fase 2 implementar el middleware/check
+que bloquea `POST /publicaciones/crear` (tipo familia/miembros/compañero) y
+`POST /matches/enviar` si el usuario no tiene fila en `perfiles_steam`, con el mensaje
+de error guiando a vincular Steam primero.
 
 ## 6. Seguridad — resuelto
 
@@ -210,12 +216,12 @@ González). Confirma y afina varias cosas ya encontradas en el código:
 - [ ] Decidir estrategia de historial de git (pospuesto, atado al rebranding — no
       urgente, las credenciales viejas ya están muertas)
 
-**Fase 1 — Definición de producto: prácticamente cerrada**
+**Fase 1 — Definición de producto: cerrada**
 - [x] Nombre final → SteamMatch (decisión tomada, ejecución pendiente)
 - [x] Alcance de Comunidad → confirmado, reusar `publicaciones` (tipo `otro`) tal cual
 - [x] `matches` vs `amistad` → confirmado, son distintos a propósito, ambos se quedan
-- [ ] Confirmar el gateo de Steam por función (sección 5) — propuesto, falta el sí
-      explícito del usuario
+- [x] Gateo de Steam por función (sección 5) → confirmado: requerido para publicar/
+      match en Familia/Compañeros, libre en Comunidad y para explorar
 
 **Fase 2 — Backend/datos: pequeña, no un rediseño**
 - [ ] Agregar valor `tipo_publi` para "busco compañero de juego"
