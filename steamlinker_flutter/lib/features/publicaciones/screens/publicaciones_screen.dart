@@ -18,25 +18,7 @@ import 'crear_publicacion_screen.dart';
 import 'publicacion_detalle_screen.dart';
 
 class PublicacionesScreen extends StatefulWidget {
-  /// Cuando se usa como pestaña de Familia/Comunidad (ver HANDOFF.md:
-  /// reorganización de IA en 4 pestañas), estos fijan el feed a un tipo (o
-  /// varios separados por coma, ej "busco_familia,busco_miembros") sin
-  /// mostrar el selector de tipo en los filtros — el resto (país, juego,
-  /// orden) se queda editable.
-  final String? tipoFiltroFijo;
-  final String? tituloFijo;
-
-  /// Sin Scaffold/AppBar propios — para anidar dentro de otra pantalla con
-  /// pestañas (ver CompanerosScreen). El llamador debe proveer su propio
-  /// FloatingActionButton si quiere permitir crear publicaciones.
-  final bool embebida;
-
-  const PublicacionesScreen({
-    super.key,
-    this.tipoFiltroFijo,
-    this.tituloFijo,
-    this.embebida = false,
-  });
+  const PublicacionesScreen({super.key});
 
   @override
   State<PublicacionesScreen> createState() => _PublicacionesScreenState();
@@ -62,11 +44,8 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
       await perfil.cargarPerfil(id);
     }
     if (!mounted) return;
-    final publicacionesProv = context.read<PublicacionesProvider>();
     await Future.wait([
-      widget.tipoFiltroFijo != null
-          ? publicacionesProv.setFiltros(tipo: widget.tipoFiltroFijo)
-          : publicacionesProv.buscar(),
+      context.read<PublicacionesProvider>().buscar(),
       context.read<MatchesProvider>().cargarTodo(),
       context.read<AmistadProvider>().cargarTodo(),
     ]);
@@ -74,24 +53,6 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
 
   Future<void> _recargar() async {
     await context.read<PublicacionesProvider>().buscar();
-  }
-
-  /// Si esta pantalla esta fijada a un solo tipo (no una combinacion como
-  /// "busco_familia,busco_miembros"), lo sugiere como valor inicial del
-  /// formulario de crear publicacion.
-  String? _tipoSugeridoParaCrear() {
-    final fijo = widget.tipoFiltroFijo;
-    if (fijo == null || fijo.contains(',')) return null;
-    return fijo;
-  }
-
-  Future<void> _limpiarFiltros() async {
-    final prov = context.read<PublicacionesProvider>();
-    if (widget.tipoFiltroFijo != null) {
-      await prov.setFiltros(tipo: widget.tipoFiltroFijo);
-    } else {
-      await prov.limpiarFiltros();
-    }
   }
 
   Future<void> _abrirFiltros() async {
@@ -160,13 +121,12 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                         ),
                       ],
                     ),
-                    if (widget.tipoFiltroFijo == null)
-                      DropField(
-                        label: 'Tipo',
-                        value: tipoEtiqueta,
-                        items: PublicacionConstants.tiposFiltroEtiquetas,
-                        onChanged: (v) => setSheetState(() => tipoEtiqueta = v),
-                      ),
+                    DropField(
+                      label: 'Tipo',
+                      value: tipoEtiqueta,
+                      items: PublicacionConstants.tiposFiltroEtiquetas,
+                      onChanged: (v) => setSheetState(() => tipoEtiqueta = v),
+                    ),
                     DropField(
                       label: 'País',
                       value: paisEtiqueta,
@@ -192,7 +152,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                           child: OutlinedButton(
                             onPressed: () async {
                               Navigator.pop(context);
-                              await _limpiarFiltros();
+                              await prov.limpiarFiltros();
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: SteamColors.muted,
@@ -205,7 +165,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () async {
-                              final tipoVal = widget.tipoFiltroFijo ??
+                              final tipoVal =
                                   PublicacionConstants.valorTipoFiltro(tipoEtiqueta);
                               final paisVal = paisEtiqueta == PaisUtil.todos
                                   ? null
@@ -262,98 +222,68 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     final matchesProv = context.watch<MatchesProvider>();
     final amistadProv = context.watch<AmistadProvider>();
 
-    final cuerpo = DesktopBodyWidth(child: SafeArea(
-      top: !widget.embebida,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
-            child: Row(
-              children: [
-                const Spacer(),
-                IconButton(
-                  icon: Icon(
-                    Icons.tune_rounded,
-                    color: publicacionesProv.tieneFiltrosActivos
-                        ? SteamColors.blue
-                        : SteamColors.muted,
-                  ),
-                  tooltip: 'Filtros',
-                  onPressed: _abrirFiltros,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: SteamColors.blue),
-                  tooltip: 'Actualizar',
-                  onPressed: _recargar,
-                ),
-              ],
-            ),
-          ),
-          if (publicacionesProv.tieneFiltrosActivos)
-            _FiltrosActivosBar(
-              prov: publicacionesProv,
-              onEditar: _abrirFiltros,
-              onLimpiar: () => publicacionesProv.limpiarFiltros(),
-            ),
-          Expanded(
-            child: RefreshIndicator(
-              color: SteamColors.blue,
-              backgroundColor: SteamColors.bgDeep,
-              onRefresh: _recargar,
-              child: _buildLista(
-                publicacionesProv,
-                auth,
-                matchesProv,
-                amistadProv,
-                auth.usuario?['id'] as int?,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
-
-    final fab = FloatingActionButton.extended(
-      onPressed: () async {
-        final creado = await Navigator.of(context).push<bool>(
-          MaterialPageRoute(
-            builder: (_) => CrearPublicacionScreen(
-              tipoInicial: _tipoSugeridoParaCrear(),
-            ),
-          ),
-        );
-        if (creado == true && context.mounted) {
-          await _recargar();
-        }
-      },
-      backgroundColor: SteamColors.blue,
-      foregroundColor: Colors.white,
-      icon: const Icon(Icons.add),
-      label: const Text(
-        'Crear',
-        style: TextStyle(fontWeight: FontWeight.w700),
-      ),
-    );
-
-    // Embebida (ej. dentro de CompanerosScreen) no tiene Scaffold propio,
-    // asi que el FAB se posiciona directamente sobre el cuerpo. La logica
-    // de creacion se queda en el State de este widget, que resuelve al
-    // PublicacionesProvider local que lo envuelva (ver FamiliaScreen /
-    // ComunidadScreen / CompanerosScreen).
-    if (widget.embebida) {
-      return Stack(
-        children: [
-          cuerpo,
-          Positioned(right: 16, bottom: 16, child: fab),
-        ],
-      );
-    }
-
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(title: widget.tituloFijo ?? 'PUBLICACIONES'),
-      floatingActionButton: fab,
-      body: cuerpo,
+      appBar: SteamAppBar(
+        title: 'PUBLICACIONES',
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.tune_rounded,
+              color: publicacionesProv.tieneFiltrosActivos
+                  ? SteamColors.blue
+                  : SteamColors.muted,
+            ),
+            tooltip: 'Filtros',
+            onPressed: _abrirFiltros,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: SteamColors.blue),
+            tooltip: 'Actualizar',
+            onPressed: _recargar,
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CrearPublicacionScreen()),
+          );
+        },
+        backgroundColor: SteamColors.blue,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          'Crear',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      body: DesktopBodyWidth(child: SafeArea(
+        child: Column(
+          children: [
+            if (publicacionesProv.tieneFiltrosActivos)
+              _FiltrosActivosBar(
+                prov: publicacionesProv,
+                onEditar: _abrirFiltros,
+                onLimpiar: () => publicacionesProv.limpiarFiltros(),
+              ),
+            Expanded(
+              child: RefreshIndicator(
+                color: SteamColors.blue,
+                backgroundColor: SteamColors.bgDeep,
+                onRefresh: _recargar,
+                child: _buildLista(
+                  publicacionesProv,
+                  auth,
+                  matchesProv,
+                  amistadProv,
+                  auth.usuario?['id'] as int?,
+                ),
+              ),
+            ),
+          ],
+        ),
+      )),
     );
   }
 

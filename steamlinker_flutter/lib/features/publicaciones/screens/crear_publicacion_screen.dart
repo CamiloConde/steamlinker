@@ -13,13 +13,7 @@ import '../../perfil/providers/perfil_provider.dart';
 import '../providers/publicaciones_provider.dart';
 
 class CrearPublicacionScreen extends StatefulWidget {
-  /// Valor de tipo_publi (ej "busco_familia") a preseleccionar — usado
-  /// cuando se crea desde una pestaña ya fijada a un tipo (Familia,
-  /// Compañeros, Comunidad). Sin esto, arranca en el primer tipo de la
-  /// lista como siempre.
-  final String? tipoInicial;
-
-  const CrearPublicacionScreen({super.key, this.tipoInicial});
+  const CrearPublicacionScreen({super.key});
 
   @override
   State<CrearPublicacionScreen> createState() => _CrearPublicacionScreenState();
@@ -31,9 +25,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   final _busquedaController = TextEditingController();
   final _cuposController = TextEditingController();
 
-  late String _tipoEtiqueta = widget.tipoInicial != null
-      ? PublicacionConstants.etiquetaTipo(widget.tipoInicial)
-      : PublicacionConstants.tiposCrearEtiquetas.first;
+  String _tipoEtiqueta = PublicacionConstants.tiposCrearEtiquetas.first;
   String _paisEtiqueta = PaisUtil.todos;
   final List<Map<String, dynamic>> _juegosSeleccionados = [];
   bool _guardando = false;
@@ -136,7 +128,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
     if (exito) {
       showSteamToast(context, 'Publicación creada', SteamColors.green);
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop();
     } else {
       final error = context.read<PublicacionesProvider>().error;
       showSteamToast(context, error ?? 'No se pudo crear', Colors.red);

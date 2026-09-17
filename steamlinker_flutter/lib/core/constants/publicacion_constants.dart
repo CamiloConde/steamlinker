@@ -53,9 +53,6 @@ class PublicacionConstants {
 
   static String etiquetaTipo(String? tipo) {
     if (tipo == null || tipo.isEmpty) return 'General';
-    if (tipo.contains(',')) {
-      return tipo.split(',').map((t) => tipoEtiquetas[t] ?? t).join(' / ');
-    }
     return tipoEtiquetas[tipo] ?? tipo;
   }
 

@@ -7,15 +7,15 @@ import 'package:provider/provider.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../amistad/screens/amistad_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../busqueda/screens/busqueda_screen.dart';
 import '../../chat/screens/chat_screen.dart';
-import '../../companeros/screens/companeros_screen.dart';
+import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../perfil/screens/perfil_screen.dart';
-import '../../publicaciones/screens/comunidad_screen.dart';
-import '../../publicaciones/screens/familia_screen.dart';
+import '../../publicaciones/screens/publicaciones_screen.dart';
 import 'home_screen.dart';
 import 'main_shell.dart';
 
@@ -42,9 +42,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
   static const _items = [
     _NavEntry('Inicio', Icons.home_outlined, Icons.home_rounded),
-    _NavEntry('Familia', Icons.groups_outlined, Icons.groups_rounded),
-    _NavEntry('Compañeros', Icons.people_outline, Icons.people_rounded),
-    _NavEntry('Comunidad', Icons.forum_outlined, Icons.forum_rounded),
+    _NavEntry('Descubrir', Icons.people_outline, Icons.people_rounded),
+    _NavEntry('Publicaciones', Icons.campaign_outlined, Icons.campaign_rounded),
+    _NavEntry('Amigos', Icons.group_outlined, Icons.group_rounded),
     _NavEntry('Buscar juegos', Icons.search_rounded, Icons.search_rounded),
     _NavEntry('Mensajes', Icons.chat_bubble_outline, Icons.chat_bubble_rounded),
     _NavEntry('Notificaciones', Icons.notifications_outlined, Icons.notifications_rounded),
@@ -56,9 +56,9 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   // pantalla nueva por encima (ver home_screen.dart).
   List<Widget> get _pages => [
         HomeScreen(onNavigateIndex: _onSelect),
-        const FamiliaScreen(),
-        const CompanerosScreen(),
-        const ComunidadScreen(),
+        const DescubrirGamersScreen(),
+        const PublicacionesScreen(),
+        const AmistadScreen(),
         const BusquedaScreen(),
         const ChatScreen(),
         const NotificationsScreen(),

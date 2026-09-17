@@ -13,9 +13,7 @@ import '../../perfil/providers/perfil_provider.dart';
 import '../../usuarios/screens/usuario_detalle_screen.dart';
 
 class DescubrirGamersScreen extends StatefulWidget {
-  final bool embebida;
-
-  const DescubrirGamersScreen({super.key, this.embebida = false});
+  const DescubrirGamersScreen({super.key});
 
   @override
   State<DescubrirGamersScreen> createState() => _DescubrirGamersScreenState();
@@ -172,36 +170,35 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     final auth = context.watch<AuthProvider>();
     final miId = auth.usuario?['id'];
 
-    final acciones = [
-      IconButton(
-        icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
-        tooltip: 'Mis solicitudes',
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const MatchesScreen()),
-          );
-        },
-      ),
-      IconButton(
-        icon: const Icon(Icons.tune_rounded, color: SteamColors.muted),
-        tooltip: 'Filtros',
-        onPressed: _abrirFiltros,
-      ),
-      IconButton(
-        icon: const Icon(Icons.refresh, color: SteamColors.blue),
-        tooltip: 'Actualizar',
-        onPressed: _recargar,
-      ),
-    ];
-
-    final cuerpo = DesktopBodyWidth(child: Column(
-      children: [
-        if (widget.embebida)
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: acciones),
+    return Scaffold(
+      backgroundColor: SteamColors.bgDeep,
+      appBar: SteamAppBar(
+        title: 'DESCUBRIR',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
+            tooltip: 'Mis solicitudes',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MatchesScreen()),
+              );
+            },
           ),
-        if (_filtroTipoEtiqueta != null ||
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: SteamColors.muted),
+            tooltip: 'Filtros',
+            onPressed: _abrirFiltros,
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: SteamColors.blue),
+            tooltip: 'Actualizar',
+            onPressed: _recargar,
+          ),
+        ],
+      ),
+      body: DesktopBodyWidth(child: Column(
+        children: [
+          if (_filtroTipoEtiqueta != null ||
               _filtroPaisEtiqueta != null ||
               _filtroJuegoNombre != null)
             Container(
@@ -293,15 +290,8 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                   ),
             ),
           ),
-      ],
-    ));
-
-    if (widget.embebida) return cuerpo;
-
-    return Scaffold(
-      backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(title: 'DESCUBRIR', actions: acciones),
-      body: cuerpo,
+        ],
+      )),
     );
   }
 
