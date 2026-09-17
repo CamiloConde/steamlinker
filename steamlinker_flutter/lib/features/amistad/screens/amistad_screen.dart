@@ -2,21 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
-import '../../../widgets/accesos_rapidos_panel.dart';
-import '../../../widgets/chats_columna.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_buttons.dart';
 import '../../../widgets/usuario_card.dart';
-import '../../chat/providers/chat_provider.dart';
-import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../providers/amistad_provider.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../usuarios/screens/usuario_detalle_screen.dart';
-
-/// Igual al breakpoint de `ResponsiveShell` (no se importa de ahí para evitar
-/// un ciclo de imports).
-const _kEscritorio = 768.0;
 
 class AmistadScreen extends StatefulWidget {
   const AmistadScreen({super.key});
@@ -35,82 +27,25 @@ class _AmistadScreenState extends State<AmistadScreen> {
     if (!_inicializado) {
       _inicializado = true;
       context.read<AmistadProvider>().cargarTodo();
-      context.read<ChatProvider>().cargarConversaciones();
     }
-  }
-
-  Widget _buildLista(AmistadProvider prov) {
-    if (prov.cargando) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-        ),
-      );
-    }
-    return _tab == 0 ? _buildSolicitudes(prov) : _buildAmigos(prov);
   }
 
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<AmistadProvider>();
 
-    final acciones = [
-      IconButton(
-        icon: const Icon(Icons.refresh, color: SteamColors.blue),
-        tooltip: 'Actualizar',
-        onPressed: () => prov.cargarTodo(),
-      ),
-    ];
-
-    final esEscritorio = MediaQuery.of(context).size.width >= _kEscritorio;
-
-    if (esEscritorio) {
-      return Scaffold(
-        backgroundColor: SteamColors.bgDeep,
-        appBar: SteamAppBar(title: 'AMIGOS', actions: acciones),
-        body: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: 220,
-              child: AccesosRapidosPanel(
-                children: [
-                  const AccesosSeccionTitulo('ACCESOS RÁPIDOS'),
-                  AccesoRapidoItem(
-                    icon: Icons.people_outline,
-                    label: 'Buscar gamers',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const DescubrirGamersScreen()),
-                    ),
-                  ),
-                  const AccesosSeccionTitulo('VER'),
-                  AccesoRapidoItem(
-                    icon: Icons.inbox_outlined,
-                    label: 'Solicitudes (${prov.solicitudes.length})',
-                    activo: _tab == 0,
-                    onTap: () => setState(() => _tab = 0),
-                  ),
-                  AccesoRapidoItem(
-                    icon: Icons.group_outlined,
-                    label: 'Amigos (${prov.amigos.length})',
-                    activo: _tab == 1,
-                    onTap: () => setState(() => _tab = 1),
-                  ),
-                ],
-              ),
-            ),
-            const VerticalDivider(color: SteamColors.border, width: 1),
-            Expanded(child: _buildLista(prov)),
-            const VerticalDivider(color: SteamColors.border, width: 1),
-            const SizedBox(width: 260, child: ChatsColumna()),
-          ],
-        ),
-      );
-    }
-
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(title: 'AMIGOS', actions: acciones),
+      appBar: SteamAppBar(
+        title: 'AMIGOS',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: SteamColors.blue),
+            tooltip: 'Actualizar',
+            onPressed: () => prov.cargarTodo(),
+          ),
+        ],
+      ),
       body: DesktopBodyWidth(child: Column(
         children: [
           Padding(
@@ -131,7 +66,17 @@ class _AmistadScreenState extends State<AmistadScreen> {
               ],
             ),
           ),
-          Expanded(child: _buildLista(prov)),
+          Expanded(
+            child: prov.cargando
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                    ),
+                  )
+                : _tab == 0
+                    ? _buildSolicitudes(prov)
+                    : _buildAmigos(prov),
+          ),
         ],
       )),
     );

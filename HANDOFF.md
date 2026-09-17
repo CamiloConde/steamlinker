@@ -491,28 +491,29 @@ backend que no vale la pena anticipar sin datos de uso).
     probar la conversación embebida del chat flotante en vivo (la cuenta de
     prueba no tenía conversaciones), pero reusa la misma lógica ya probada de
     `ChatConversationScreen`. `flutter analyze`: 0 issues. `flutter test`: 10/10.
-- [x] **Columnas laterales (accesos rápidos + chats) extendidas a Descubrir y
-      Amigos** — el usuario confirmó explícitamente que las quería ahí también
-      (solo las columnas laterales, sin composer inline porque esas pantallas no
-      son un feed de publicaciones). Se extrajeron los widgets compartidos
-      `lib/widgets/accesos_rapidos_panel.dart` (`AccesosRapidosPanel`,
-      `AccesosSeccionTitulo`, `AccesoRapidoItem`) y `lib/widgets/chats_columna.dart`
-      (`ChatsColumna`) para no duplicar el código entre las 3 pantallas —
-      `PublicacionesScreen` se refactorizó para usarlos también.
-  - **Descubrir Gamers**: columna izquierda con "Mis solicitudes" (→
-    `MatchesScreen`) y atajos de filtro rápido por tipo (llaman a
-    `descubrirUsuarios(tipo:)` directo, reseteando país/juego — mismo
-    comportamiento que el atajo de Publicaciones). Columna derecha `ChatsColumna`.
-  - **Amigos**: columna izquierda con "Buscar gamers" (→ `DescubrirGamersScreen`)
-    y el switcher Solicitudes/Amigos como items de columna (controla el mismo
-    `_tab` que ya usaban los chips de antes; los chips se mantienen tal cual en
-    el layout móvil de una sola columna, sin tocar). Columna derecha
-    `ChatsColumna`.
-  - Verificado en navegador: nav superior con las 4 pestañas, columnas laterales
-    en Descubrir y Amigos funcionando (filtro rápido por tipo en Descubrir,
-    switcher Solicitudes/Amigos en Amigos), y en móvil (375px) ambas pantallas
-    siguen con su layout de una sola columna sin regresión. `flutter analyze`: 0
-    issues. `flutter test`: 10/10.
+- [x] **Columnas laterales probadas en Descubrir/Amigos y revertidas — decisión
+      final: solo Publicaciones tiene 3 columnas.** Se llegaron a agregar columna
+      izquierda (accesos rápidos) y derecha (chats) alrededor del contenido de
+      Descubrir Gamers y Amigos, igual que en Publicaciones. Verificado
+      funcionando en navegador, pero al verlo el usuario preguntó "¿de verdad
+      vale la pena tener las 3 columnas así, o que cada una tenga su propia
+      personalidad?" — la respuesta honesta fue que no: en Descubrir/Amigos la
+      columna de accesos rápidos quedaba delgada (2-3 ítems rellenando espacio
+      más que aportando) y la columna de Chats se repetía idéntica en las tres
+      pantallas, compitiendo con el chat flotante que ya cubre eso globalmente.
+      Revertidas ambas pantallas a su estado anterior (una sola columna
+      centrada con `DesktopBodyWidth`, cada una con su propio diseño). Los
+      widgets compartidos `lib/widgets/accesos_rapidos_panel.dart` y
+      `lib/widgets/chats_columna.dart` se quedan (los sigue usando
+      `PublicacionesScreen`, que es donde de verdad aportan: es un feed real con
+      composer y filtros ricos). **Lección**: no asumir que un patrón que
+      funciona en una pantalla se debe replicar mecánicamente a las demás solo
+      por consistencia — cada pantalla se gana su layout según lo que
+      realmente contiene, no al revés.
+  - Verificado en navegador tras el revert: Descubrir y Amigos de vuelta a su
+    layout original de una sola columna, Publicaciones intacta con sus 3
+    columnas, nav superior con las 4 pestañas funcionando en las tres, y móvil
+    (375px) sin regresión. `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
