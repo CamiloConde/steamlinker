@@ -83,14 +83,14 @@ router.post('/crear', verificarToken, async (req, res) => {
 
 // GET /publicaciones/buscar
 // Busca publicaciones con filtros opcionales
-// Parametros: tipo, pais, appid, orden (recientes | reputacion)
+// Parametros: tipo (uno o varios separados por coma, ej "busco_familia,busco_miembros"), pais, appid, orden (recientes | reputacion)
 router.get('/buscar', async (req, res) => {
     const { tipo, pais, appid, orden } = req.query;
 
     try {
         // Construir la consulta dinamicamente segun los filtros
         let consulta = `
-            SELECT DISTINCT p.*, 
+            SELECT DISTINCT p.*,
                    u.username_usu, u.repu_usu, u.pais_usu,
                    COUNT(pj.appid) as total_juegos
             FROM publicaciones p
@@ -103,8 +103,9 @@ router.get('/buscar', async (req, res) => {
         let contador = 1;
 
         if (tipo) {
-            consulta += ` AND p.tipo_publi = $${contador}`;
-            parametros.push(tipo);
+            const tipos = String(tipo).split(',').map((t) => t.trim()).filter(Boolean);
+            consulta += ` AND p.tipo_publi = ANY($${contador}::varchar[])`;
+            parametros.push(tipos);
             contador++;
         }
 

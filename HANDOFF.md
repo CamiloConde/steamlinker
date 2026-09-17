@@ -202,6 +202,21 @@ verlas.
 4 direcciones visuales (canvas de Artifact) y el usuario confirmó explícitamente:
 **"esa es, sigamos con esa dirección"**, refiriéndose a la dirección **"Fiel a Steam"**.
 
+**Actualización 2 — la IA de navegación SÍ se terminó tocando, con confirmación
+explícita.** Hubo un ciclo de ida y vuelta real en una sesión: se construyó una
+reestructuración de navegación a 4 pestañas basada en los wireframes, el usuario pidió
+revertirla ("los wireframes se adaptan a lo que teniamos, no lo que teniamos al
+wireframe"), se revirtió por completo, y luego — tras ver capturas comparando el
+"feel" visual del wireframe contra la app real — el usuario confirmó explícitamente que
+sí quería la reestructuración después de todo: **"pero de hecho la navegacion si vamos
+a tocar, y la estructura tambien"**, reconfirmado con `AskUserQuestion` para no volver a
+adivinar. Resultado final: sidebar/bottom-nav de **Familia / Compañeros / Comunidad /
+Perfil** (reemplaza Descubrir + Publicaciones + Amigos), con **Compañeros fusionando
+Amigos + Buscar + Avisos en 3 sub-pestañas** — ver el checklist de Fase 5 para el
+detalle técnico. Lección para sesiones futuras: cuando el usuario cambia de opinión
+sobre algo estructural más de una vez, pedir confirmación explícita antes de
+reconstruir — no asumir que "ya se descartó" sigue siendo cierto.
+
 ## 9. Sistema de diseño (Fase 3) — decidido e implementado
 
 Se probaron 4 direcciones visuales en un canvas de diseño (tipografía + radios +
@@ -383,6 +398,65 @@ backend que no vale la pena anticipar sin datos de uso).
 - [ ] **Sigue pendiente**: mayúsculas+tracking en tags al estilo Steam fuera de lo
       que ya heredan los widgets compartidos; aplicar `DesktopBodyWidth` a más
       pantallas si hace falta (perfil, usuarios, etc. — no se revisaron todas).
+- [x] **Rediseño visual de `PublicacionCard`** (`lib/widgets/publicacion_card.dart`) —
+      avatar circular con inicial (gradiente azul-teal, tappable), username como link
+      azul, fila de metadatos (tipo · reputación con estrella), carátula del juego a
+      todo ancho (`AspectRatio` 16:7, `Image.network` del `headerimg_jg` con fallback),
+      pie con país + acción "Ver detalle". Directamente en respuesta al feedback del
+      usuario sobre la "sensación" visual de los wireframes (ver sección 8, actualización
+      2) sin tocar estructura. Verificado con `flutter analyze` (0 issues) y en
+      navegador con un post real (Elden Ring, carátula real de Steam CDN).
+- [x] **Reestructuración de IA de navegación a 4 pestañas** (ver sección 8,
+      actualización 2, para el porqué y el historial de idas y vueltas): sidebar de
+      escritorio / bottom-nav queda **Familia · Compañeros · Comunidad · Perfil**
+      (antes: Descubrir · Publicaciones · Amigos).
+  - **Familia** (`publicaciones/screens/familia_screen.dart`) — feed de
+    `busco_familia` + `busco_miembros` juntos. Requirió soporte de filtro
+    multi-tipo en el backend: `GET /publicaciones/buscar?tipo=a,b` ahora acepta
+    varios tipos separados por coma (`= ANY($1::varchar[])` en vez de igualdad),
+    cubierto por `steamlinker_back/tests/publicaciones.buscar.test.js` (3 tests
+    nuevos). Sigue gateado a Steam vinculado (Fase 2, sin cambios).
+  - **Compañeros** (`companeros/screens/companeros_screen.dart`, nuevo feature) —
+    fusiona **Amigos + Buscar + Avisos** en 3 sub-pestañas (`TabBar`/`TabBarView`
+    embebidas, mismo patrón que `NotificationsScreen`). Avisos = feed de
+    `busco_companero`, sin gateo de Steam.
+  - **Comunidad** (`publicaciones/screens/comunidad_screen.dart`) — feed de `otro`,
+    ya existía como funcionalidad, ahora con pestaña propia en vez de compartir
+    "Publicaciones" con todo lo demás.
+  - **`PublicacionesScreen` y `AmistadScreen`/`DescubrirGamersScreen` ahora aceptan
+    un modo `embebida`** (sin `Scaffold`/`AppBar` propios, para anidarse dentro de
+    otra pantalla con pestañas) y, en el caso de `PublicacionesScreen`,
+    `tipoFiltroFijo`/`tituloFijo` para fijar el feed a un tipo (o varios) sin
+    mostrar el selector de tipo en filtros.
+  - **Bug arquitectónico real encontrado y arreglado — `PublicacionesProvider`
+    compartido se pisaba entre pestañas.** `ResponsiveShell` usa `IndexedStack` para
+    el sidebar de escritorio, que mantiene **todas** las páginas montadas a la vez
+    (no solo la visible). Como `PublicacionesProvider` se registraba una sola vez a
+    nivel de toda la app (`main.dart`), Familia/Comunidad/Compañeros-Avisos —los
+    tres usan `PublicacionesScreen` por dentro— compartían la misma instancia, y sus
+    llamadas a `setFiltros()` se pisaban entre sí (síntoma real visto: la pestaña
+    Familia mostraba el chip de filtro "Otro" que pertenecía a Comunidad). **Fix:**
+    cada una de las 3 pantallas (`FamiliaScreen`, `ComunidadScreen`, y el sub-tab
+    Avisos de `CompanerosScreen`) envuelve su `PublicacionesScreen` embebida en su
+    propio `ChangeNotifierProvider<PublicacionesProvider>` local, en vez de usar el
+    global. El flujo de crear publicación (FAB) se mantuvo dentro del propio
+    `State` de `PublicacionesScreen` — incluso en modo `embebida` (renderizado con
+    `Stack`+`Positioned` en vez de `Scaffold.floatingActionButton`, ya que no hay
+    `Scaffold` propio) — para que `context.read<PublicacionesProvider>()` siga
+    resolviendo al provider local correcto y no al global.
+  - **Bug menor encontrado y arreglado de paso:**
+    `PublicacionConstants.etiquetaTipo()` no sabía manejar valores compuestos tipo
+    `"busco_familia,busco_miembros"` (los mostraba crudos en el chip de filtro fijo
+    de Familia) — ahora los separa por coma y junta las etiquetas resueltas con
+    `" / "`.
+  - Verificado end-to-end en navegador (build web real, no solo `flutter analyze`):
+    creado un post de prueba en Comunidad y otro en Compañeros/Avisos, confirmado
+    que cada pestaña (Familia/Compañeros/Comunidad) mantiene su propio feed/filtro
+    al cambiar entre ellas repetidamente (la reproducción exacta del bug original ya
+    no ocurre), FAB de creación embebido funciona y preselecciona el tipo correcto,
+    y verificado en móvil (375px) que el bottom-nav de 3 pestañas y las tarjetas del
+    dashboard de Inicio siguen funcionando sin regresión. `flutter analyze`: 0
+    issues. `flutter test`: 10/10. Backend `npm test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

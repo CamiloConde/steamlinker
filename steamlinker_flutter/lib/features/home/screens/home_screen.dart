@@ -8,10 +8,10 @@ import '../../../core/auth/user_role.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../busqueda/screens/busqueda_screen.dart';
 import '../../chat/screens/chat_screen.dart';
-import '../../amistad/screens/amistad_screen.dart';
-import '../../descubrir/screens/descubrir_gamers_screen.dart';
+import '../../companeros/screens/companeros_screen.dart';
 import '../../perfil/screens/perfil_screen.dart';
-import '../../publicaciones/screens/publicaciones_screen.dart';
+import '../../publicaciones/screens/comunidad_screen.dart';
+import '../../publicaciones/screens/familia_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   /// Cuando se embebe en el sidebar de escritorio (ResponsiveShell), las
@@ -199,19 +199,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // ── Secciones Rápidas ────────────────────────────────
                 _QuickAccessCard(
-                  icon: Icons.people_outline,
-                  title: 'Descubre Gamers',
-                  description: 'Encuentra compañeros de juego',
+                  icon: Icons.groups_outlined,
+                  title: 'Familia',
+                  description: 'Busca o únete a una Familia de Steam',
                   color: SteamColors.purple,
-                  onTap: () => _ir(1, const DescubrirGamersScreen()),
+                  onTap: () => _ir(1, const FamiliaScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
-                  icon: Icons.group_outlined,
-                  title: 'Amigos',
-                  description: 'Solicitudes y lista de amigos',
+                  icon: Icons.people_outline,
+                  title: 'Compañeros',
+                  description: 'Amigos, buscar gamers y avisos',
                   color: SteamColors.green,
-                  onTap: () => _ir(3, const AmistadScreen()),
+                  onTap: () => _ir(2, const CompanerosScreen()),
+                ),
+                const SizedBox(height: 12),
+                _QuickAccessCard(
+                  icon: Icons.forum_outlined,
+                  title: 'Comunidad',
+                  description: 'Publicaciones abiertas de la comunidad',
+                  color: SteamColors.orange,
+                  onTap: () => _ir(3, const ComunidadScreen()),
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
@@ -223,14 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
-                  icon: Icons.sports_esports_outlined,
-                  title: 'Mis Juegos',
-                  description: 'Administra tu biblioteca',
-                  color: SteamColors.teal,
-                  onTap: () => _ir(7, const PerfilScreen()),
-                ),
-                const SizedBox(height: 12),
-                _QuickAccessCard(
                   icon: Icons.chat_outlined,
                   title: 'Mensajes',
                   description: 'Comunícate con otros usuarios',
@@ -239,11 +239,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 12),
                 _QuickAccessCard(
-                  icon: Icons.campaign_outlined,
-                  title: 'Publicaciones',
-                  description: 'Explora avisos y ofertas de juego',
-                  color: SteamColors.orange,
-                  onTap: () => _ir(2, const PublicacionesScreen()),
+                  icon: Icons.sports_esports_outlined,
+                  title: 'Mis Juegos',
+                  description: 'Administra tu biblioteca',
+                  color: SteamColors.teal,
+                  onTap: () => _ir(7, const PerfilScreen()),
                 ),
 
                 const SizedBox(height: 32),

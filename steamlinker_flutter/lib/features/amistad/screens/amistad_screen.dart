@@ -11,7 +11,9 @@ import '../../notifications/providers/notificaciones_provider.dart';
 import '../../usuarios/screens/usuario_detalle_screen.dart';
 
 class AmistadScreen extends StatefulWidget {
-  const AmistadScreen({super.key});
+  final bool embebida;
+
+  const AmistadScreen({super.key, this.embebida = false});
 
   @override
   State<AmistadScreen> createState() => _AmistadScreenState();
@@ -34,6 +36,50 @@ class _AmistadScreenState extends State<AmistadScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<AmistadProvider>();
 
+    final cuerpo = DesktopBodyWidth(child: Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              _TabChip(
+                label: 'Solicitudes (${prov.solicitudes.length})',
+                selected: _tab == 0,
+                onTap: () => setState(() => _tab = 0),
+              ),
+              const SizedBox(width: 10),
+              _TabChip(
+                label: 'Amigos (${prov.amigos.length})',
+                selected: _tab == 1,
+                onTap: () => setState(() => _tab = 1),
+              ),
+              if (widget.embebida) ...[
+                const SizedBox(width: 10),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: SteamColors.blue),
+                  tooltip: 'Actualizar',
+                  onPressed: () => prov.cargarTodo(),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Expanded(
+          child: prov.cargando
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                  ),
+                )
+              : _tab == 0
+                  ? _buildSolicitudes(prov)
+                  : _buildAmigos(prov),
+        ),
+      ],
+    ));
+
+    if (widget.embebida) return cuerpo;
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       appBar: SteamAppBar(
@@ -46,39 +92,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
           ),
         ],
       ),
-      body: DesktopBodyWidth(child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                _TabChip(
-                  label: 'Solicitudes (${prov.solicitudes.length})',
-                  selected: _tab == 0,
-                  onTap: () => setState(() => _tab = 0),
-                ),
-                const SizedBox(width: 10),
-                _TabChip(
-                  label: 'Amigos (${prov.amigos.length})',
-                  selected: _tab == 1,
-                  onTap: () => setState(() => _tab = 1),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: prov.cargando
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                    ),
-                  )
-                : _tab == 0
-                    ? _buildSolicitudes(prov)
-                    : _buildAmigos(prov),
-          ),
-        ],
-      )),
+      body: cuerpo,
     );
   }
 
