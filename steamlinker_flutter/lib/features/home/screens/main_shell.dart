@@ -2,7 +2,10 @@
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../amistad/screens/amistad_screen.dart';
+import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
+import '../../publicaciones/screens/publicaciones_screen.dart';
 import '../screens/home_screen.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../perfil/screens/perfil_screen.dart';
@@ -18,8 +21,15 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
   bool _notifInit = false;
 
+  // Inicio dejó de tener tarjetas de acceso rápido a Descubrir/Publicaciones/
+  // Amigos (rediseño "bandeja de pendientes", ver HANDOFF.md) — en escritorio
+  // esas pantallas ya viven en la nav superior, pero en móvil no hay otra nav,
+  // así que el bottom nav es su único punto de entrada real.
   final List<Widget> _pages = const [
     HomeScreen(),
+    DescubrirGamersScreen(),
+    PublicacionesScreen(),
+    AmistadScreen(),
     NotificationsScreen(),
     PerfilScreen(),
   ];
@@ -38,7 +48,7 @@ class _MainShellState extends State<MainShell> {
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
-    if (index == 1) {
+    if (index == 4) {
       context.read<NotificacionesProvider>().cargar();
     } else {
       context.read<NotificacionesProvider>().cargarContador();
@@ -81,7 +91,7 @@ class _BottomNavBar extends StatelessWidget {
       ),
       child: SafeArea(
         child: SizedBox(
-          height: 62,
+          height: 60,
           child: Row(children: [
             _NavItem(
               icon: Icons.home_outlined,
@@ -92,21 +102,45 @@ class _BottomNavBar extends StatelessWidget {
               onTap: () => onTap(0),
             ),
             _NavItem(
-              icon: Icons.notifications_outlined,
-              activeIcon: Icons.notifications_rounded,
-              label: 'Notificaciones',
+              icon: Icons.people_outline,
+              activeIcon: Icons.people_rounded,
+              label: 'Descubrir',
               index: 1,
               currentIndex: currentIndex,
-              badge: unreadCount,
               onTap: () => onTap(1),
+            ),
+            _NavItem(
+              icon: Icons.campaign_outlined,
+              activeIcon: Icons.campaign_rounded,
+              label: 'Publica.',
+              index: 2,
+              currentIndex: currentIndex,
+              onTap: () => onTap(2),
+            ),
+            _NavItem(
+              icon: Icons.group_outlined,
+              activeIcon: Icons.group_rounded,
+              label: 'Amigos',
+              index: 3,
+              currentIndex: currentIndex,
+              onTap: () => onTap(3),
+            ),
+            _NavItem(
+              icon: Icons.notifications_outlined,
+              activeIcon: Icons.notifications_rounded,
+              label: 'Avisos',
+              index: 4,
+              currentIndex: currentIndex,
+              badge: unreadCount,
+              onTap: () => onTap(4),
             ),
             _NavItem(
               icon: Icons.manage_accounts_outlined,
               activeIcon: Icons.manage_accounts_rounded,
               label: 'Perfil',
-              index: 2,
+              index: 5,
               currentIndex: currentIndex,
-              onTap: () => onTap(2),
+              onTap: () => onTap(5),
             ),
           ]),
         ),
@@ -152,7 +186,7 @@ class _NavItem extends StatelessWidget {
                   _active ? activeIcon : icon,
                   key: ValueKey(_active),
                   color: _active ? SteamColors.blue : SteamColors.muted,
-                  size: 24,
+                  size: 21,
                 ),
               ),
               if (badge > 0)
@@ -181,11 +215,11 @@ class _NavItem extends StatelessWidget {
               duration: const Duration(milliseconds: 180),
               style: TextStyle(
                 color: _active ? SteamColors.blue : SteamColors.muted,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: _active ? FontWeight.w700 : FontWeight.w400,
-                letterSpacing: 0.4,
+                letterSpacing: 0.2,
               ),
-              child: Text(label),
+              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(height: 2),
             AnimatedContainer(

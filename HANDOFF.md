@@ -722,6 +722,61 @@ backend que no vale la pena anticipar sin datos de uso).
     particular (los datos finales son correctos, solo hay llamadas de más).
     No se investigó a fondo por estar fuera del alcance de este cambio; queda
     anotado por si vale la pena perfilarlo en una sesión futura.
+- [x] **Descubrir — tabla de personas en vez de tarjetas (turno 4, opción
+      4a).** Tercera pieza del rediseño confirmado. Descubrir dejaba de
+      solaparse visualmente con Publicaciones: antes ambas mostraban
+      tarjetas parecidas; ahora Descubrir lista **personas** (biblioteca,
+      reputación, en común) mientras Publicaciones lista **anuncios**.
+      Columnas: GAMER (avatar + ✓ si tiene Steam vinculado + país/tipo de su
+      publicación activa) · EN COMÚN · JUEGOS · REP · ACTIVO (relativo,
+      "2 h"/"1 d") · acción "Ver". Filtros en una sola fila (buscador de
+      cliente por nombre + el botón de Filtros existente para Tipo/País/
+      Juego), no en columna lateral — igual razón que ya aplicó a
+      Publicaciones. Solo aplica en escritorio; móvil conserva el feed de
+      tarjetas (`UsuarioCard`) sin cambios.
+  - **Backend**: `GET /perfil/descubrir` no traía ni el conteo de juegos en
+    común, ni el total de juegos del otro usuario, ni si tiene Steam
+    vinculado. Se agregaron tres subqueries: `juegos_en_comun` (join de
+    `usuarios_juegos` entre ambos usuarios — la biblioteca ya *verificada*
+    en la app, no una llamada en vivo a la API de Steam, que sería
+    demasiado cara para una lista de N usuarios), `total_juegos`, y
+    `steam_vinculado` (`EXISTS` sobre `perfiles_steam`). También
+    `tipo_publi_reciente` y `ultima_publicacion` (para la columna ACTIVO).
+    Orden por defecto cambia a `juegos_en_comun DESC` (antes solo
+    reputación), como pide el wireframe ("ordenado por juegos en común").
+    Nuevo test `tests/perfil.descubrir.test.js`.
+  - **Desviación deliberada del wireframe, y por qué**: el mockup mostraba
+    una columna ESTADO con "EN LÍNEA"/"HACE 2 H" (presencia en vivo) y un
+    checkmark de "verificado" sin aclarar qué lo otorga. Ninguna de las dos
+    cosas existe en el backend (no hay tracking de conexión/presencia, y no
+    había ningún concepto de "verificado" implementado pese a lo que decía
+    la nota del wireframe). En vez de inventar datos falsos: la columna
+    (renombrada ACTIVO) usa el timestamp real de la publicación más
+    reciente, y el check ✓ se ancla a `steam_vinculado` (identidad real
+    confirmada), que es la interpretación más honesta de "verificado" que
+    permite el modelo de datos actual.
+  - **Regresión encontrada y arreglada en el mismo cambio**: al quitar las
+    tarjetas de acceso rápido de Inicio (pieza anterior), **la navegación
+    móvil a Descubrir, Publicaciones y Amigos se rompió por completo** — el
+    bottom nav de `MainShell` (`main_shell.dart`) solo tenía Inicio/
+    Notificaciones/Perfil desde antes de esta sesión; esas 3 pantallas solo
+    eran alcanzables en móvil a través de las tarjetas de Inicio que
+    acababan de desaparecer. Encontrado verificando manualmente el flujo
+    móvil de esta misma pieza, no reportado por el usuario. Fix: el bottom
+    nav pasa de 3 a 6 pestañas (Inicio/Descubrir/Publica./Amigos/Avisos/
+    Perfil), iconos más pequeños (21px) y etiquetas abreviadas para que
+    quepan sin overflow en 375px. Esto **no** repite el problema que motivó
+    quitar las tarjetas de Inicio: en escritorio esas pantallas ya viven en
+    la nav superior (por eso sí se podían quitar de Inicio ahí), pero en
+    móvil no existe ninguna otra nav — sin estas pestañas, esas 3 pantallas
+    quedaban inalcanzables, no solo duplicadas.
+  - Verificado en navegador: tabla de escritorio con datos reales (2
+    usuarios, 1 juego en común, sin Steam vinculado → sin ✓), buscador de
+    cliente filtra en vivo, fila navega al perfil existente. Verificado en
+    móvil (375px): las 6 pestañas nuevas cargan sus pantallas correctas
+    (Descubrir con tarjetas, Publicaciones con feed+FAB, Amigos), sin
+    overflow visual. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+    Backend: 13/13.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

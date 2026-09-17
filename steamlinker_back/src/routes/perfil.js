@@ -35,14 +35,27 @@ router.put('/editar', verificarToken, async (req, res) => {
 });
 
 // GET /perfil/descubrir
-// Usuarios con publicaciones activas (para encontrar familia / miembros)
+// Usuarios con publicaciones activas (para encontrar familia / miembros).
+// Incluye juegos en comun (de la biblioteca verificada, no de lo que el
+// usuario diga tener), total de juegos, tipo de su publicacion mas reciente
+// y si tiene Steam vinculado (insignia de "verificado" en la tabla).
 router.get('/descubrir', verificarToken, async (req, res) => {
     const { tipo, pais, appid } = req.query;
 
     try {
         let consulta = `
             SELECT u.id_usu, u.username_usu, u.descrip_usu, u.pais_usu, u.repu_usu,
-                   COUNT(DISTINCT p.id_publi)::int AS total_publicaciones
+                   COUNT(DISTINCT p.id_publi)::int AS total_publicaciones,
+                   (SELECT p2.tipo_publi FROM publicaciones p2
+                    WHERE p2.id_usu = u.id_usu AND p2.estado_publi = TRUE
+                    ORDER BY p2.creadoen_publi DESC LIMIT 1) AS tipo_publi_reciente,
+                   (SELECT MAX(p3.creadoen_publi) FROM publicaciones p3
+                    WHERE p3.id_usu = u.id_usu AND p3.estado_publi = TRUE) AS ultima_publicacion,
+                   (SELECT COUNT(*)::int FROM usuarios_juegos uj WHERE uj.id_usu = u.id_usu) AS total_juegos,
+                   (SELECT COUNT(*)::int FROM usuarios_juegos uj1
+                    JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
+                    WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu) AS juegos_en_comun,
+                   EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = u.id_usu) AS steam_vinculado
             FROM usuarios u
             JOIN publicaciones p ON p.id_usu = u.id_usu
             LEFT JOIN publicacion_juegos pj ON pj.id_publi = p.id_publi
@@ -75,7 +88,7 @@ router.get('/descubrir', verificarToken, async (req, res) => {
 
         consulta += `
             GROUP BY u.id_usu, u.username_usu, u.descrip_usu, u.pais_usu, u.repu_usu
-            ORDER BY u.repu_usu DESC, total_publicaciones DESC
+            ORDER BY juegos_en_comun DESC, u.repu_usu DESC
         `;
 
         const resultado = await pool.query(consulta, parametros);
