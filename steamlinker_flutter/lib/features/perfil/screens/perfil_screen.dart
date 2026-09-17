@@ -412,63 +412,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SteamCard(
-                    icon: Icons.person,
-                    title: perfil['username'] ?? 'Usuario',
-                    child: Column(
-                      children: [
-                        Text(
-                          perfil['descrip'] ?? 'Sin descripción',
-                          style: const TextStyle(
-                            color: SteamColors.textSec,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _InfoChip(
-                              label: 'País',
-                              value: perfil['pais'] ?? 'N/A',
-                            ),
-                            _InfoChip(
-                              label: 'Reputación',
-                              value: '${perfil['repu'] ?? 0}',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SteamButtonOutline(
-                                label: 'Configuración',
-                                onTap: () {
-                                  pushAppScreen(
-                                    context,
-                                    const AccountSettingsScreen(),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () => confirmarYCerrarSesion(context),
-                                icon: const Icon(Icons.logout, size: 16),
-                                label: const Text('Salir'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: SteamColors.red,
-                                  side: const BorderSide(color: SteamColors.red),
-                                  padding: const EdgeInsets.symmetric(vertical: 11),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  _PerfilHeader(
+                    perfil: perfil,
+                    juegosCount: perfilProv.juegos.length,
+                    onConfiguracion: () {
+                      pushAppScreen(context, const AccountSettingsScreen());
+                    },
+                    onSalir: () => confirmarYCerrarSesion(context),
                   ),
                   if (esAdmin) ...[
                     const SizedBox(height: 16),
@@ -724,6 +674,178 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+class _PerfilHeader extends StatelessWidget {
+  final Map<String, dynamic> perfil;
+  final int juegosCount;
+  final VoidCallback onConfiguracion;
+  final VoidCallback onSalir;
+
+  const _PerfilHeader({
+    required this.perfil,
+    required this.juegosCount,
+    required this.onConfiguracion,
+    required this.onSalir,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final steam = perfil['steam'] as Map<String, dynamic>?;
+    final avatarUrl = steam?['avatar_url'] as String?;
+    final username = (perfil['username'] as String?) ?? 'Usuario';
+    final inicial = username.isNotEmpty ? username[0].toUpperCase() : '?';
+    final descripcion = (perfil['descrip'] as String?)?.trim();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: SteamColors.bgCard,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Banner + avatar superpuesto ─────────────────────────────
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 92,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 16,
+                bottom: -32,
+                child: Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: SteamColors.bgCard, width: 4),
+                    gradient: avatarUrl == null
+                        ? const LinearGradient(
+                            colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    image: avatarUrl != null
+                        ? DecorationImage(
+                            image: NetworkImage(avatarUrl),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: avatarUrl == null
+                      ? Center(
+                          child: Text(
+                            inicial,
+                            style: const TextStyle(
+                              color: SteamColors.light,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+              if (steam != null)
+                Positioned(
+                  left: 60,
+                  bottom: -32,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: SteamColors.blue,
+                      border: Border.all(color: SteamColors.bgCard, width: 3),
+                    ),
+                    child: const Icon(
+                      Icons.verified_rounded,
+                      size: 13,
+                      color: SteamColors.bgDeep,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  username,
+                  style: const TextStyle(
+                    color: SteamColors.light,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (descripcion != null && descripcion.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    descripcion,
+                    style: const TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    _InfoChip(label: 'País', value: perfil['pais'] ?? 'N/A'),
+                    _InfoChip(
+                      label: 'Reputación',
+                      value: '${perfil['repu'] ?? 0}',
+                    ),
+                    _InfoChip(label: 'Juegos', value: '$juegosCount'),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SteamButtonOutline(
+                        label: 'Configuración',
+                        onTap: onConfiguracion,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onSalir,
+                        icon: const Icon(Icons.logout, size: 16),
+                        label: const Text('Salir'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: SteamColors.red,
+                          side: const BorderSide(color: SteamColors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

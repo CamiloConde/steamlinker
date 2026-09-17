@@ -457,6 +457,24 @@ backend que no vale la pena anticipar sin datos de uso).
     y verificado en móvil (375px) que el bottom-nav de 3 pestañas y las tarjetas del
     dashboard de Inicio siguen funcionando sin regresión. `flutter analyze`: 0
     issues. `flutter test`: 10/10. Backend `npm test`: 10/10.
+- [x] **Banner + avatar en Perfil** (`perfil/screens/perfil_screen.dart`, nuevo
+      widget privado `_PerfilHeader`) — el único ítem de "estructura" que quedó
+      explícitamente pendiente de los wireframes en la sección 8. Reemplaza la
+      `SteamCard` de identidad (username + descripción + país/reputación + botones)
+      por un banner con gradiente (mismo gradiente azul-teal que la tarjeta de
+      bienvenida de Inicio, para no inventar un lenguaje visual nuevo) con un avatar
+      circular superpuesto en el borde inferior: usa la foto real de Steam
+      (`steam.avatar_url`) cuando la cuenta está vinculada, si no cae a un círculo
+      con gradiente + inicial del username (mismo patrón que `PublicacionCard` y el
+      pie del sidebar). Si Steam está vinculado se agrega una insignia de
+      verificación (check azul) sobre el avatar. Los chips de País/Reputación ahora
+      van con un tercer chip de Juegos, en un `Wrap` (no `Row`) para no desbordar en
+      móvil con países de nombre largo. Verificado con `flutter analyze` (0 issues),
+      `flutter test` (10/10) y en navegador en ambos anchos (1000px y 375px) con una
+      cuenta de prueba real sin Steam vinculado (el caso sin avatar, el más común en
+      la beta) — sin Steam vinculado no se pudo verificar visualmente la variante
+      con foto real ni la insignia de verificación, pero el código sigue el mismo
+      patrón ya probado en `PublicacionCard`.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
