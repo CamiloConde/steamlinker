@@ -59,25 +59,38 @@ class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
     final useUserActions =
         showUserActions ?? (!useBack && !esEscritorio);
 
+    // Pantalla de nivel superior en escritorio: la nav global ya muestra el
+    // nombre de la pestaña activa, así que repetirlo aquí (más el logo de
+    // leading) es puro chrome redundante. Se funde con el fondo y solo deja
+    // los íconos de acciones propios de la pantalla (Filtros, Refrescar,
+    // Mis solicitudes, etc.), en vez de una segunda barra con título.
+    final fundirConFondo = esEscritorio && !useBack;
+
     return AppBar(
-      backgroundColor: SteamColors.bgPanel,
+      backgroundColor: fundirConFondo ? SteamColors.bgDeep : SteamColors.bgPanel,
       elevation: 0,
       automaticallyImplyLeading: false,
-      leadingWidth: useBack ? 48 : 56,
-      leading: useBack ? _BackLeading(onPressed: () => _pop(context)) : _LogoLeading(),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: SteamColors.border),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: SteamColors.light,
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.4,
-        ),
-      ),
+      leadingWidth: fundirConFondo ? 16 : (useBack ? 48 : 56),
+      leading: fundirConFondo
+          ? null
+          : (useBack ? _BackLeading(onPressed: () => _pop(context)) : _LogoLeading()),
+      bottom: fundirConFondo
+          ? null
+          : PreferredSize(
+              preferredSize: const Size.fromHeight(1),
+              child: Container(height: 1, color: SteamColors.border),
+            ),
+      title: fundirConFondo
+          ? null
+          : Text(
+              title,
+              style: const TextStyle(
+                color: SteamColors.light,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.4,
+              ),
+            ),
       actions: [
         ...?actions,
         if (useUserActions) _UserActions(),

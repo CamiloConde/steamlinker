@@ -565,6 +565,23 @@ backend que no vale la pena anticipar sin datos de uso).
       azul→cian de los avatares, el botón "Publicar" y la pestaña activa de la
       nav se ven notablemente más vivos que antes. `flutter analyze`: 0 issues.
       `flutter test`: 10/10.
+- [x] **Barra local de cada pantalla dejaba de tener sentido en escritorio —
+      repetía el nombre de la pestaña ya activa en la nav superior.** El
+      usuario mandó una captura de "AMIGOS" mostrando esa segunda barra (logo +
+      título repetido + ícono de refrescar) y señaló que era puro chrome
+      redundante, aunque pidió no perder los íconos de utilidad que sí varían
+      por pantalla (Filtros/Mis solicitudes en Descubrir, Filtros/Refrescar en
+      Publicaciones, etc.). Fix centralizado en `SteamAppBar` (una sola pantalla
+      de nivel superior en escritorio = misma condición ya usada para el fix de
+      usuario/logout duplicados): cuando `esEscritorio && !useBack`, la barra se
+      funde con el fondo (`SteamColors.bgDeep`, sin borde inferior), oculta el
+      logo de leading y el título, y deja solo los íconos de `actions` propios
+      de cada pantalla flotando a la derecha — no hizo falta tocar las pantallas
+      individuales, todas heredan el cambio a través de `SteamAppBar`. Verificado
+      en navegador: Inicio/Perfil/Descubrir/Publicaciones/Amigos en escritorio ya
+      no repiten su nombre, los íconos de utilidad de cada una se conservan, y en
+      móvil (375px) cada pantalla sigue mostrando su barra completa con título
+      como antes. `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
