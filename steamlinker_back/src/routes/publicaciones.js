@@ -83,7 +83,7 @@ router.post('/crear', verificarToken, async (req, res) => {
 
 // GET /publicaciones/buscar
 // Busca publicaciones con filtros opcionales
-// Parametros: tipo, pais, appid, orden (recientes | reputacion)
+// Parametros: tipo (uno o varios separados por coma, ej "busco_familia,busco_miembros"), pais, appid, orden (recientes | reputacion)
 router.get('/buscar', async (req, res) => {
     const { tipo, pais, appid, orden } = req.query;
 
@@ -103,8 +103,9 @@ router.get('/buscar', async (req, res) => {
         let contador = 1;
 
         if (tipo) {
-            consulta += ` AND p.tipo_publi = $${contador}`;
-            parametros.push(tipo);
+            const tipos = String(tipo).split(',').map((t) => t.trim()).filter(Boolean);
+            consulta += ` AND p.tipo_publi = ANY($${contador}::varchar[])`;
+            parametros.push(tipos);
             contador++;
         }
 
@@ -131,7 +132,7 @@ router.get('/buscar', async (req, res) => {
 
         const resultado = await pool.query(consulta, parametros);
 
-        // Traer los juegos de cada publicacion
+        // Traer los juegos y cupos ocupados de cada publicacion
         const publicaciones = await Promise.all(
             resultado.rows.map(async (pub) => {
                 const juegos = await pool.query(
@@ -141,7 +142,16 @@ router.get('/buscar', async (req, res) => {
                      WHERE pj.id_publi = $1`,
                     [pub.id_publi]
                 );
-                return { ...pub, juegos: juegos.rows };
+                const ocupados = await pool.query(
+                    `SELECT COUNT(*)::int AS n FROM matches
+                     WHERE id_publi = $1 AND estado_match = 'Aceptada'`,
+                    [pub.id_publi]
+                );
+                return {
+                    ...pub,
+                    juegos: juegos.rows,
+                    cupos_ocupados: ocupados.rows[0].n,
+                };
             })
         );
 

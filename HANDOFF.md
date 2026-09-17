@@ -615,6 +615,69 @@ backend que no vale la pena anticipar sin datos de uso).
     global cambie ni parpadee, y en móvil (375px) sin regresión.
     `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
+- [x] **Handoff de wireframes vía Claude Design — rediseño completo confirmado
+      como la visión real del usuario, no solo referencia.** El usuario mandó
+      un ZIP de handoff (`SteamMatch diseño web-handoff.zip`, formato estándar
+      de claude.ai/design: `README.md` + `project/*.dc.html`) con 4 "turnos" de
+      opciones exploradas para Publicaciones (turno 3) e Inicio (turno 2).
+      Tras resumir el alcance y preguntar si quería todo o solo una pieza
+      inicial, el usuario aclaró explícitamente: **"los diseños que yo quería
+      están en la parte de 4, son básicamente mi visión"** — es decir, el
+      turno 4 completo (que depende de la opción 3b del turno 3) es el objetivo
+      real, no un extra opcional. Decisiones de alcance ya tomadas de esos
+      turnos: Publicaciones = opción **3b** (conmutador Familia/Jugar
+      ahora/Otro, cambia columnas de tabla según intención, mapea 1:1 a
+      `tipo_publi`); Inicio = opción **2a** (bandeja de acciones pendientes:
+      solicitudes, cupos, Steam sin vincular). El resto del turno 4 (Descubrir
+      como tabla, grid de stats en Perfil, panel de cupos en el detalle de
+      publicación, disclaimer de Valve en login, banner de contexto en el chat)
+      queda pendiente, implementándose por partes verificables, no todo de una
+      vez, por el tamaño del cambio.
+- [x] **Publicaciones — conmutador Familia/Jugar ahora/Otro (turno 3, opción
+      3b), primera pieza del rediseño confirmado.** Reemplaza el layout de 3
+      columnas (accesos rápidos + feed + chats) que no existía en el
+      wireframe, por: una franja de pestañas con contador por tipo, una barra
+      de composición contextual (el texto y el botón cambian según la pestaña:
+      "Publicar en Familia" / "Publicar partida" / "Publicar"), y una tabla
+      densa con columnas específicas por pestaña en vez de las tarjetas
+      genéricas de `PublicacionCard` — Familia: TIPO·USUARIO·CUPOS·REP·HACE;
+      Jugar ahora: JUEGO·PUBLICACIÓN·GENTE·CUÁNDO; Otro: USUARIO·TÍTULO·HACE
+      (esta última no estaba en el wireframe, es un mínimo razonable propio).
+      Solo aplica en escritorio — móvil no se tocó, sigue con el feed de
+      tarjetas + FAB de siempre, tal como se decidió para los wireframes
+      anteriores (son solo de escritorio).
+  - **Backend**: `GET /publicaciones/buscar` ya soportaba un solo `tipo`; se
+    reincorporó el filtro multi-tipo por coma (`ANY($::varchar[])`, necesario
+    para agrupar `busco_familia`+`busco_miembros` bajo la pestaña Familia) y
+    se agregó `cupos_ocupados` (conteo de matches con `estado_match =
+    'Aceptada'`) a **todas** las publicaciones del listado, no solo al detalle
+    — la tabla de Familia necesita mostrar "CUPOS 4/6" por fila. 4 tests
+    nuevos en `tests/publicaciones.buscar.test.js` (filtro simple, filtro
+    multi-tipo, sin filtro, `cupos_ocupados` presente como número).
+  - **Frontend, decisión de diseño clave**: el conmutador de pestañas es
+    **puramente de cliente**, no repite la búsqueda al backend por pestaña.
+    `PublicacionesProvider.buscar()` trae la lista completa una sola vez (como
+    ya hacía) y la pantalla la agrupa localmente por `tipo_publi` para calcular
+    los 3 contadores y filtrar las filas de la tabla activa. Esto evita un
+    problema real: si el conteo de cada pestaña viniera de una llamada aparte
+    al backend, cambiar de pestaña sería más lento y los contadores podrían
+    desincronizarse; con filtrado de cliente los 3 contadores están siempre
+    correctos y cambiar de pestaña es instantáneo. El modal de Filtros
+    (País/Juego/Orden) se mantiene para lo que las pestañas no cubren, pero
+    oculta su dropdown de Tipo en escritorio (`_abrirFiltros(ocultarTipo:
+    true)`) para no competir con el conmutador — en móvil se sigue mostrando
+    completo, sin cambios.
+  - Se eliminaron `_ComposerBar` y `_AccesosRapidos` (quedaron sin uso tras el
+    reemplazo) en vez de dejarlos como código muerto.
+  - Verificado en navegador (escritorio 1000px): pestañas con contador en
+    tiempo real tras crear una publicación, tabla de "Jugar ahora" con
+    columnas y formato correctos (cupos `0/4`, "ahora"), tap en fila navega al
+    detalle existente (que ya tenía "Cerrar publicación" para el dueño — no
+    hacía falta duplicar esa acción en la tabla), modal de Filtros sin
+    dropdown de Tipo en escritorio. Verificado en móvil (375px): feed de
+    tarjetas + FAB sin cambios, sin pestañas. `flutter analyze`: 0 issues.
+    `flutter test`: 10/10. Backend: 11/11.
+
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
 de cada `flutter build web`, **la primera carga en el navegador puede servir la
