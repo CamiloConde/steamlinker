@@ -1,15 +1,15 @@
 # Handoff — continuidad del proyecto Steamlinker / SteamMatch
 
 Este archivo resume el estado real del proyecto y las decisiones tomadas, para que
-cualquier sesión de Claude (en la nube o local, en cualquier PC) pueda seguir sin
-redescubrir nada. Se actualiza en cada sesión relevante — no es un log histórico,
-es el estado actual. Bórralo o muévelo a `docs/` solo cuando el proyecto ya no lo
-necesite como referencia activa.
+cualquier sesión de trabajo futura (en cualquier PC) pueda seguir sin redescubrir
+nada. Se actualiza en cada sesión relevante — no es un log histórico, es el estado
+actual. Bórralo o muévelo a `docs/` solo cuando el proyecto ya no lo necesite como
+referencia activa.
 
 **Identidad de commits:** todos los commits van a nombre de
-`Steamlinker <camilandre0510@gmail.com>` (el dueño del proyecto), sin rastro de Claude
-en autoría ni mensajes — así lo pidió explícitamente. Sin footer de atribución, sin
-`Co-Authored-By: Claude`.
+`Steamlinker <camilandre0510@gmail.com>` (el dueño del proyecto), sin ningún rastro de
+herramientas de asistencia en autoría ni mensajes — así lo pidió explícitamente el
+dueño del proyecto. Sin footers de atribución de ningún tipo.
 
 ---
 
