@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../amistad/screens/amistad_screen.dart';
+import '../../chat/screens/chat_screen.dart';
 import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
@@ -22,14 +23,16 @@ class _MainShellState extends State<MainShell> {
   bool _notifInit = false;
 
   // Inicio dejó de tener tarjetas de acceso rápido a Descubrir/Publicaciones/
-  // Amigos (rediseño "bandeja de pendientes", ver HANDOFF.md) — en escritorio
-  // esas pantallas ya viven en la nav superior, pero en móvil no hay otra nav,
-  // así que el bottom nav es su único punto de entrada real.
+  // Amigos/Mensajes (rediseño "bandeja de pendientes", ver HANDOFF.md) — en
+  // escritorio esas pantallas ya viven en la nav superior o el chat
+  // flotante, pero en móvil no hay otra nav, así que el bottom nav es su
+  // único punto de entrada real.
   final List<Widget> _pages = const [
     HomeScreen(),
     DescubrirGamersScreen(),
     PublicacionesScreen(),
     AmistadScreen(),
+    ChatScreen(),
     NotificationsScreen(),
     PerfilScreen(),
   ];
@@ -48,7 +51,7 @@ class _MainShellState extends State<MainShell> {
 
   void _onNavTap(int index) {
     setState(() => _currentIndex = index);
-    if (index == 4) {
+    if (index == 5) {
       context.read<NotificacionesProvider>().cargar();
     } else {
       context.read<NotificacionesProvider>().cargarContador();
@@ -126,21 +129,29 @@ class _BottomNavBar extends StatelessWidget {
               onTap: () => onTap(3),
             ),
             _NavItem(
+              icon: Icons.chat_bubble_outline,
+              activeIcon: Icons.chat_bubble_rounded,
+              label: 'Chat',
+              index: 4,
+              currentIndex: currentIndex,
+              onTap: () => onTap(4),
+            ),
+            _NavItem(
               icon: Icons.notifications_outlined,
               activeIcon: Icons.notifications_rounded,
               label: 'Avisos',
-              index: 4,
+              index: 5,
               currentIndex: currentIndex,
               badge: unreadCount,
-              onTap: () => onTap(4),
+              onTap: () => onTap(5),
             ),
             _NavItem(
               icon: Icons.manage_accounts_outlined,
               activeIcon: Icons.manage_accounts_rounded,
               label: 'Perfil',
-              index: 5,
+              index: 6,
               currentIndex: currentIndex,
-              onTap: () => onTap(5),
+              onTap: () => onTap(6),
             ),
           ]),
         ),

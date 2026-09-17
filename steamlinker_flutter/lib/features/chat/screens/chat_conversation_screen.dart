@@ -5,6 +5,7 @@ import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
+import '../widgets/chat_context_banner.dart';
 
 class ChatConversationScreen extends StatefulWidget {
   final int chatId;
@@ -31,7 +32,12 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<ChatProvider>().cargarMensajes(widget.chatId);
+      final chatProv = context.read<ChatProvider>();
+      await Future.wait([
+        chatProv.cargarMensajes(widget.chatId),
+        if (chatProv.conversaciones.isEmpty) chatProv.cargarConversaciones(),
+      ]);
+      if (!mounted) return;
       _scrollAlFinal();
     });
   }
@@ -120,6 +126,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
         ),
         body: Column(
           children: [
+            ChatContextBanner(conversacion: chatProv.conversacionPorId(widget.chatId)),
             Expanded(
               child: chatProv.cargandoMensajes && chatProv.mensajes.isEmpty
                   ? const Center(

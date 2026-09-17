@@ -9,7 +9,10 @@ const { crearNotificacion, usernameDe } = require('../services/notificacionesSer
 const router = express.Router();
 
 // GET /chat/conversaciones
-// Lista todas las conversaciones del usuario logueado
+// Lista todas las conversaciones del usuario logueado. Incluye el contexto
+// del match aceptado mas reciente entre los dos participantes (tipo, juego,
+// cupos) para la franja "Match por: X" del chat flotante y de la pantalla
+// de conversacion — sin eso, todas las conversaciones se ven identicas.
 router.get('/conversaciones', verificarToken, async (req, res) => {
     try {
         const resultado = await pool.query(
@@ -29,10 +32,30 @@ router.get('/conversaciones', verificarToken, async (req, res) => {
                      ORDER BY creadoen_mensaje DESC LIMIT 1) AS ultimo_mensaje,
                     (SELECT creadoen_mensaje FROM mensaje
                      WHERE id_chat = c.id_chat
-                     ORDER BY creadoen_mensaje DESC LIMIT 1) AS fecha_ultimo_mensaje
+                     ORDER BY creadoen_mensaje DESC LIMIT 1) AS fecha_ultimo_mensaje,
+                    mctx.tipo_publi AS match_tipo_publi,
+                    mctx.titulo_publi AS match_titulo_publi,
+                    mctx.cupos_totales AS match_cupos_totales,
+                    mctx.cupos_ocupados AS match_cupos_ocupados,
+                    mctx.juego_nombre AS match_juego_nombre
              FROM chat c
              JOIN usuarios u1 ON c.id_participante1 = u1.id_usu
              JOIN usuarios u2 ON c.id_participante2 = u2.id_usu
+             LEFT JOIN LATERAL (
+                 SELECT p.tipo_publi, p.titulo_publi, p.cupos_totales,
+                        (SELECT COUNT(*)::int FROM matches m2
+                         WHERE m2.id_publi = p.id_publi AND m2.estado_match = 'Aceptada') AS cupos_ocupados,
+                        (SELECT j.nom_jg FROM publicacion_juegos pj
+                         JOIN juegos j ON j.appid = pj.appid
+                         WHERE pj.id_publi = p.id_publi LIMIT 1) AS juego_nombre
+                 FROM matches m
+                 JOIN publicaciones p ON p.id_publi = m.id_publi
+                 WHERE m.estado_match = 'Aceptada'
+                   AND ((m.id_solicitante = c.id_participante1 AND m.id_receptor = c.id_participante2)
+                     OR (m.id_solicitante = c.id_participante2 AND m.id_receptor = c.id_participante1))
+                 ORDER BY m.creadoen_match DESC
+                 LIMIT 1
+             ) mctx ON TRUE
              WHERE c.id_participante1 = $1 OR c.id_participante2 = $1
              ORDER BY fecha_ultimo_mensaje DESC NULLS LAST`,
             [req.usuario.id]

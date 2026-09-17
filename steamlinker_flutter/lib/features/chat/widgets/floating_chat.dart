@@ -8,6 +8,7 @@ import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
+import 'chat_context_banner.dart';
 
 class FloatingChat extends StatefulWidget {
   const FloatingChat({super.key});
@@ -339,6 +340,7 @@ class _ConversacionEmbebidaState extends State<_ConversacionEmbebida> {
 
     return Column(
       children: [
+        ChatContextBanner(conversacion: chatProv.conversacionPorId(widget.chatId)),
         Expanded(
           child: chatProv.cargandoMensajes && chatProv.mensajes.isEmpty
               ? const Center(

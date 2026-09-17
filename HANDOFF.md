@@ -631,8 +631,9 @@ backend que no vale la pena anticipar sin datos de uso).
       solicitudes, cupos, Steam sin vincular). El resto del turno 4 (Descubrir
       como tabla, grid de stats en Perfil, panel de cupos en el detalle de
       publicación, disclaimer de Valve en login, banner de contexto en el chat)
-      queda pendiente, implementándose por partes verificables, no todo de una
-      vez, por el tamaño del cambio.
+      se implementó por partes verificables, no todo de una vez, por el
+      tamaño del cambio — **completado, ver las entradas siguientes de esta
+      sección y el cierre de "Ronda 4 completa" más abajo.**
 - [x] **Publicaciones — conmutador Familia/Jugar ahora/Otro (turno 3, opción
       3b), primera pieza del rediseño confirmado.** Reemplaza el layout de 3
       columnas (accesos rápidos + feed + chats) que no existía en el
@@ -857,6 +858,51 @@ backend que no vale la pena anticipar sin datos de uso).
     la nota y el descargo se ven completos, sin overlap con el chip de dev
     server (esquina inferior derecha, solo en local). `flutter analyze`: 0
     issues. `flutter test`: 10/10.
+- [x] **Chat — franja de contexto "Match por: X" (turno 4, opción 4e).**
+      Octava y última pieza del rediseño de wireframes confirmado — **cierra
+      la ronda 4 completa**. Antes, tres conversaciones de chat se veían
+      idénticas (solo nombre + burbujas); ahora una franja bajo el
+      encabezado muestra por qué existe esa conversación: "Match por: X"
+      (nombre del juego si lo hay, o el tipo de publicación si no) + cupos
+      `N/M` si aplica. Implementado en el widget compartido
+      `ChatContextBanner` (`lib/features/chat/widgets/chat_context_banner.dart`),
+      usado tanto por el chat flotante de escritorio como por
+      `ChatConversationScreen` (pantalla completa, usada en móvil y cuando
+      se abre desde "Abrir chat" en el detalle de publicación) — una sola
+      fuente de verdad para ambos.
+  - **Backend**: ni `chat` ni `GET /chat/conversaciones` guardaban relación
+    alguna con el match/publicación que originó la conversación (un chat
+    solo tiene `id_participante1/2`). Se agregó un `LEFT JOIN LATERAL` que
+    busca el match Aceptado más reciente entre los dos participantes y trae
+    tipo, título, cupos y el nombre del primer juego asociado — sin tabla
+    nueva, solo derivándolo en la consulta existente. Nuevo test
+    `tests/chat.conversaciones.test.js`.
+  - **Regresión encontrada y arreglada en el mismo cambio, mismo patrón que
+    la de Descubrir/Publicaciones/Amigos**: `ChatScreen` (la lista completa
+    de conversaciones) nunca estuvo en el bottom nav de `MainShell` — su
+    único punto de entrada en móvil era la tarjeta "Mensajes" de Inicio, que
+    desapareció con el rediseño de la bandeja de pendientes. El chat
+    flotante es explícitamente solo de escritorio, así que sin la tarjeta,
+    un usuario de móvil no tenía **ninguna** forma de ver su lista de
+    chats. Fix: el bottom nav pasa de 6 a 7 pestañas, agregando "Chat" entre
+    Amigos y Avisos.
+  - Verificado en navegador con 2 usuarios de prueba reales (match aceptado
+    sobre una publicación `busco_companero` con el juego "Helldivers 2" y 4
+    cupos): la franja muestra exactamente "Match por: Helldivers 2 · 1/4"
+    en el chat flotante. Verificado en móvil (375px): las 7 pestañas caben
+    sin overflow. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+    Backend: 15/15.
+
+**Ronda 4 completa** (turno 4 del handoff de wireframes: Descubrir, Perfil,
+detalle de publicación, login y chat, sobre la base del conmutador 3b de
+Publicaciones y la bandeja de pendientes 2a de Inicio) — las 8 piezas
+confirmadas por el usuario ("los diseños que yo quería están en la parte de
+4, son básicamente mi visión") están implementadas, verificadas en
+escritorio y móvil, y pusheadas. Pendiente, solicitado aparte y no parte de
+esta ronda: el pie de página de Inicio (qué somos, propósito, no afiliación
+a Valve) y el ícono "?" con la FAQ de bloqueo regional/VPN en pantallas de
+Familia — ver el resto de esta sección para el detalle exacto de ese
+pendiente.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

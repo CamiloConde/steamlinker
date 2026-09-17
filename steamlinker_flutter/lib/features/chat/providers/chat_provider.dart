@@ -38,6 +38,14 @@ class ChatProvider extends ChangeNotifier {
     return int.tryParse(id?.toString() ?? '');
   }
 
+  Map<String, dynamic>? conversacionPorId(int idChat) {
+    for (final c in _conversaciones) {
+      final chat = Map<String, dynamic>.from(c as Map);
+      if (chat['id_chat'] == idChat) return chat;
+    }
+    return null;
+  }
+
   Future<void> cargarConversaciones() async {
     _cargandoLista = true;
     _error = null;
