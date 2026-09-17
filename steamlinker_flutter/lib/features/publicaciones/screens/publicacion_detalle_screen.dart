@@ -680,6 +680,8 @@ class _PanelCupos extends StatelessWidget {
 
   const _PanelCupos({required this.pub});
 
+  static const _tiposFamilia = ['busco_familia', 'busco_miembros'];
+
   @override
   Widget build(BuildContext context) {
     final total = pub['cupos_totales'] as int;
@@ -689,6 +691,7 @@ class _PanelCupos extends StatelessWidget {
     final ocupados = confirmados.length;
     final libres = (total - ocupados).clamp(0, total);
     const maxFilas = 8;
+    final esFamilia = _tiposFamilia.contains(pub['tipo_publi']);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -700,15 +703,34 @@ class _PanelCupos extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'CONFIRMADOS',
-            style: TextStyle(
-              color: SteamColors.muted,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              fontFamily: 'monospace',
-            ),
+          Row(
+            children: [
+              const Text(
+                'CONFIRMADOS',
+                style: TextStyle(
+                  color: SteamColors.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              if (esFamilia) ...[
+                const Spacer(),
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _mostrarFaqRegion(context),
+                  child: const Padding(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.help_outline,
+                      size: 15,
+                      color: SteamColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 2),
           Text.rich(
@@ -760,6 +782,38 @@ class _PanelCupos extends StatelessWidget {
               '+${confirmados.length + libres - maxFilas} más',
               style: const TextStyle(color: SteamColors.muted, fontSize: 11),
             ),
+        ],
+      ),
+    );
+  }
+
+  void _mostrarFaqRegion(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: SteamColors.bgPanel,
+        title: const Text(
+          '¿Steam dice que no puedes unirte por región?',
+          style: TextStyle(color: SteamColors.light, fontSize: 15),
+        ),
+        content: const Text(
+          'Steam a veces bloquea unirse a una Familia si detecta que el país '
+          'de tu cuenta no coincide con el del resto de la familia. No es '
+          'algo que SteamMatch controle — es una regla de Steam. Dos formas '
+          'con las que otros usuarios han resuelto esto:\n\n'
+          '• Que una persona inicie sesión en Steam desde el computador de '
+          'la otra (o viceversa) al momento de unirse.\n\n'
+          '• Usar una VPN con un servidor en el país de la familia mientras '
+          'se hace la unión.\n\n'
+          'Ninguna de las dos garantiza que funcione siempre, y quedan '
+          'sujetas a las políticas de Steam.',
+          style: TextStyle(color: SteamColors.textSec, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
         ],
       ),
     );

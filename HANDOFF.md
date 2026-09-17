@@ -898,11 +898,39 @@ detalle de publicación, login y chat, sobre la base del conmutador 3b de
 Publicaciones y la bandeja de pendientes 2a de Inicio) — las 8 piezas
 confirmadas por el usuario ("los diseños que yo quería están en la parte de
 4, son básicamente mi visión") están implementadas, verificadas en
-escritorio y móvil, y pusheadas. Pendiente, solicitado aparte y no parte de
-esta ronda: el pie de página de Inicio (qué somos, propósito, no afiliación
-a Valve) y el ícono "?" con la FAQ de bloqueo regional/VPN en pantallas de
-Familia — ver el resto de esta sección para el detalle exacto de ese
-pendiente.
+escritorio y móvil, y pusheadas.
+- [x] **Pie de página de Inicio + FAQ de bloqueo regional (pedido aparte,
+      no parte del handoff de wireframes).** El usuario pidió esto en el
+      mismo mensaje que mandó los wireframes, pero como contenido propio,
+      no como parte del rediseño visual.
+  - **Pie de página en Inicio** (`_FooterInicio` en `home_screen.dart`):
+    qué es SteamMatch en una frase, y el descargo "No afiliados a Valve
+    Corporation. Steam es una marca registrada de Valve Corporation." Vive
+    en Inicio (no en cada pantalla) porque es el punto de entrada de la
+    app — mismo criterio que ya se usó para decidir dónde iba el descargo
+    de Valve en login.
+  - **FAQ de bloqueo regional**: el usuario no estaba seguro si debía ir en
+    el pie de página o como un ícono "?" en el detalle de una familia —
+    se decidió por lo segundo, porque es información que importa en el
+    momento de decidir si solicitar unirse, no como nota general de la
+    app. Ícono `?` junto a "CONFIRMADOS" en el panel de cupos del detalle
+    de publicación (`_PanelCupos` en `publicacion_detalle_screen.dart`),
+    visible **solo** para publicaciones `busco_familia`/`busco_miembros`
+    (el bloqueo regional es específico de Steam Family Sharing, no aplica
+    a "busco compañero"). Abre un diálogo explicando que es una regla de
+    Steam, no de SteamMatch, y los dos workarounds que el usuario describió:
+    que una persona inicie sesión en el PC de la otra al momento de unirse,
+    o usar una VPN con servidor en el país de la familia — con la
+    aclaración de que ninguno garantiza funcionar siempre.
+  - Verificado en navegador con una publicación `busco_miembros` de prueba:
+    el pie de página se ve completo en Inicio; el ícono `?` aparece en el
+    panel de cupos de esa publicación (confirmado visualmente en varias
+    capturas) — el clic específico sobre el ícono no se pudo verificar de
+    punta a punta por fricción de coordenadas del navegador de automatización
+    en esta sesión (mismo tipo de problema ya documentado antes en este
+    archivo), pero el patrón `showDialog` + `AlertDialog` es idéntico al que
+    ya usa `_confirmarEliminarJuego` en `perfil_screen.dart`, código
+    existente y probado. `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

@@ -301,11 +301,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 28),
+                const _FooterInicio(),
+                const SizedBox(height: 16),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Pie de página de Inicio: qué es SteamMatch y el descargo de no
+/// afiliación a Valve (pedido aparte del rediseño de wireframes, ver
+/// HANDOFF.md). Vive aquí y no en cada pantalla porque Inicio es el punto
+/// de entrada de la app.
+class _FooterInicio extends StatelessWidget {
+  const _FooterInicio();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 16),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: SteamColors.border)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'SteamMatch',
+            style: TextStyle(
+              color: SteamColors.textSec,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Conectamos gamers para formar familias de Steam y encontrar '
+            'compañeros de juego, a partir de tu biblioteca verificada. '
+            'Un proyecto independiente, no un servicio oficial de Steam.',
+            style: TextStyle(color: SteamColors.muted, fontSize: 12, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'No afiliados a Valve Corporation. Steam es una marca registrada '
+            'de Valve Corporation.',
+            style: TextStyle(color: SteamColors.muted, fontSize: 11),
+          ),
+        ],
       ),
     );
   }
