@@ -145,16 +145,22 @@ router.get('/estado/:otroId', verificarToken, async (req, res) => {
 });
 
 // GET /matches/recibidos
-// Lista las solicitudes recibidas por el usuario logueado
+// Lista las solicitudes recibidas por el usuario logueado. Incluye datos de
+// la publicacion asociada (si la hay) para que la bandeja de Inicio pueda
+// mostrar "BUSCO MIEMBROS · 4/6 cupos" sin una llamada aparte.
 router.get('/recibidos', verificarToken, async (req, res) => {
     try {
         const resultado = await pool.query(
-            `SELECT m.*, 
+            `SELECT m.*,
                     u.username_usu AS solicitante_username,
                     u.repu_usu AS solicitante_reputacion,
-                    u.pais_usu AS solicitante_pais
+                    u.pais_usu AS solicitante_pais,
+                    p.tipo_publi, p.titulo_publi, p.cupos_totales,
+                    (SELECT COUNT(*)::int FROM matches mo
+                     WHERE mo.id_publi = p.id_publi AND mo.estado_match = 'Aceptada') AS cupos_ocupados
              FROM matches m
              JOIN usuarios u ON m.id_solicitante = u.id_usu
+             LEFT JOIN publicaciones p ON m.id_publi = p.id_publi
              WHERE m.id_receptor = $1
              ORDER BY m.creadoen_match DESC`,
             [req.usuario.id]

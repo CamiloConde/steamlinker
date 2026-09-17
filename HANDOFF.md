@@ -677,6 +677,51 @@ backend que no vale la pena anticipar sin datos de uso).
     dropdown de Tipo en escritorio. Verificado en móvil (375px): feed de
     tarjetas + FAB sin cambios, sin pestañas. `flutter analyze`: 0 issues.
     `flutter test`: 10/10. Backend: 11/11.
+- [x] **Inicio — bandeja de acciones pendientes (turno 2, opción 2a).** Segunda
+      pieza del rediseño confirmado. Reemplaza el dashboard genérico (tarjeta
+      de bienvenida + info de perfil duplicada + 6 tarjetas de acceso rápido
+      que solo repetían la nav — "Descubre Gamers", "Amigos", "Publicaciones",
+      etc.) por: TU ESTADO (estado de familia derivado + conteo de
+      publicaciones abiertas), STEAM NO VINCULADO (si aplica), SOLICITUDES
+      PENDIENTES (Aceptar/Rechazar/Ver perfil inline, sin salir de Inicio) y
+      TUS PUBLICACIONES ABIERTAS (cupos con barra de progreso + Cerrar). Cero
+      atajos a pantallas que ya están un clic de distancia en la nav superior.
+      A diferencia de Publicaciones/Descubrir, **esto aplica igual en móvil y
+      escritorio** — el contenido es una sola columna de tarjetas apiladas,
+      no un layout de escritorio específico, así que no hacía falta la rama
+      `esEscritorio` que sí tienen esas otras pantallas.
+  - **Limitación conocida y a propósito**: el backend no tiene un concepto
+    formal de "familia" (no hay tabla/rol de membresía). "TU ESTADO" se
+    deriva con una heurística: "Buscando familia" si tienes una publicación
+    propia abierta de tipo `busco_familia`/`busco_miembros`; "En una familia"
+    si tienes un match Aceptado (enviado por ti) hacia una publicación de ese
+    tipo que **sigue abierta**; si no, "Sin familia". El caso de una familia
+    que ya se llenó y se autocerró no se detecta (el match sigue existiendo
+    pero la publicación ya no aparece en el listado para cruzarla) — es una
+    simplificación honesta, no un dato inventado; si se necesita el estado
+    exacto en todo momento, hace falta modelar family/membresía formalmente.
+  - **Backend**: `GET /matches/recibidos` no traía nada de la publicación
+    asociada (solo `id_publi`), así que la bandeja no podía mostrar "BUSCO
+    MIEMBROS · 4/6 cupos" sin otra llamada. Se agregó un `LEFT JOIN` a
+    `publicaciones` + la misma subquery de `cupos_ocupados` que ya usa
+    `/publicaciones/buscar` y `/publicaciones/:id`. Nuevo test
+    `tests/matches.recibidos.test.js`.
+  - Verificado en navegador con dos usuarios de prueba reales (uno publica
+    "Busco compañero", el otro envía la solicitud): la bandeja se llena
+    correctamente (estado, solicitud pendiente con los datos reales de la
+    publicación, publicación propia con cupos 0/4), aceptar la solicitud
+    actualiza todo en vivo (la solicitud desaparece, cupos pasan a 1/4, la
+    barra de progreso se rellena) sin recargar la página. Verificado en móvil
+    (375px): mismo contenido, una sola columna, sin overflow.
+    `flutter analyze`: 0 issues. `flutter test`: 10/10. Backend: 12/12.
+  - **Nota de rendimiento observada, no introducida por este cambio**: al
+    iniciar sesión se ven varias llamadas duplicadas a
+    `GET /publicaciones/buscar` (y probablemente otras) en vez de una sola —
+    parece venir de cómo el widget raíz reconstruye el árbol mientras
+    resuelve el estado de autenticación al arrancar, no de esta pantalla en
+    particular (los datos finales son correctos, solo hay llamadas de más).
+    No se investigó a fondo por estar fuera del alcance de este cambio; queda
+    anotado por si vale la pena perfilarlo en una sesión futura.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
