@@ -839,6 +839,24 @@ backend que no vale la pena anticipar sin datos de uso).
     (juegos, comentarios) sin cambios. Verificado en móvil (375px): mismo
     contenido, sin overflow. `flutter analyze`: 0 issues. `flutter test`:
     10/10. Backend: 14/14.
+- [x] **Login — nota de Steam + descargo de Valve (turno 4, opción 4d).**
+      Séptima pieza del rediseño confirmado. El wireframe señalaba una
+      corrección importante: un wireframe anterior (de otra persona) tenía
+      botones "Ingresar con Google", "Ingresar con Steam" y código QR — nada
+      de eso existe en el backend (login real es correo/contraseña, sin
+      passport). **Se verificó que `login_screen.dart` nunca tuvo esos
+      botones**, así que no hacía falta quitar nada; solo se agregaron las
+      dos piezas que sí faltaban: una nota bajo el botón de submit
+      explicando que vincular Steam es un paso posterior dentro de Perfil
+      (para que el usuario no choque con el 403 de `STEAM_REQUERIDO` sin
+      contexto la primera vez que intenta publicar en Familia), y el
+      descargo "No afiliado a Valve Corporation" centrado al pie de la
+      pantalla. Mismo texto en login y en registro (es el mismo formulario
+      con un flag `_mostrarRegistro`).
+  - Verificado en navegador en ambos modos (iniciar sesión / crear cuenta):
+    la nota y el descargo se ven completos, sin overlap con el chip de dev
+    server (esquina inferior derecha, solo en local). `flutter analyze`: 0
+    issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

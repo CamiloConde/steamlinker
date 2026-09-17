@@ -261,6 +261,44 @@ class _LoginScreenState extends State<LoginScreen> {
                               : Text(_mostrarRegistro ? 'CREAR CUENTA' : 'INGRESAR'),
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        decoration: const BoxDecoration(
+                          border: Border(top: BorderSide(color: Color(0xFF30363D))),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              margin: const EdgeInsets.only(top: 1),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(4),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF3B82F6), Color(0xFF22D3EE)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            const Expanded(
+                              child: Text(
+                                'Vincular tu cuenta de Steam es un paso posterior, '
+                                'dentro de Perfil. Hace falta solo para publicar o '
+                                'matchear en Familia.',
+                                style: TextStyle(
+                                  color: Color(0xFF8B949E),
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -292,6 +330,20 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ),
           ),
+            ),
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 10,
+            child: SafeArea(
+              top: false,
+              child: Center(
+                child: Text(
+                  'No afiliado a Valve Corporation',
+                  style: TextStyle(color: Color(0xFF8B949E), fontSize: 11),
+                ),
+              ),
             ),
           ),
           const Positioned(
