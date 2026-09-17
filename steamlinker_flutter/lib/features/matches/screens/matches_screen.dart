@@ -321,6 +321,7 @@ class _MatchCard extends StatelessWidget {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SteamColors.green,
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
                         ),
                         onPressed: onAccept,

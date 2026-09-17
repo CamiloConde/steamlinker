@@ -102,7 +102,10 @@ class _CalificarDialogState extends State<_CalificarDialog> {
           child: const Text('Cancelar', style: TextStyle(color: SteamColors.muted)),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: SteamColors.blue),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: SteamColors.blue,
+            foregroundColor: Colors.white,
+          ),
           onPressed: () {
             Navigator.pop(
               context,

@@ -106,7 +106,10 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                     onChanged: (v) => setSheetState(() => juegoEtiqueta = v),
                   ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: SteamColors.blue),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: SteamColors.blue,
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () {
                       final tipo = PublicacionConstants.valorTipoFiltro(tipoEtiqueta);
                       final pais = paisEtiqueta == PaisUtil.todos

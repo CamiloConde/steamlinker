@@ -582,6 +582,38 @@ backend que no vale la pena anticipar sin datos de uso).
       no repiten su nombre, los íconos de utilidad de cada una se conservan, y en
       móvil (375px) cada pantalla sigue mostrando su barra completa con título
       como antes. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+- [x] **Bug real: texto invisible en 4 botones azul/verde/rojo (Material 3).**
+      El usuario reportó el modal de filtros de Descubrir con el botón "Aplicar"
+      sin texto visible. Causa: `ElevatedButton.styleFrom(backgroundColor: …)`
+      sin `foregroundColor` explícito — en Material 3 el texto por defecto usa
+      `colorScheme.primary`, que en esta app **es el mismo azul de acento**
+      (`SteamColors.blue`), así que cualquier botón con fondo azul sin
+      `foregroundColor` queda con texto azul sobre azul = invisible. Es un bug
+      preexistente (no introducido esta sesión), agravado/hecho más visible por
+      el cambio reciente de paleta. Se encontraron 4 sitios con el mismo defecto
+      (grep de `ElevatedButton.styleFrom` con `backgroundColor` sin
+      `foregroundColor`): el "Aplicar" de filtros en
+      `descubrir_gamers_screen.dart` (texto invisible, el que reportó el
+      usuario), `calificar_dialog.dart` (texto invisible, mismo caso azul),
+      "Aceptar" en `matches_screen.dart` (visible pero con el color equivocado —
+      texto azul sobre fondo verde) y "Enviar reporte" en
+      `reportar_usuario_dialog.dart` (visible pero azul sobre rojo). Los 4 ahora
+      declaran `foregroundColor: Colors.white` explícito, igual que ya hacía
+      `SteamButtonPrimary` (el botón compartido, que nunca tuvo este bug).
+  - **Bug adicional encontrado de paso, mismo flujo**: al abrir ese modal de
+    filtros, la barra local (recién "fundida con el fondo" en el fix anterior)
+    volvía a aparecer con flecha de "volver" — un modal bottom sheet también se
+    registra como una ruta que se puede hacer *pop* en el `Navigator`, así que
+    `Navigator.canPop()` daba `true` mientras el modal estaba abierto, aunque la
+    pantalla de fondo (Descubrir) seguía siendo la misma. Fix en
+    `SteamAppBar._canPop()`: si `ModalRoute.of(context)?.isCurrent == false`
+    (algo está cubriendo esta pantalla — un modal, un diálogo), se ignora la
+    señal de `canPop()` y la barra se queda exactamente como estaba, sin
+    parpadear.
+  - Verificado en navegador: el botón "Aplicar" de Descubrir ya muestra su
+    texto, aplicar un filtro cierra el modal y recarga la lista sin que la nav
+    global cambie ni parpadee, y en móvil (375px) sin regresión.
+    `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

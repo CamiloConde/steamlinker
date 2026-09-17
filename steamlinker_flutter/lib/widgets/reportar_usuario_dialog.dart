@@ -130,7 +130,10 @@ class _ReportarDialogState extends State<_ReportarDialog> {
         ),
         ElevatedButton(
           onPressed: _enviando ? null : _enviar,
-          style: ElevatedButton.styleFrom(backgroundColor: SteamColors.red),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: SteamColors.red,
+            foregroundColor: Colors.white,
+          ),
           child: Text(_enviando ? 'Enviando...' : 'Enviar reporte'),
         ),
       ],

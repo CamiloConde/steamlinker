@@ -25,6 +25,12 @@ class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
 
   bool _canPop(BuildContext context) {
+    // Un modal bottom sheet o diálogo abierto ENCIMA de esta pantalla también
+    // se registra como una ruta que se puede "pop" en el navigator — sin este
+    // chequeo, abrir un modal hacía reaparecer la barra local (con flecha de
+    // volver) en las pantallas de nivel superior, un parpadeo no deseado.
+    final route = ModalRoute.of(context);
+    if (route != null && !route.isCurrent) return false;
     if (Navigator.of(context, rootNavigator: true).canPop()) return true;
     final router = GoRouter.maybeOf(context);
     if (router != null && router.canPop()) return true;
