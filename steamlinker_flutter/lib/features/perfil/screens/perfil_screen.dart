@@ -10,10 +10,14 @@ import '../../../widgets/steam_buttons.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../core/auth/user_role.dart';
 import '../../../core/navigation/app_navigator.dart';
+import '../../../core/utils/estado_familia_helper.dart';
 import '../../account/screens/account_settings_screen.dart';
+import '../../amistad/providers/amistad_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../home/widgets/admin_panel_section.dart';
 import '../../busqueda/screens/busqueda_screen.dart';
+import '../../matches/providers/matches_provider.dart';
+import '../../publicaciones/providers/publicaciones_provider.dart';
 import '../providers/perfil_provider.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -55,7 +59,12 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final perfilProv = _perfilProv;
     final usuario = auth.usuario;
     if (usuario == null) return;
-    await perfilProv.cargarPerfil(usuario['id']);
+    await Future.wait([
+      perfilProv.cargarPerfil(usuario['id']),
+      context.read<MatchesProvider>().cargarTodo(),
+      context.read<PublicacionesProvider>().buscar(),
+      context.read<AmistadProvider>().cargarTodo(),
+    ]);
     if (!mounted) return;
   }
 
@@ -376,8 +385,22 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Widget build(BuildContext context) {
     final perfilProv = context.watch<PerfilProvider>();
     final auth = context.watch<AuthProvider>();
+    final matchesProv = context.watch<MatchesProvider>();
+    final publicacionesProv = context.watch<PublicacionesProvider>();
+    final amistadProv = context.watch<AmistadProvider>();
     final perfil = perfilProv.perfil;
     final esAdmin = esUsuarioAdmin(auth.usuario) || esUsuarioAdmin(perfil);
+
+    final miId = auth.usuario?['id'] as int?;
+    final misPublicaciones = publicacionesProv.publicaciones
+        .where((p) => p is Map && p['id_usu'] == miId)
+        .map((p) => Map<String, dynamic>.from(p as Map))
+        .toList();
+    final estadoFamilia = calcularEstadoFamilia(
+      misPublicaciones: misPublicaciones,
+      matchesEnviados: matchesProv.enviados,
+      todasPublicaciones: publicacionesProv.publicaciones,
+    );
 
     // En escritorio la nav superior global ya tiene su propio botón de
     // cerrar sesión — mostrarlo aquí también duplicaba el icono.
@@ -420,6 +443,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   _PerfilHeader(
                     perfil: perfil,
                     juegosCount: perfilProv.juegos.length,
+                    amigosCount: amistadProv.amigos.length,
+                    estadoFamilia: estadoFamilia,
                     onConfiguracion: () {
                       pushAppScreen(context, const AccountSettingsScreen());
                     },
@@ -686,12 +711,16 @@ class _PerfilScreenState extends State<PerfilScreen> {
 class _PerfilHeader extends StatelessWidget {
   final Map<String, dynamic> perfil;
   final int juegosCount;
+  final int amigosCount;
+  final EstadoFamilia estadoFamilia;
   final VoidCallback onConfiguracion;
   final VoidCallback onSalir;
 
   const _PerfilHeader({
     required this.perfil,
     required this.juegosCount,
+    required this.amigosCount,
+    required this.estadoFamilia,
     required this.onConfiguracion,
     required this.onSalir,
   });
@@ -809,18 +838,18 @@ class _PerfilHeader extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 4),
+                Text(
+                  perfil['pais'] ?? 'País no especificado',
+                  style: const TextStyle(color: SteamColors.muted, fontSize: 12),
+                ),
                 const SizedBox(height: 14),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    _InfoChip(label: 'País', value: perfil['pais'] ?? 'N/A'),
-                    _InfoChip(
-                      label: 'Reputación',
-                      value: '${perfil['repu'] ?? 0}',
-                    ),
-                    _InfoChip(label: 'Juegos', value: '$juegosCount'),
-                  ],
+                _StatGrid(
+                  reputacion: perfil['repu'],
+                  totalCalificaciones: perfil['totalrating'],
+                  juegosCount: juegosCount,
+                  amigosCount: amigosCount,
+                  estadoFamilia: estadoFamilia,
                 ),
                 const SizedBox(height: 14),
                 Row(
@@ -855,34 +884,131 @@ class _PerfilHeader extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final String label;
-  final String value;
+/// Grid de 4 celdas con números monoespaciados (wireframe turno 4, opción
+/// 4b): reemplaza los chips de País/Reputación/Juegos por las métricas que
+/// alguien realmente mira antes de mandar un match — es la sensación
+/// SteamDB que ya tiene el resto de la app.
+class _StatGrid extends StatelessWidget {
+  final dynamic reputacion;
+  final dynamic totalCalificaciones;
+  final int juegosCount;
+  final int amigosCount;
+  final EstadoFamilia estadoFamilia;
 
-  const _InfoChip({required this.label, required this.value});
+  const _StatGrid({
+    required this.reputacion,
+    required this.totalCalificaciones,
+    required this.juegosCount,
+    required this.amigosCount,
+    required this.estadoFamilia,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: SteamColors.textSec, fontSize: 11),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(SteamRadii.sm),
+    final rep = double.tryParse('$reputacion') ?? 0.0;
+    final totalRep = totalCalificaciones ?? 0;
+
+    String familiaValor;
+    Color familiaColor;
+    if (estadoFamilia.total != null) {
+      familiaValor = '${estadoFamilia.ocupados ?? 0}/${estadoFamilia.total}';
+      familiaColor = SteamColors.teal;
+    } else if (estadoFamilia.etiqueta == 'En una familia') {
+      familiaValor = 'Sí';
+      familiaColor = SteamColors.teal;
+    } else {
+      familiaValor = '—';
+      familiaColor = SteamColors.light;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: SteamColors.border),
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Wrap(
+        children: [
+          _StatCell(
+            label: 'REPUTACIÓN',
+            valor: rep.toStringAsFixed(1),
+            sufijo: '/5 · $totalRep',
           ),
-          child: Text(
-            value,
-            style: const TextStyle(color: SteamColors.light, fontSize: 13),
-          ),
+          _StatCell(label: 'JUEGOS VERIFICADOS', valor: '$juegosCount'),
+          _StatCell(label: 'FAMILIA', valor: familiaValor, color: familiaColor),
+          _StatCell(label: 'AMIGOS', valor: '$amigosCount'),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  final String label;
+  final String valor;
+  final String? sufijo;
+  final Color color;
+
+  const _StatCell({
+    required this.label,
+    required this.valor,
+    this.sufijo,
+    this.color = SteamColors.light,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 110),
+      width: 150,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: const BoxDecoration(
+        color: SteamColors.bgPanel,
+        border: Border(
+          left: BorderSide(color: SteamColors.border),
+          top: BorderSide(color: SteamColors.border),
         ),
-      ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: SteamColors.muted,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: valor,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 19,
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (sufijo != null)
+                  TextSpan(
+                    text: ' $sufijo',
+                    style: const TextStyle(
+                      color: SteamColors.muted,
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

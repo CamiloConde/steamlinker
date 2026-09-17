@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
+import '../../../core/utils/estado_familia_helper.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
@@ -65,13 +66,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => pantalla));
   }
 
-  Map<String, dynamic>? _publiPorId(List<dynamic> lista, dynamic id) {
-    for (final p in lista) {
-      if (p is Map && p['id_publi'] == id) return Map<String, dynamic>.from(p);
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final esEscritorio = MediaQuery.of(context).size.width >= 768;
@@ -106,19 +100,11 @@ class _HomeScreenState extends State<HomeScreen> {
         .map((p) => Map<String, dynamic>.from(p as Map))
         .toList();
 
-    final tengoPubliFamiliaPropia = misPublicaciones.any((p) =>
-        p['tipo_publi'] == 'busco_familia' || p['tipo_publi'] == 'busco_miembros');
-
-    final estoyEnFamiliaAjena = matchesProv.enviados.any((m) {
-      if (m['estado_match'] != 'Aceptada') return false;
-      final pub = _publiPorId(publicacionesProv.publicaciones, m['id_publi']);
-      return pub != null &&
-          (pub['tipo_publi'] == 'busco_familia' || pub['tipo_publi'] == 'busco_miembros');
-    });
-
-    final estadoFamilia = estoyEnFamiliaAjena
-        ? 'En una familia'
-        : (tengoPubliFamiliaPropia ? 'Buscando familia' : 'Sin familia');
+    final estadoFamilia = calcularEstadoFamilia(
+      misPublicaciones: misPublicaciones,
+      matchesEnviados: matchesProv.enviados,
+      todasPublicaciones: publicacionesProv.publicaciones,
+    );
 
     final nadaPendiente =
         pendientes.isEmpty && misPublicaciones.isEmpty && steamVinculado;
@@ -214,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // ── TU ESTADO ────────────────────────────────────────
                 _TarjetaEstado(
-                  estado: estadoFamilia,
+                  estado: estadoFamilia.etiqueta,
                   publicacionesAbiertas: misPublicaciones.length,
                 ),
                 if (!steamVinculado) ...[

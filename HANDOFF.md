@@ -777,6 +777,33 @@ backend que no vale la pena anticipar sin datos de uso).
     (Descubrir con tarjetas, Publicaciones con feed+FAB, Amigos), sin
     overflow visual. `flutter analyze`: 0 issues. `flutter test`: 10/10.
     Backend: 13/13.
+- [x] **Perfil — grid de 4 estadísticas en vez de chips (turno 4, opción
+      4b).** Cuarta pieza del rediseño confirmado. Los chips de País/
+      Reputación/Juegos se reemplazan por un grid de 4 celdas con números
+      monoespaciados grandes — REPUTACIÓN (`4.5 /5 · 12`), JUEGOS
+      VERIFICADOS, FAMILIA, AMIGOS — la misma sensación SteamDB que ya tiene
+      el resto de la app. País se mantiene, como texto pequeño bajo la
+      descripción en vez de chip. Aplica igual en móvil (el grid se envuelve
+      a 2 columnas con `Wrap`) y escritorio, como Inicio — a diferencia de
+      Publicaciones/Descubrir, el contenido de Perfil no depende de un
+      layout específico de escritorio.
+  - **Nuevo helper compartido** `lib/core/utils/estado_familia_helper.dart`:
+    la heurística de "estado de familia" (con la misma limitación conocida
+    documentada arriba, en la entrada de Inicio) vivía duplicada inline en
+    `home_screen.dart`; se extrajo a `calcularEstadoFamilia()` para que
+    Perfil la reutilice sin copiar la lógica — la celda FAMILIA muestra
+    `ocupados/total` en cian si tiene una publicación propia abierta de ese
+    tipo, "Sí" si se unió a la de alguien más, o "—" si no aplica.
+  - `PerfilScreen` ahora también carga `MatchesProvider`, `PublicacionesProvider`
+    y `AmistadProvider` al entrar (antes solo cargaba el perfil), necesarios
+    para calcular FAMILIA y AMIGOS sin pedirle al usuario que visite Inicio
+    primero.
+  - Verificado en navegador con un usuario de prueba real: grid con
+    REPUTACIÓN `0.0/5 · 0`, JUEGOS VERIFICADOS `2`, FAMILIA `0/6` en cian
+    (con una publicación `busco_miembros` de prueba) y AMIGOS `0`; mismo
+    dato coherente entre Inicio y Perfil gracias al helper compartido.
+    Verificado en móvil (375px): el grid se envuelve a 2x2 sin overflow.
+    `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
