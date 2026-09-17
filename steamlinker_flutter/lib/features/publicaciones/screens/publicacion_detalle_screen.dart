@@ -243,7 +243,7 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: SteamColors.blue.withOpacity(0.12),
+                                  color: SteamColors.blue.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(SteamRadii.sm),
                                 ),
                                 child: Text(
@@ -583,7 +583,7 @@ class _ComentarioBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: esMio ? SteamColors.blue.withOpacity(0.12) : SteamColors.bgPanel,
+        color: esMio ? SteamColors.blue.withValues(alpha: 0.12) : SteamColors.bgPanel,
         borderRadius: BorderRadius.circular(SteamRadii.sm),
         border: Border.all(color: SteamColors.border),
       ),
@@ -641,7 +641,7 @@ class _EstadoCerrada extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: SteamColors.red.withOpacity(0.15),
+        color: SteamColors.red.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(SteamRadii.sm),
       ),
       child: const Text(
@@ -674,7 +674,7 @@ class _AutorSection extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: SteamColors.blue.withOpacity(0.2),
+              backgroundColor: SteamColors.blue.withValues(alpha: 0.2),
               child: Text(
                 (pub['username_usu']?.toString() ?? 'U')[0].toUpperCase(),
                 style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w700),

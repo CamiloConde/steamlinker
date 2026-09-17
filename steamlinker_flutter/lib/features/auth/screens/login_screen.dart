@@ -219,9 +219,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
+                            color: Colors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(SteamRadii.sm),
-                            border: Border.all(color: Colors.red.withOpacity(0.3)),
+                            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
@@ -267,8 +267,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
 
                 // Alternar entre login y registro
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
                   children: [
                     Text(
                       _mostrarRegistro ? '¿Ya tienes cuenta? ' : '¿No tienes cuenta? ',

@@ -22,7 +22,7 @@ class _LoginDevServerChipState extends State<LoginDevServerChip> {
       final respuesta = await ApiClient.dio.get('/health');
       final data = respuesta.data;
       final db = data is Map ? data['database'] : null;
-      if (!mounted) return;
+      if (!mounted || !sheetContext.mounted) return;
       Navigator.pop(sheetContext);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -127,7 +127,7 @@ class _LoginDevServerChipState extends State<LoginDevServerChip> {
     if (kReleaseMode) return const SizedBox.shrink();
 
     return Material(
-      color: const Color(0xFF161B22).withOpacity(0.92),
+      color: const Color(0xFF161B22).withValues(alpha: 0.92),
       elevation: 4,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
@@ -137,7 +137,7 @@ class _LoginDevServerChipState extends State<LoginDevServerChip> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF1A9FFF).withOpacity(0.35)),
+            border: Border.all(color: const Color(0xFF1A9FFF).withValues(alpha: 0.35)),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,

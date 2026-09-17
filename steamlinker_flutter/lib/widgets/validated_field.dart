@@ -130,7 +130,7 @@ class _ValidatedFieldState extends State<ValidatedField> {
           decoration: InputDecoration(
             hintText: widget.placeholder,
             hintStyle: TextStyle(
-              color: SteamColors.textSec.withOpacity(0.5),
+              color: SteamColors.textSec.withValues(alpha: 0.5),
               fontSize: 13,
             ),
             filled: true,

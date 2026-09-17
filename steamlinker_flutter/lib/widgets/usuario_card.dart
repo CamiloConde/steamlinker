@@ -44,7 +44,7 @@ class UsuarioCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: SteamColors.blue.withOpacity(0.2),
+                backgroundColor: SteamColors.blue.withValues(alpha: 0.2),
                 child: Text(
                   username.isNotEmpty ? username[0].toUpperCase() : '?',
                   style: const TextStyle(
@@ -109,7 +109,7 @@ class UsuarioCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (accion != null) accion!,
+              ?accion,
               if (onTap != null && accion == null)
                 const Icon(Icons.chevron_right, color: SteamColors.muted, size: 20),
             ],

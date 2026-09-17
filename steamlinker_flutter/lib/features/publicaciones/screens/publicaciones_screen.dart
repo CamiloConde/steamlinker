@@ -337,7 +337,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
       itemCount: publicacionesProv.publicaciones.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final publicacion = publicacionesProv.publicaciones[index];
         final autorId = publicacion['id_usu'] as int?;

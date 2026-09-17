@@ -272,7 +272,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                     itemCount: perfilProv.usuariosDescubrir
                         .where((u) => miId == null || (u as Map)['id_usu'] != miId)
                         .length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final lista = perfilProv.usuariosDescubrir
                           .where((u) => miId == null || (u as Map)['id_usu'] != miId)

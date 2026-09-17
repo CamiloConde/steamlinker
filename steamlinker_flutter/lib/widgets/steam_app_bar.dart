@@ -71,7 +71,7 @@ class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        if (actions != null) ...actions!,
+        ...?actions,
         if (useUserActions) _UserActions(),
         if (useUserActions || (actions != null && actions!.isNotEmpty))
           const SizedBox(width: 8)

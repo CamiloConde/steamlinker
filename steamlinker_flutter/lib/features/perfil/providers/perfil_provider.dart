@@ -42,7 +42,7 @@ class PerfilProvider extends ChangeNotifier {
       'totalrating': raw['totalrating_usu'] ?? raw['totalrating'],
       'tipo': raw['tipo_usu'] ?? raw['tipo'],
       'creadoen': raw['creadoen_usu'] ?? raw['creadoen'],
-      'steam': raw['steam'] ?? null,
+      'steam': raw['steam'],
     };
   }
 

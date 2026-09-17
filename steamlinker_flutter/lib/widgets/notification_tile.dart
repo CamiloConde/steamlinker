@@ -111,7 +111,7 @@ class NotificationTile extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       color: notif.isRead
           ? Colors.transparent
-          : SteamColors.blue.withOpacity(0.05),
+          : SteamColors.blue.withValues(alpha: 0.05),
       child: InkWell(
         onTap: () async {
           if (!notif.isRead) {
@@ -124,8 +124,8 @@ class NotificationTile extends StatelessWidget {
           onOpen?.call();
           onChanged();
         },
-        splashColor: SteamColors.blue.withOpacity(0.07),
-        highlightColor: SteamColors.blue.withOpacity(0.04),
+        splashColor: SteamColors.blue.withValues(alpha: 0.07),
+        highlightColor: SteamColors.blue.withValues(alpha: 0.04),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child:
@@ -138,15 +138,15 @@ class NotificationTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(SteamRadii.sm),
                   gradient: LinearGradient(
                     colors: [
-                      notif.typeColor.withOpacity(0.25),
-                      notif.typeColor.withOpacity(0.1),
+                      notif.typeColor.withValues(alpha: 0.25),
+                      notif.typeColor.withValues(alpha: 0.1),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   border: Border.all(
                     color: notif.typeColor
-                        .withOpacity(notif.isRead ? 0.2 : 0.6),
+                        .withValues(alpha: notif.isRead ? 0.2 : 0.6),
                     width: 1.5,
                   ),
                 ),
@@ -191,7 +191,7 @@ class NotificationTile extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: notif.typeColor.withOpacity(0.15),
+                        color: notif.typeColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(SteamRadii.sm),
                       ),
                       child: Text(

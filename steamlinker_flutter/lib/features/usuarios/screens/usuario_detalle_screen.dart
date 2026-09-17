@@ -330,9 +330,9 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: SteamColors.orange.withOpacity(0.1),
+                          color: SteamColors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(SteamRadii.sm),
-                          border: Border.all(color: SteamColors.orange.withOpacity(0.4)),
+                          border: Border.all(color: SteamColors.orange.withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -537,7 +537,7 @@ class _ChipInfo extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(SteamRadii.sm),
       ),
       child: Text(

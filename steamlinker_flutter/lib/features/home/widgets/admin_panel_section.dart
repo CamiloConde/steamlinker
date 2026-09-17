@@ -63,14 +63,14 @@ class AdminPanelSection extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF3D2E14).withOpacity(0.9),
+            const Color(0xFF3D2E14).withValues(alpha: 0.9),
             SteamColors.bgCard,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(SteamRadii.sm),
-        border: Border.all(color: SteamColors.orange.withOpacity(0.55), width: 1.2),
+        border: Border.all(color: SteamColors.orange.withValues(alpha: 0.55), width: 1.2),
       ),
       padding: const EdgeInsets.all(18),
       child: Column(
@@ -82,7 +82,7 @@ class AdminPanelSection extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: SteamColors.orange.withOpacity(0.15),
+                  color: SteamColors.orange.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(SteamRadii.sm),
                   border: Border.all(color: SteamColors.orange, width: 1.2),
                 ),

@@ -56,8 +56,6 @@ class ApiErrorMapper {
           return AppConfig.connectionHelpMessage;
         }
         break;
-      default:
-        break;
     }
 
     return fallback;

@@ -154,7 +154,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final item = Map<String, dynamic>.from(items[index] as Map);
         final estado = item['estado_match'] ?? 'Pendiente';
@@ -177,7 +177,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           onAccept: estado == 'Pendiente' && recibido
               ? () async {
                   await prov.responder(item['id_match'], 'Aceptada');
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   context.read<NotificacionesProvider>().cargarContador();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Solicitud aceptada — chat creado')),
@@ -187,7 +187,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           onReject: estado == 'Pendiente' && recibido
               ? () async {
                   await prov.responder(item['id_match'], 'Rechazada');
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Solicitud rechazada')),
                   );
@@ -297,7 +297,7 @@ class _MatchCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _estadoColor.withOpacity(0.15),
+                      color: _estadoColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
                     child: Text(

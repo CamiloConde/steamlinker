@@ -173,6 +173,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       descripcion: _descripcionController.text.trim(),
       pais: _paisToCode(_pais),
     );
+    if (!mounted) return;
 
     if (exito) {
       _originalDescripcion = _descripcionController.text.trim();
@@ -420,6 +421,7 @@ class _SecurityCardState extends State<_SecurityCard> {
       contrasenaActual: _currentPasswordController.text.trim(),
       nuevaContrasena: _newPasswordController.text.trim(),
     );
+    if (!mounted) return;
 
     if (exitoso) {
       showSteamToast(
@@ -702,10 +704,12 @@ class _DangerCard extends StatelessWidget {
       },
     );
 
-    if (confirmado != true) return;
+    if (confirmado != true || !context.mounted) return;
 
     final auth = context.read<AuthProvider>();
     final exito = await auth.eliminarCuenta();
+    if (!context.mounted) return;
+
     if (exito) {
       showSteamToast(
         context,

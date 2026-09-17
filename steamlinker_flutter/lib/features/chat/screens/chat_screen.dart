@@ -131,7 +131,7 @@ class _ChatScreenState extends State<ChatScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: chatProv.conversaciones.length,
-      separatorBuilder: (_, __) => const Divider(
+      separatorBuilder: (_, _) => const Divider(
         color: SteamColors.border,
         height: 1,
         indent: 72,
@@ -147,7 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: CircleAvatar(
-            backgroundColor: SteamColors.blue.withOpacity(0.2),
+            backgroundColor: SteamColors.blue.withValues(alpha: 0.2),
             child: Text(
               inicial,
               style: const TextStyle(

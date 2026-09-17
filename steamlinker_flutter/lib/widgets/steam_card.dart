@@ -32,7 +32,7 @@ class SteamCard extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.07),
+              color: accent.withValues(alpha: 0.07),
               border: const Border(bottom: BorderSide(color: SteamColors.border)),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(6),

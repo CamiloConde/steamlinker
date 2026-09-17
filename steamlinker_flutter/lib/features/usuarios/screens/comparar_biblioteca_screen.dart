@@ -47,7 +47,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: (esSteam ? SteamColors.teal : SteamColors.blue).withOpacity(0.15),
+                    color: (esSteam ? SteamColors.teal : SteamColors.blue).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(SteamRadii.sm),
                   ),
                   child: Text(

@@ -104,7 +104,7 @@ class PublicacionesProvider extends ChangeNotifier {
         'titulo': titulo,
         'descripcion': descripcion,
         'pais': pais,
-        if (cuposTotales != null) 'cupos_totales': cuposTotales,
+        'cupos_totales': ?cuposTotales,
         'juegos': juegos,
       });
       await buscar();
@@ -185,7 +185,7 @@ class PublicacionesProvider extends ChangeNotifier {
         '/publicaciones/$idPubli/comentarios',
         data: {
           'texto': texto,
-          if (idPadre != null) 'id_padre': idPadre,
+          'id_padre': ?idPadre,
         },
       );
       _comentarios = [..._comentarios, respuesta.data];

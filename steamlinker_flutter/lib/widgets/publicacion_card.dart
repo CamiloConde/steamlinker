@@ -49,7 +49,7 @@ class PublicacionCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: SteamColors.blue.withOpacity(0.12),
+                      color: SteamColors.blue.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
                     child: Text(

@@ -117,7 +117,7 @@ class SteamButtonDanger extends StatelessWidget {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         foregroundColor: SteamColors.red,
-        side: BorderSide(color: SteamColors.red.withOpacity(0.6)),
+        side: BorderSide(color: SteamColors.red.withValues(alpha: 0.6)),
         minimumSize: const Size(64, 44),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),

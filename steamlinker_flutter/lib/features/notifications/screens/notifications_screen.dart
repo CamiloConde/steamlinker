@@ -178,7 +178,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                             child: ListView.separated(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               itemCount: lista.length,
-                              separatorBuilder: (_, __) => const Divider(
+                              separatorBuilder: (_, _) => const Divider(
                                 color: SteamColors.border,
                                 height: 1,
                                 indent: 16,
@@ -253,7 +253,7 @@ class _EmptyState extends StatelessWidget {
                   ? Icons.thumb_up_outlined
                   : Icons.notifications_off_outlined,
               size: 56,
-              color: SteamColors.muted.withOpacity(0.35),
+              color: SteamColors.muted.withValues(alpha: 0.35),
             ),
             const SizedBox(height: 16),
             Text(

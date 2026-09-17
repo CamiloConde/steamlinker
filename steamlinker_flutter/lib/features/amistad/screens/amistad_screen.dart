@@ -95,7 +95,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: prov.solicitudes.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final s = prov.solicitudes[index];
         return UsuarioCard(
@@ -153,7 +153,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: prov.amigos.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final a = prov.amigos[index];
         final id = a['amigo_id'] as int;
