@@ -45,11 +45,19 @@ class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
     Navigator.of(context).maybePop();
   }
 
+  /// Mismo breakpoint que `ResponsiveShell` (no se importa de ahí para evitar
+  /// un ciclo de imports). En escritorio la nav superior global ya muestra
+  /// usuario/logout, así que el bloque local de esta AppBar se suprime salvo
+  /// que se pida explícitamente con [showUserActions].
+  static const _kEscritorio = 768.0;
+
   @override
   Widget build(BuildContext context) {
     final canPop = _canPop(context);
     final useBack = showBack ?? canPop;
-    final useUserActions = showUserActions ?? !useBack;
+    final esEscritorio = MediaQuery.of(context).size.width >= _kEscritorio;
+    final useUserActions =
+        showUserActions ?? (!useBack && !esEscritorio);
 
     return AppBar(
       backgroundColor: SteamColors.bgPanel,

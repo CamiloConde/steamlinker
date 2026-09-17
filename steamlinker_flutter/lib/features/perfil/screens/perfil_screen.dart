@@ -379,12 +379,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final perfil = perfilProv.perfil;
     final esAdmin = esUsuarioAdmin(auth.usuario) || esUsuarioAdmin(perfil);
 
+    // En escritorio la nav superior global ya tiene su propio botón de
+    // cerrar sesión — mostrarlo aquí también duplicaba el icono.
+    final esEscritorio = MediaQuery.of(context).size.width >= 768;
+    final puedeVolver = Navigator.of(context).canPop();
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       appBar: SteamAppBar(
-        title: Navigator.of(context).canPop() ? 'MIS JUEGOS' : 'PERFIL',
-        showUserActions: Navigator.of(context).canPop(),
-        actions: Navigator.of(context).canPop()
+        title: puedeVolver ? 'MIS JUEGOS' : 'PERFIL',
+        showUserActions: puedeVolver,
+        actions: puedeVolver || esEscritorio
             ? null
             : [
                 IconButton(

@@ -38,17 +38,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // En escritorio la nav superior global ya tiene su propio botón de
+    // cerrar sesión — mostrarlo aquí también duplicaba el icono.
+    final esEscritorio = MediaQuery.of(context).size.width >= 768;
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       appBar: SteamAppBar(
         title: 'INICIO',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: SteamColors.muted),
-            tooltip: 'Cerrar sesión',
-            onPressed: () => confirmarYCerrarSesion(context),
-          ),
-        ],
+        actions: esEscritorio
+            ? null
+            : [
+                IconButton(
+                  icon: const Icon(Icons.logout, color: SteamColors.muted),
+                  tooltip: 'Cerrar sesión',
+                  onPressed: () => confirmarYCerrarSesion(context),
+                ),
+              ],
       ),
       body: Consumer<AuthProvider>(
         builder: (context, auth, _) {

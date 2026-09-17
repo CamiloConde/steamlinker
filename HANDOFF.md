@@ -514,6 +514,22 @@ backend que no vale la pena anticipar sin datos de uso).
     layout original de una sola columna, Publicaciones intacta con sus 3
     columnas, nav superior con las 4 pestañas funcionando en las tres, y móvil
     (375px) sin regresión. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+- [x] **Bug real: usuario/logout duplicados en escritorio.** El usuario mandó
+      una captura mostrando dos bloques de usuario+logout apilados. Causa: cada
+      pantalla de nivel superior (`SteamAppBar` sin botón atrás) sigue mostrando
+      su propio bloque local de usuario — antes tenía sentido porque era la
+      única identidad visible, pero ahora la nav superior global
+      (`ResponsiveShell`/`_TopNav`) ya muestra usuario+logout de forma
+      persistente en escritorio, así que quedaba duplicado. Fix: `SteamAppBar`
+      ahora es consciente del ancho (mismo breakpoint 768px) y suprime su
+      bloque local de usuario en escritorio salvo que se pida explícitamente
+      con `showUserActions`; además se hicieron condicionales al ancho los
+      botones de logout explícitos que `HomeScreen`, `PerfilScreen` y
+      `NotificationsScreen` agregaban en su propia `actions:` (en móvil se
+      mantienen igual que antes, ya que ahí no hay nav global). Verificado en
+      navegador: Inicio/Perfil/Notificaciones en escritorio ya no repiten
+      usuario ni logout, y en móvil (375px) cada pantalla conserva su propio
+      logout como antes. `flutter analyze`: 0 issues. `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

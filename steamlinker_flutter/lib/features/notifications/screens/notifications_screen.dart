@@ -111,7 +111,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       appBar: SteamAppBar(
         title: 'NOTIFICACIONES',
         showBack: false,
-        showUserActions: true,
+        // En escritorio la nav superior global ya muestra el usuario.
+        showUserActions: MediaQuery.of(context).size.width < 768,
         actions: [
           if (unread > 0)
             TextButton(
