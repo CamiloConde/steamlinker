@@ -392,10 +392,45 @@ reales. Pasó varias veces en esta sesión y generó falsos negativos ("el cambi
 se aplicó") que en realidad sí estaban aplicados. Si algo no se ve reflejado tras un
 rebuild, recarga una segunda vez antes de asumir que el código está mal.
 
-**Fase 6 — No funcional**
-- [ ] Tests básicos + CI (hoy no hay nada real, solo el placeholder de plantilla)
-- [ ] Despliegue de Web 1.0 (hosting backend Node + Postgres + `flutter build web`,
-      dominio, variables de entorno de producción, secrets de prod separados de dev)
+**Fase 6 — No funcional: tests + CI cerrados, despliegue pendiente**
+- [x] **Backend testeable**: `src/app.js` (exporta la app de Express) separado de
+      `src/index.js` (solo arranca el servidor) — necesario para testear rutas con
+      `supertest` sin abrir un puerto real.
+- [x] **7 tests de backend** (`steamlinker_back/tests/`, `node --test` + `supertest`,
+      contra una base `steamlinker_test` dedicada, sin tocar la de desarrollo):
+      `/health`, y el gateo de Steam completo de la Fase 2 (familia/miembros → 403,
+      compañero → 201, tipo inválido → 400, sin token → 401).
+- [x] **10 tests de Flutter**: el placeholder de login (nunca se había corrido — al
+      correrlo encontró un overflow de layout real, ya arreglado, ver abajo) + nuevo
+      `test/publicacion_constants_test.dart` (gateo de Steam del lado Flutter).
+- [x] **`flutter analyze` en 0 issues** (antes 58, todos bloqueaban CI porque
+      `--fatal-infos` viene activado por defecto): 34 `withOpacity` deprecado, 11
+      `BuildContext` usado tras un `await` sin guardia (revisados uno por uno, no en
+      bloque — varios necesitaban `context.mounted` en vez de `State.mounted` porque
+      el `context` venía de un builder anidado), 7 parámetros `(_, __)`→`(_, _)`, 4
+      sintaxis null-aware modernas, 2 triviales (`default` inalcanzable, `?? null`
+      redundante).
+- [x] **CI en GitHub Actions** (`.github/workflows/ci.yml`) — dos jobs en cada
+      push/PR a `main`: backend (Postgres 16 de servicio + `npm test`) y Flutter
+      (`analyze` + `test`). **Ya corrió en GitHub, en verde, primer intento**
+      (commit `35f3121`, ~2 min).
+- [x] **Limpieza de dependencias del backend**: quitados `passport`/
+      `passport-google-oauth20`/`passport-steam` (confirmado con grep que no se usan
+      en ningún lado — el login real es email/password, sección 5). `npm audit fix`
+      bajó de 8 vulnerabilidades (5 high) a 1 moderate, sin saltos de versión mayor.
+- [x] **`steamlinker_back/node_modules` destrackeado de git** (1512 archivos que
+      nunca debieron commitearse — ya estaba en `.gitignore` pero quedó trackeado
+      desde antes; mismo patrón que el fix de `.env` en Fase 0). Los archivos siguen
+      en disco, solo se sacaron del control de versiones.
+- [ ] **Despliegue de Web 1.0 — pendiente, decisión tomada, ejecución no.** El
+      usuario confirmó: **Railway** para backend + Postgres (recomendado por mí, sin
+      preferencia previa), **sin dominio propio todavía** (URL gratuita del hosting
+      tipo `algo.up.railway.app` está bien para la beta). Falta: el usuario crea la
+      cuenta de Railway y conecta el repo (no lo puedo hacer yo, requiere su cuenta),
+      luego configurar variables de entorno de producción (secrets nuevos, nunca los
+      de dev/CI), `CORS_ORIGINS` apuntando al dominio del frontend, y decidir dónde
+      queda el `flutter build web` (¿Railway también, o Vercel/Netlify para el
+      estático? — pendiente de definir en la sesión que ejecute el despliegue).
 
 **Fase 7 — Lanzamiento**
 - [ ] Beta web pública, recoger feedback real antes de empaquetar formalmente
