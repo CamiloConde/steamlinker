@@ -3,14 +3,21 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../theme/colors.dart';
+import '../../../widgets/accesos_rapidos_panel.dart';
+import '../../../widgets/chats_columna.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/drop_field.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/usuario_card.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../chat/providers/chat_provider.dart';
 import '../../matches/screens/matches_screen.dart';
 import '../../perfil/providers/perfil_provider.dart';
 import '../../usuarios/screens/usuario_detalle_screen.dart';
+
+/// Igual al breakpoint de `ResponsiveShell` (no se importa de ahí para evitar
+/// un ciclo de imports).
+const _kEscritorio = 768.0;
 
 class DescubrirGamersScreen extends StatefulWidget {
   const DescubrirGamersScreen({super.key});
@@ -43,7 +50,27 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       await perfil.cargarPerfil(id);
     }
     if (!mounted) return;
-    await perfil.descubrirUsuarios();
+    await Future.wait([
+      perfil.descubrirUsuarios(),
+      context.read<ChatProvider>().cargarConversaciones(),
+    ]);
+  }
+
+  /// Atajo de filtro rápido por tipo desde la columna de accesos (escritorio).
+  /// `null` = "Todos los tipos". Resetea país/juego, igual que el atajo
+  /// equivalente en Publicaciones.
+  void _filtrarPorTipoRapido(String? etiqueta) {
+    final perfil = context.read<PerfilProvider>();
+    setState(() {
+      _filtroTipoEtiqueta = etiqueta;
+      _filtroPaisEtiqueta = null;
+      _filtroJuegoNombre = null;
+      _filtroAppid = null;
+    });
+    final valor = etiqueta == null
+        ? null
+        : PublicacionConstants.valorTipoFiltro(etiqueta);
+    perfil.descubrirUsuarios(tipo: valor == null || valor.isEmpty ? null : valor);
   }
 
   Future<void> _recargar() async {
@@ -170,33 +197,29 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     final auth = context.watch<AuthProvider>();
     final miId = auth.usuario?['id'];
 
-    return Scaffold(
-      backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: 'DESCUBRIR',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
-            tooltip: 'Mis solicitudes',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MatchesScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: SteamColors.muted),
-            tooltip: 'Filtros',
-            onPressed: _abrirFiltros,
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: SteamColors.blue),
-            tooltip: 'Actualizar',
-            onPressed: _recargar,
-          ),
-        ],
+    final acciones = [
+      IconButton(
+        icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
+        tooltip: 'Mis solicitudes',
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MatchesScreen()),
+          );
+        },
       ),
-      body: DesktopBodyWidth(child: Column(
+      IconButton(
+        icon: const Icon(Icons.tune_rounded, color: SteamColors.muted),
+        tooltip: 'Filtros',
+        onPressed: _abrirFiltros,
+      ),
+      IconButton(
+        icon: const Icon(Icons.refresh, color: SteamColors.blue),
+        tooltip: 'Actualizar',
+        onPressed: _recargar,
+      ),
+    ];
+
+    final cuerpo = Column(
         children: [
           if (_filtroTipoEtiqueta != null ||
               _filtroPaisEtiqueta != null ||
@@ -291,7 +314,59 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
             ),
           ),
         ],
-      )),
+      );
+
+    final esEscritorio = MediaQuery.of(context).size.width >= _kEscritorio;
+
+    if (esEscritorio) {
+      return Scaffold(
+        backgroundColor: SteamColors.bgDeep,
+        appBar: SteamAppBar(title: 'DESCUBRIR', actions: acciones),
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 220,
+              child: AccesosRapidosPanel(
+                children: [
+                  const AccesosSeccionTitulo('ACCESOS RÁPIDOS'),
+                  AccesoRapidoItem(
+                    icon: Icons.inbox_outlined,
+                    label: 'Mis solicitudes',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MatchesScreen()),
+                    ),
+                  ),
+                  const AccesosSeccionTitulo('FILTRAR POR TIPO'),
+                  AccesoRapidoItem(
+                    icon: Icons.apps_rounded,
+                    label: 'Todos los tipos',
+                    activo: _filtroTipoEtiqueta == null,
+                    onTap: () => _filtrarPorTipoRapido(null),
+                  ),
+                  for (final etiqueta in PublicacionConstants.tiposFiltroEtiquetas.skip(1))
+                    AccesoRapidoItem(
+                      icon: Icons.label_outline,
+                      label: etiqueta,
+                      activo: _filtroTipoEtiqueta == etiqueta,
+                      onTap: () => _filtrarPorTipoRapido(etiqueta),
+                    ),
+                ],
+              ),
+            ),
+            const VerticalDivider(color: SteamColors.border, width: 1),
+            Expanded(child: cuerpo),
+            const VerticalDivider(color: SteamColors.border, width: 1),
+            const SizedBox(width: 260, child: ChatsColumna()),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: SteamColors.bgDeep,
+      appBar: SteamAppBar(title: 'DESCUBRIR', actions: acciones),
+      body: DesktopBodyWidth(child: cuerpo),
     );
   }
 

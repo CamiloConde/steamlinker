@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../widgets/accesos_rapidos_panel.dart';
+import '../../../widgets/chats_columna.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
@@ -12,7 +14,6 @@ import '../../../widgets/steam_app_bar.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../chat/providers/chat_provider.dart';
-import '../../chat/screens/chat_conversation_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../matches/screens/matches_screen.dart';
 import '../../perfil/providers/perfil_provider.dart';
@@ -306,7 +307,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
               ),
             ),
             const VerticalDivider(color: SteamColors.border, width: 1),
-            const SizedBox(width: 260, child: _ChatsColumna()),
+            const SizedBox(width: 260, child: ChatsColumna()),
           ],
         ),
       );
@@ -594,190 +595,29 @@ class _AccesosRapidos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'ACCESOS RÁPIDOS',
-              style: TextStyle(
-                color: SteamColors.textSec,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          _AccesoItem(
-            icon: Icons.inbox_outlined,
-            label: 'Mis solicitudes',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MatchesScreen()),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Text(
-              'FILTRAR POR TIPO',
-              style: TextStyle(
-                color: SteamColors.textSec,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          _AccesoItem(
-            icon: Icons.apps_rounded,
-            label: 'Todos los tipos',
-            activo: filtroActivo == null || filtroActivo!.isEmpty,
-            onTap: () => onFiltrar(null),
-          ),
-          for (var i = 1; i < PublicacionConstants.tiposFiltroValores.length; i++)
-            _AccesoItem(
-              icon: Icons.label_outline,
-              label: PublicacionConstants.tiposFiltroEtiquetas[i],
-              activo: filtroActivo == PublicacionConstants.tiposFiltroValores[i],
-              onTap: () => onFiltrar(PublicacionConstants.tiposFiltroValores[i]),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccesoItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool activo;
-  final VoidCallback onTap;
-
-  const _AccesoItem({
-    required this.icon,
-    required this.label,
-    this.activo = false,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: activo ? SteamColors.bgCard : Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: activo ? SteamColors.blue : SteamColors.muted),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: activo ? SteamColors.blue : SteamColors.light,
-                    fontSize: 13,
-                    fontWeight: activo ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Columna derecha de escritorio (posición del wireframe): lista de chats.
-/// El panel de chat flotante (ver FloatingChat) cubre la conversación en sí;
-/// esta columna es solo el acceso rápido, igual que en el wireframe.
-class _ChatsColumna extends StatelessWidget {
-  const _ChatsColumna();
-
-  @override
-  Widget build(BuildContext context) {
-    final chatProv = context.watch<ChatProvider>();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return AccesosRapidosPanel(
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(
-            'CHATS',
-            style: TextStyle(
-              color: SteamColors.textSec,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1,
-            ),
+        const AccesosSeccionTitulo('ACCESOS RÁPIDOS'),
+        AccesoRapidoItem(
+          icon: Icons.inbox_outlined,
+          label: 'Mis solicitudes',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const MatchesScreen()),
           ),
         ),
-        if (chatProv.cargandoLista && chatProv.conversaciones.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-              ),
-            ),
-          )
-        else if (chatProv.conversaciones.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'No tienes conversaciones aún.',
-              style: TextStyle(color: SteamColors.textSec, fontSize: 12),
-            ),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              itemCount: chatProv.conversaciones.length,
-              itemBuilder: (context, index) {
-                final chat = Map<String, dynamic>.from(
-                  chatProv.conversaciones[index] as Map,
-                );
-                final nombre = ChatProvider.nombreOtro(chat);
-                final idChat = chat['id_chat'];
-                final inicial = nombre.isNotEmpty ? nombre[0].toUpperCase() : '?';
-
-                return ListTile(
-                  dense: true,
-                  leading: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: SteamColors.blue.withValues(alpha: 0.2),
-                    child: Text(
-                      inicial,
-                      style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w800, fontSize: 12),
-                    ),
-                  ),
-                  title: Text(
-                    nombre,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  onTap: idChat == null
-                      ? null
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ChatConversationScreen(
-                                chatId: idChat is int ? idChat : int.parse(idChat.toString()),
-                                otroNombre: nombre,
-                                otroUserId: ChatProvider.otroUserId(chat),
-                              ),
-                            ),
-                          );
-                        },
-                );
-              },
-            ),
+        const AccesosSeccionTitulo('FILTRAR POR TIPO'),
+        AccesoRapidoItem(
+          icon: Icons.apps_rounded,
+          label: 'Todos los tipos',
+          activo: filtroActivo == null || filtroActivo!.isEmpty,
+          onTap: () => onFiltrar(null),
+        ),
+        for (var i = 1; i < PublicacionConstants.tiposFiltroValores.length; i++)
+          AccesoRapidoItem(
+            icon: Icons.label_outline,
+            label: PublicacionConstants.tiposFiltroEtiquetas[i],
+            activo: filtroActivo == PublicacionConstants.tiposFiltroValores[i],
+            onTap: () => onFiltrar(PublicacionConstants.tiposFiltroValores[i]),
           ),
       ],
     );
