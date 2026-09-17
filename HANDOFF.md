@@ -931,6 +931,72 @@ escritorio y móvil, y pusheadas.
     archivo), pero el patrón `showDialog` + `AlertDialog` es idéntico al que
     ya usa `_confirmarEliminarJuego` en `perfil_screen.dart`, código
     existente y probado. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+- [x] **Pivote post-ronda-4: sidebar izquierdo + Descubrir como tarjetas
+      ricas + login con los colores actuales — el usuario probó la tabla
+      densa de Descubrir (opción 4a) y no le gustó, mandó un wireframe de
+      referencia nuevo y pidió reconstruir con esa estructura.** Confirmado
+      explícitamente por el usuario tras dos preguntas de alcance: (1)
+      sidebar izquierdo reemplaza la nav superior en **toda la app**
+      (escritorio), no solo el contenido de Descubrir — "quiero la
+      estructura de como esta hecho el wireframe"; (2) "inicio de sesión"
+      se refería a la pantalla de login, no a Inicio.
+  - **`ResponsiveShell` reescrito**: la nav horizontal (`_TopNav`) se
+    reemplaza por `Row(_SideNav, Expanded(Column(_TopBar, contenido)))`.
+    `_SideNav` (232px): logo, 5 destinos principales (Inicio/Descubrir/
+    Publicaciones/Amigos con badge de solicitudes/Perfil), sección "TUS
+    JUEGOS" (primeros 5 de `PerfilProvider.juegos`, real), tarjeta promo
+    "Conecta con otros gamers" → Descubrir. `_TopBar`: buscador (Enter o
+    clic en la lupa navegan a Descubrir y aplican el filtro — con doble
+    disparador porque el Enter por teclado es poco fiable en el navegador
+    de automatización de esta sesión, mejor no depender de uno solo),
+    notificaciones, usuario, cerrar sesión. Publicaciones/Amigos/Perfil no
+    cambiaron de contenido, solo quedaron dentro del nuevo layout — se
+    verificaron una por una para confirmar que nada se rompió.
+  - **Descubrir rehecho de tabla a tarjetas ricas** (`descubrir_gamers_screen.dart`):
+    cada tarjeta trae avatar, país, ★ reputación, bio real (`descrip_usu`),
+    una etiqueta con el tipo de publicación, carátulas de hasta 3 juegos en
+    común + contador, botón "Ver perfil", y una fila con el juego de su
+    publicación más reciente (+ horas jugadas si están registradas). Panel
+    derecho: buscador, filtros reales (juego/país/tipo — reutilizan el
+    modal ya existente), chips de umbral "juegos en común" (cliente),
+    "Ordenar por" (más en común/reputación/recientes, cliente), "GAMERS
+    ACTIVOS" (conteo real) y "JUEGOS POPULARES" (tally real de
+    `juego_reciente` sobre la lista ya cargada). **Se deliberadamente NO
+    copiaron** del wireframe de referencia: "En línea/Ausente" (no hay
+    tracking de presencia), "Idioma" y "Tipo de juego" por género (no
+    existen en el modelo de datos), ni las pestañas "Grupos"/"Publicaciones"
+    dentro de Descubrir (esa función ya vive en su propia sección de nav,
+    duplicarla habría revivido la confusión Descubrir/Publicaciones que se
+    resolvió en la ronda 4) — mismo criterio de "nada inventado" de todo
+    el resto de esta sesión.
+  - **Backend**: `GET /perfil/descubrir` gana dos campos derivados de la
+    biblioteca verificada, sin tabla nueva: `juegos_comunes_muestra` (hasta
+    3 juegos en común, con carátula, vía `json_agg`) y `juego_reciente`
+    (el juego de la publicación activa más reciente del usuario + horas
+    jugadas propias en ese juego si las tiene registradas, vía
+    `row_to_json`). Test actualizado en `tests/perfil.descubrir.test.js`.
+  - **Login (`login_screen.dart`) tenía colores hexadecimales sueltos
+    (`Color(0xFF1A9FFF)`, `Color(0xFF161B22)`, etc.) de antes de que
+    existiera `SteamColors`, nunca migrados** — por eso se sentía
+    "desactualizado" frente al resto de la app aunque ya tenía la nota de
+    Steam y el descargo de Valve de la ronda 4. Reemplazados uno a uno por
+    los tokens de `SteamColors`/`SteamRadii` (logo con degradado azul→cian
+    en vez de un círculo azul plano, fondo `bgDeep`, tarjeta `bgCard`,
+    bordes `border`, texto `textSec`/`muted`/`light`), y el botón principal
+    ahora declara `foregroundColor` explícito (mismo patrón del bug de
+    Material 3 arreglado antes en esta sesión, para que no quede en riesgo
+    si algún día cambia el tema). Test `widget_test.dart` actualizado
+    ("INICIAR SESION" → "INICIAR SESIÓN", con tilde, consistente con el
+    resto de la app).
+  - Verificado en navegador: sidebar + top bar funcionando en Inicio/
+    Descubrir/Publicaciones/Amigos/Perfil sin regresiones; buscador de la
+    barra superior filtra Descubrir correctamente (probado con clic en la
+    lupa); tarjetas de Descubrir con datos reales de 3 usuarios de prueba
+    (bio, tipo, juegos en común con carátula, orden por "más en común");
+    panel derecho con GAMERS ACTIVOS y JUEGOS POPULARES correctos; login
+    con la paleta actual en escritorio y móvil, formulario de registro
+    también. `flutter analyze`: 0 issues. `flutter test`: 10/10. Backend:
+    15/15.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

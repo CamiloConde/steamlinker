@@ -13,7 +13,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('INICIAR SESION'), findsOneWidget);
+    expect(find.text('INICIAR SESIÓN'), findsOneWidget);
     expect(find.text('Servidor'), findsOneWidget);
   });
 }

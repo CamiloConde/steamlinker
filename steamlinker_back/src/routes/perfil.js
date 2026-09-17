@@ -37,8 +37,11 @@ router.put('/editar', verificarToken, async (req, res) => {
 // GET /perfil/descubrir
 // Usuarios con publicaciones activas (para encontrar familia / miembros).
 // Incluye juegos en comun (de la biblioteca verificada, no de lo que el
-// usuario diga tener), total de juegos, tipo de su publicacion mas reciente
-// y si tiene Steam vinculado (insignia de "verificado" en la tabla).
+// usuario diga tener) con una muestra de hasta 3 para mostrar carátulas,
+// total de juegos, tipo de su publicacion mas reciente, si tiene Steam
+// vinculado (insignia de "verificado"), y el juego de su publicacion mas
+// reciente (con horas jugadas si las tiene registradas) para la fila de
+// "juego destacado" de la tarjeta.
 router.get('/descubrir', verificarToken, async (req, res) => {
     const { tipo, pais, appid } = req.query;
 
@@ -55,7 +58,26 @@ router.get('/descubrir', verificarToken, async (req, res) => {
                    (SELECT COUNT(*)::int FROM usuarios_juegos uj1
                     JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
                     WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu) AS juegos_en_comun,
-                   EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = u.id_usu) AS steam_vinculado
+                   EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = u.id_usu) AS steam_vinculado,
+                   (SELECT json_agg(row_to_json(jc)) FROM (
+                        SELECT j.appid, j.nom_jg, j.headerimg_jg
+                        FROM usuarios_juegos uj1
+                        JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
+                        JOIN juegos j ON j.appid = uj1.appid
+                        WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu
+                        LIMIT 3
+                    ) jc) AS juegos_comunes_muestra,
+                   (SELECT row_to_json(jr) FROM (
+                        SELECT j.appid, j.nom_jg, j.headerimg_jg,
+                               (SELECT uj.horas_usujg FROM usuarios_juegos uj
+                                WHERE uj.id_usu = u.id_usu AND uj.appid = j.appid) AS horas
+                        FROM publicaciones p4
+                        JOIN publicacion_juegos pj4 ON pj4.id_publi = p4.id_publi
+                        JOIN juegos j ON j.appid = pj4.appid
+                        WHERE p4.id_usu = u.id_usu AND p4.estado_publi = TRUE
+                        ORDER BY p4.creadoen_publi DESC
+                        LIMIT 1
+                    ) jr) AS juego_reciente
             FROM usuarios u
             JOIN publicaciones p ON p.id_usu = u.id_usu
             LEFT JOIN publicacion_juegos pj ON pj.id_publi = p.id_publi

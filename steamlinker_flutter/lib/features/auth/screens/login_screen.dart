@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_dev_server_chip.dart';
@@ -104,6 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
+      backgroundColor: SteamColors.bgDeep,
       body: Stack(
         children: [
           Center(
@@ -120,25 +122,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   width: 64,
                   height: 64,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: const Color(0xFF1A9FFF),
+                    gradient: LinearGradient(
+                      colors: [SteamColors.blue, SteamColors.teal],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                  child: const Icon(Icons.games, color: Colors.white, size: 32),
+                  child: const Icon(Icons.sports_esports, color: Colors.white, size: 32),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'STEAMLINKER',
+                  'STEAMMATCH',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
-                    color: Colors.white,
+                    color: SteamColors.light,
                   ),
                 ),
                 const Text(
                   'Tu conector de comunidad gamer',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF8B949E)),
+                  style: TextStyle(fontSize: 13, color: SteamColors.textSec),
                 ),
                 const SizedBox(height: 40),
 
@@ -146,17 +152,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161B22),
+                    color: SteamColors.bgCard,
                     borderRadius: BorderRadius.circular(SteamRadii.sm),
-                    border: Border.all(color: const Color(0xFF30363D)),
+                    border: Border.all(color: SteamColors.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
                       Text(
-                        _mostrarRegistro ? 'CREAR CUENTA' : 'INICIAR SESION',
+                        _mostrarRegistro ? 'CREAR CUENTA' : 'INICIAR SESIÓN',
                         style: const TextStyle(
+                          color: SteamColors.light,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5,
@@ -167,13 +174,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Campo username solo en registro
                       if (_mostrarRegistro) ...[
                         const Text('NOMBRE DE USUARIO',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF8B949E), letterSpacing: 1)),
+                            style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _usernameController,
+                          style: const TextStyle(color: SteamColors.light),
                           decoration: const InputDecoration(
                             hintText: 'Tu nombre de usuario',
-                            prefixIcon: Icon(Icons.person_outline, size: 18),
+                            hintStyle: TextStyle(color: SteamColors.muted),
+                            prefixIcon: Icon(Icons.person_outline, size: 18, color: SteamColors.muted),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -181,32 +190,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Campo email
                       const Text('CORREO',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8B949E), letterSpacing: 1)),
+                          style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        style: const TextStyle(color: SteamColors.light),
                         decoration: const InputDecoration(
                           hintText: 'tu@correo.com',
-                          prefixIcon: Icon(Icons.email_outlined, size: 18),
+                          hintStyle: TextStyle(color: SteamColors.muted),
+                          prefixIcon: Icon(Icons.email_outlined, size: 18, color: SteamColors.muted),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Campo contrasena
                       const Text('CONTRASEÑA',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF8B949E), letterSpacing: 1)),
+                          style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _passwordController,
                         obscureText: !_verPassword,
+                        style: const TextStyle(color: SteamColors.light),
                         decoration: InputDecoration(
                           hintText: '••••••••',
-                          prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                          hintStyle: const TextStyle(color: SteamColors.muted),
+                          prefixIcon: const Icon(Icons.lock_outline, size: 18, color: SteamColors.muted),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _verPassword ? Icons.visibility_off : Icons.visibility,
                               size: 18,
+                              color: SteamColors.muted,
                             ),
                             onPressed: () => setState(() => _verPassword = !_verPassword),
                           ),
@@ -219,19 +233,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
+                            color: SteamColors.red.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(SteamRadii.sm),
-                            border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                            border: Border.all(color: SteamColors.red.withValues(alpha: 0.3)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.error_outline, color: Colors.red, size: 16),
+                              const Icon(Icons.error_outline, color: SteamColors.red, size: 16),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   auth.error!,
                                   style: const TextStyle(
-                                    color: Colors.red,
+                                    color: SteamColors.red,
                                     fontSize: 12,
                                     height: 1.4,
                                   ),
@@ -249,6 +263,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 44,
                         child: ElevatedButton(
                           onPressed: auth.cargando ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: SteamColors.blue,
+                            foregroundColor: Colors.white,
+                          ),
                           child: auth.cargando
                               ? const SizedBox(
                                   width: 20,
@@ -265,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.only(top: 16),
                         decoration: const BoxDecoration(
-                          border: Border(top: BorderSide(color: Color(0xFF30363D))),
+                          border: Border(top: BorderSide(color: SteamColors.border)),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +295,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(4),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF3B82F6), Color(0xFF22D3EE)],
+                                  colors: [SteamColors.blue, SteamColors.teal],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -290,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'dentro de Perfil. Hace falta solo para publicar o '
                                 'matchear en Familia.',
                                 style: TextStyle(
-                                  color: Color(0xFF8B949E),
+                                  color: SteamColors.textSec,
                                   fontSize: 12,
                                   height: 1.4,
                                 ),
@@ -310,16 +328,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       _mostrarRegistro ? '¿Ya tienes cuenta? ' : '¿No tienes cuenta? ',
-                      style: const TextStyle(color: Color(0xFF8B949E), fontSize: 13),
+                      style: const TextStyle(color: SteamColors.textSec, fontSize: 13),
                     ),
                     GestureDetector(
                       onTap: () => setState(() {
                         _mostrarRegistro = !_mostrarRegistro;
                       }),
                       child: Text(
-                        _mostrarRegistro ? 'Inicia sesion' : 'Crear cuenta gratis',
+                        _mostrarRegistro ? 'Inicia sesión' : 'Crear cuenta gratis',
                         style: const TextStyle(
-                          color: Color(0xFF1A9FFF),
+                          color: SteamColors.blue,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -341,7 +359,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Center(
                 child: Text(
                   'No afiliado a Valve Corporation',
-                  style: TextStyle(color: Color(0xFF8B949E), fontSize: 11),
+                  style: TextStyle(color: SteamColors.muted, fontSize: 11),
                 ),
               ),
             ),

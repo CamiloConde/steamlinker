@@ -36,10 +36,15 @@ before(async () => {
 
     // El otro usuario necesita una publicacion activa para aparecer en
     // /perfil/descubrir (solo lista gente con publicaciones abiertas).
+    // Le asociamos el mismo juego para poder probar juego_reciente.
     await request(app)
         .post('/publicaciones/crear')
         .set('Authorization', `Bearer ${tokenOtro}`)
-        .send({ tipo: 'busco_companero', titulo: 'Publicacion de prueba descubrir' });
+        .send({
+            tipo: 'busco_companero',
+            titulo: 'Publicacion de prueba descubrir',
+            juegos: [{ appid: 990990, nombre: 'Juego de prueba comun' }],
+        });
 });
 
 after(async () => {
@@ -60,4 +65,7 @@ test('descubrir incluye juegos_en_comun, total_juegos y steam_vinculado', async 
     assert.equal(fila.total_juegos, 1);
     assert.equal(fila.steam_vinculado, false);
     assert.equal(fila.tipo_publi_reciente, 'busco_companero');
+    assert.equal(fila.juegos_comunes_muestra.length, 1);
+    assert.equal(fila.juegos_comunes_muestra[0].appid, 990990);
+    assert.equal(fila.juego_reciente.appid, 990990);
 });
