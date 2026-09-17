@@ -804,6 +804,41 @@ backend que no vale la pena anticipar sin datos de uso).
     dato coherente entre Inicio y Perfil gracias al helper compartido.
     Verificado en móvil (375px): el grid se envuelve a 2x2 sin overflow.
     `flutter analyze`: 0 issues. `flutter test`: 10/10.
+- [x] **Detalle de publicación — panel de cupos con roster real (turno 4,
+      opción 4c).** Sexta pieza del rediseño confirmado. Antes el detalle
+      solo mostraba un chip de relación (match/amistad) y el botón "Enviar
+      match" sin contexto de cuántos cupos hay ni quién ya confirmó. Se
+      agregó un panel "CONFIRMADOS N/total" (número grande monoespaciado +
+      barra de progreso + roster: avatar y username de cada quien se unió,
+      más círculos punteados "Libre" para los cupos que faltan) — solo
+      aparece si la publicación tiene `cupos_totales` (familia/miembros, o
+      compañero si el autor puso cupos). También un aviso "Tienes este juego
+      verificado en tu biblioteca" cuando el juego de la publicación ya está
+      en la biblioteca verificada del visitante. Aplica igual en móvil y
+      escritorio (no se restructuró a 2 columnas como en el wireframe — el
+      panel se inserta como una tarjeta más en la misma columna única que ya
+      tenía la pantalla, que es de menor riesgo y entrega el mismo valor:
+      "hace visible lo que el backend ya calcula antes de actuar").
+  - **Backend**: `GET /publicaciones/:id` no traía el roster de quién se
+    unió, solo el conteo (`cupos_ocupados`). Se agregó una query que trae
+    `id_usu`+`username_usu` de cada solicitante con match Aceptado sobre esa
+    publicación (`confirmados`), y `cupos_ocupados` ahora se deriva de ese
+    mismo array en vez de una segunda query redundante. Nuevo test
+    `tests/publicaciones.detalle.test.js`.
+  - **Decisión de scope**: el botón "Enviar match" se dejó donde ya estaba
+    en el flujo de acciones, en vez de moverlo dentro del panel como en el
+    mockup — moverlo hubiera significado duplicar la lógica de estados de
+    relación (match pendiente/aceptado, amistad, etc.) en dos lugares. El
+    panel es puramente informativo; la acción sigue siendo una sola fuente
+    de verdad.
+  - Verificado en navegador con 3 usuarios de prueba reales (autor con
+    publicación `busco_companero` y 4 cupos, un solicitante con match
+    aceptado, un tercer usuario visitante con el mismo juego en su
+    biblioteca): panel muestra `1/4`, roster con el solicitante real + 3
+    "Libre", aviso de biblioteca verificada visible, resto de la pantalla
+    (juegos, comentarios) sin cambios. Verificado en móvil (375px): mismo
+    contenido, sin overflow. `flutter analyze`: 0 issues. `flutter test`:
+    10/10. Backend: 14/14.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

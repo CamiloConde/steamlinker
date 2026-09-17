@@ -316,16 +316,23 @@ router.get('/:id', async (req, res) => {
             [req.params.id]
         );
 
-        const ocupados = await pool.query(
-            `SELECT COUNT(*)::int AS n FROM matches
-             WHERE id_publi = $1 AND estado_match = 'Aceptada'`,
+        // Quienes se unieron (matches aceptados): el solicitante es quien
+        // pidio entrar, no el dueno de la publicacion. Esto es el roster
+        // real que respalda el panel de cupos ("CONFIRMADOS N/M").
+        const confirmados = await pool.query(
+            `SELECT u.id_usu, u.username_usu
+             FROM matches m
+             JOIN usuarios u ON u.id_usu = m.id_solicitante
+             WHERE m.id_publi = $1 AND m.estado_match = 'Aceptada'
+             ORDER BY m.creadoen_match ASC`,
             [req.params.id]
         );
 
         res.json({
             ...resultado.rows[0],
             juegos: juegos.rows,
-            cupos_ocupados: ocupados.rows[0].n,
+            cupos_ocupados: confirmados.rows.length,
+            confirmados: confirmados.rows,
         });
 
     } catch (err) {

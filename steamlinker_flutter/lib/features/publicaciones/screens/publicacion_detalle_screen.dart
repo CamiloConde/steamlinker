@@ -15,6 +15,7 @@ import '../../chat/providers/chat_provider.dart';
 import '../../chat/screens/chat_conversation_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
+import '../../perfil/providers/perfil_provider.dart';
 import '../../usuarios/screens/usuario_detalle_screen.dart';
 import '../providers/publicaciones_provider.dart';
 
@@ -49,11 +50,14 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
 
   Future<void> _cargar() async {
     final prov = context.read<PublicacionesProvider>();
+    final perfilProv = context.read<PerfilProvider>();
+    final miId = context.read<AuthProvider>().usuario?['id'] as int?;
     await prov.cargarPorId(widget.idPubli);
     if (!mounted) return;
     await Future.wait([
       _cargarRelacion(),
       prov.cargarComentarios(widget.idPubli),
+      if (miId != null && perfilProv.juegos.isEmpty) perfilProv.cargarPerfil(miId),
     ]);
   }
 
@@ -179,10 +183,18 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<PublicacionesProvider>();
     final auth = context.watch<AuthProvider>();
+    final perfilProv = context.watch<PerfilProvider>();
     final pub = prov.detalle;
     final miId = auth.usuario?['id'];
     final esMia = pub != null && miId == pub['id_usu'];
     final autorId = pub?['id_usu'] as int?;
+
+    final tieneJuego = pub != null &&
+        !esMia &&
+        (pub['juegos'] as List<dynamic>? ?? []).any((j) {
+          final appid = (j as Map)['appid'];
+          return perfilProv.juegos.any((mio) => mio['appid'] == appid);
+        });
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
@@ -292,6 +304,14 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
                             pub: pub,
                             onTapPerfil: () => _irPerfil(pub),
                           ),
+                          if (pub['cupos_totales'] != null) ...[
+                            const SizedBox(height: 12),
+                            _PanelCupos(pub: pub),
+                          ],
+                          if (tieneJuego) ...[
+                            const SizedBox(height: 10),
+                            const _TieneJuegoBox(),
+                          ],
                           const SizedBox(height: 16),
                           if (!esMia && autorId != null) ...[
                             RelacionStatusRow(relacion: _relacion),
@@ -647,6 +667,179 @@ class _EstadoCerrada extends StatelessWidget {
       child: const Text(
         'Cerrada',
         style: TextStyle(color: SteamColors.red, fontSize: 11, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// Panel de cupos (wireframe turno 4, opción 4c): hace visible lo que el
+/// backend ya calcula (matches aceptados / cupos_totales) con el roster
+/// real de quién confirmó, en vez de solo un número suelto.
+class _PanelCupos extends StatelessWidget {
+  final Map<String, dynamic> pub;
+
+  const _PanelCupos({required this.pub});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = pub['cupos_totales'] as int;
+    final confirmados = ((pub['confirmados'] as List<dynamic>?) ?? [])
+        .map((c) => Map<String, dynamic>.from(c as Map))
+        .toList();
+    final ocupados = confirmados.length;
+    final libres = (total - ocupados).clamp(0, total);
+    const maxFilas = 8;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SteamColors.bgPanel,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.blue),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'CONFIRMADOS',
+            style: TextStyle(
+              color: SteamColors.muted,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$ocupados',
+                  style: const TextStyle(
+                    color: SteamColors.teal,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                TextSpan(
+                  text: '/$total',
+                  style: const TextStyle(
+                    color: SteamColors.muted,
+                    fontSize: 15,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: total > 0 ? (ocupados / total).clamp(0, 1) : 0,
+              minHeight: 5,
+              backgroundColor: SteamColors.bgInput,
+              valueColor: const AlwaysStoppedAnimation(SteamColors.teal),
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final c in confirmados.take(maxFilas))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 7),
+              child: _FilaCupo(texto: c['username_usu']?.toString() ?? 'Usuario'),
+            ),
+          for (var i = 0; i < libres && confirmados.length + i < maxFilas; i++)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 7),
+              child: _FilaCupo(texto: 'Libre', libre: true),
+            ),
+          if (confirmados.length + libres > maxFilas)
+            Text(
+              '+${confirmados.length + libres - maxFilas} más',
+              style: const TextStyle(color: SteamColors.muted, fontSize: 11),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilaCupo extends StatelessWidget {
+  final String texto;
+  final bool libre;
+
+  const _FilaCupo({required this.texto, this.libre = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        if (libre)
+          Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: SteamColors.border, style: BorderStyle.solid),
+            ),
+          )
+        else
+          Container(
+            width: 22,
+            height: 22,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [SteamColors.blue, SteamColors.teal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              texto.isNotEmpty ? texto[0].toUpperCase() : '?',
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+            ),
+          ),
+        const SizedBox(width: 9),
+        Text(
+          texto,
+          style: TextStyle(
+            color: libre ? SteamColors.muted : SteamColors.light,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TieneJuegoBox extends StatelessWidget {
+  const _TieneJuegoBox();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: SteamColors.bgPanel,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.border),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.check_circle, size: 16, color: SteamColors.teal),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Tienes este juego verificado en tu biblioteca',
+              style: TextStyle(color: SteamColors.teal, fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
