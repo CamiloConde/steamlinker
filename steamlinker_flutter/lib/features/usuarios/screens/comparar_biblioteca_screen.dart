@@ -61,7 +61,7 @@ class CompararBibliotecaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '$commonCount juegos en común',
+                  '$commonCount juego${commonCount == 1 ? '' : 's'} en común',
                   style: const TextStyle(
                     color: SteamColors.blue,
                     fontSize: 22,

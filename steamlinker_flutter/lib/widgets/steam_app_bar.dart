@@ -90,6 +90,7 @@ class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? null
           : Text(
               title,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: SteamColors.light,
                 fontSize: 13,
@@ -140,74 +141,44 @@ class _LogoLeading extends StatelessWidget {
   }
 }
 
+/// Solo el avatar (sin nombre ni "En línea" repetidos en cada pantalla): ese
+/// bloque de texto era puro chrome redundante — ya hay una pestaña Perfil en
+/// el bottom nav — y en pantallas con varios íconos de acción propios
+/// (Descubrir, Publicaciones) empujaba el título fuera del espacio
+/// disponible en móvil, a veces hasta dejarlo invisible. Ver HANDOFF.md.
 class _UserActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         final usuario = auth.usuario;
-        final username = usuario?['username'] ?? 'Usuario';
+        final username = usuario?['username'] as String? ?? 'Usuario';
         final inicial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
         return Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    username,
-                    style: const TextStyle(
-                      color: SteamColors.light,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Row(children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: SteamColors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'En línea',
-                      style: TextStyle(color: SteamColors.green, fontSize: 10),
-                    ),
-                  ]),
-                ],
+          padding: const EdgeInsets.only(right: 4),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
+              gradient: const LinearGradient(
+                colors: [SteamColors.blue, SteamColors.teal],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(width: 10),
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(SteamRadii.sm),
-                  gradient: const LinearGradient(
-                    colors: [SteamColors.blue, SteamColors.teal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(color: SteamColors.blue, width: 2),
-                ),
-                child: Center(
-                  child: Text(
-                    inicial,
-                    style: const TextStyle(
-                      color: SteamColors.light,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
+              border: Border.all(color: SteamColors.blue, width: 1.5),
+            ),
+            child: Center(
+              child: Text(
+                inicial,
+                style: const TextStyle(
+                  color: SteamColors.light,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
-            ],
+            ),
           ),
         );
       },

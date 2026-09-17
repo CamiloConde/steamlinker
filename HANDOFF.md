@@ -1050,6 +1050,165 @@ rebuild, recarga una segunda vez antes de asumir que el código está mal.
 - [ ] Beta web pública, recoger feedback real antes de empaquetar formalmente
       Android/iOS/Desktop (Flutter ya los soporta con el mismo código — ahí no hay
       trabajo de plataforma nuevo, es empaque y QA)
+- [x] **Auditoría real en móvil (clic por clic, no solo revisión de código) —
+      pedida después de aprobar el sidebar/Descubrir/login.** El usuario
+      reportó "funciones que no hacen nada", funciones "bugeadas" y pidió
+      una revisión general. Se encontraron y arreglaron 3 bugs reales:
+  - **Bug real: "Reseñas" se quedaba cargando para siempre** (spinner
+    infinito). Causa raíz: `CalificacionesProvider.cargarDeUsuario()` casteaba
+    `respuesta.data['promedio']` directo a `num`, pero Postgres devuelve
+    `AVG()` como **string** (`"0.00"`), no como número JSON — el cast
+    lanzaba un `TypeError` que el `catch (DioException)` no atrapaba
+    (no es una `DioException`), así que `_cargandoResenas` nunca volvía a
+    `false`. Arreglado con `double.tryParse('${...}')` en vez de un cast
+    directo. Mismo tipo de bug que otros ya arreglados esta sesión: el
+    backend y el frontend asumían tipos distintos para el mismo campo.
+  - **Bug real: el título de la barra superior desaparecía o se cortaba en
+    móvil** ("DESCUBRIR" no se veía nada, "NOTIFICACIONES"→"NOT...",
+    "PUBLICACIONES"→"PUBLIC..."). Causa raíz: cada pantalla repetía un
+    bloque de usuario (nombre + "En línea" + avatar, sin `onTap`, puro
+    adorno) en su propia `SteamAppBar`, y en pantallas con varios íconos de
+    acción (Descubrir tiene 3: bandeja, filtros, refrescar) la suma de
+    íconos + ese bloque ancho superaba los 375px disponibles y empujaba el
+    título fuera de la pantalla — en release no se ve el aviso de overflow
+    que sí aparece en debug, así que quedaba invisible sin ningún error
+    visible. Arreglado en `steam_app_bar.dart`: `_UserActions` se redujo a
+    solo el avatar (se quitó el nombre y "En línea", que además eran
+    redundantes — ya existe la pestaña Perfil en el bottom nav) y el título
+    ganó `overflow: TextOverflow.ellipsis` como defensa adicional.
+  - **Bug menor: pluralización** — "1 juegos en común" en
+    `comparar_biblioteca_screen.dart` (siempre plural). Arreglado.
+  - **Hallazgo, no bug de código — 3 controles de Configuración no hacen
+    nada**: se confirmó con `grep` que `notificaciones_amigos`, `dos_factor`
+    y `correos_promocionales` se guardan en la base de datos pero **no se
+    leen en ningún otro lugar del backend** — no gatean ninguna conducta
+    real. Compárese con `perfil_publico` y `mostrar_biblioteca`, que sí se
+    usan como condición real en `/perfil/descubrir` y `/perfil/comparar/:id`.
+    "Notificaciones de amigos" además promete algo que no existe (avisar
+    cuando un amigo se conecta) — no hay tracking de presencia en todo el
+    backend. Decisión pendiente: implementarlos de verdad o quitarlos de la
+    pantalla de Configuración; no dejarlos como controles decorativos.
+  - **Hallazgo — la pestaña "Interesantes" de Avisos (marcar notificaciones
+    con 👍/👎) funciona mecánicamente pero no tiene un propósito claro.**
+    No hay ningún algoritmo o filtro que lea esa marca para nada (no
+    reordena ni prioriza notificaciones futuras) — es un archivador manual
+    autorreferencial. Además el texto de ayuda de esa pestaña vacía tiene un
+    glifo roto (▯) en vez de un ícono real. Se deja documentado para
+    decidir: quitarla, o darle un propósito real (ej. que SÍ afecte qué se
+    prioriza).
+  - **Hallazgo — "Match recibido" en el perfil de otro usuario es un botón
+    con `onTap: null`**: mismo componente visual (`SteamButtonOutline`) que
+    los botones reales de esa pantalla, solo diferenciado por un color de
+    texto más apagado cuando está deshabilitado — fácil de confundir con un
+    botón funcional en un vistazo rápido en móvil. Junto con "Amigos"
+    apareciendo dos veces (chip de estado arriba + barra debajo) y "Ver
+    reseñas" apareciendo dos veces (botón + menú de tres puntos) en la misma
+    pantalla — redundancia visual real, no solo percepción del usuario.
+  - Resto de la app probado en vivo en móvil (Inicio, Amigos con aceptar
+    solicitud real, chat con mensaje real, Publicaciones con crear/filtrar,
+    Perfil/Configuración completo, Descubrir) **sin más bugs encontrados** —
+    el resto funciona como se diseñó. `flutter analyze`: 0 issues.
+    `flutter test`: 10/10.
+
+### Roadmap hacia 1.0 — todo lo pedido por el usuario para guardar de cara a
+### futuras sesiones, con criterio de priorización
+
+El usuario pidió guardar una lista larga de funciones para la 1.0 y dejó
+claro que quiere mi opinión honesta sobre qué es necesario y qué no — **no
+se debe interpretar como "hacer todo esto en la próxima sesión"**, es una
+mochila de trabajo pendiente para ir sacando por partes, priorizada.
+
+**Preguntas puntuales que el usuario hizo, con la respuesta dada en el chat
+(no repetida en detalle aquí, solo el resumen de la decisión):**
+- *Buscador siempre visible en la barra superior de escritorio*: el usuario
+  dudaba de si tiene sentido. Opinión dada: tiene sentido si de verdad busca
+  jugadores (ya lo hace, filtra Descubrir), pero hoy es la única pieza de la
+  UI que promete "búsqueda global" sin serlo — vale la pena, no quitarlo.
+- *Login de Steam vía SteamID/URL vs. "Iniciar sesión con Steam" (OpenID)*:
+  el usuario prefiere el flujo tipo OAuth que usan otras webs. Steam ofrece
+  esto gratis (OpenID 2.0, sin necesidad de una app registrada como en
+  Google/Discord) — es totalmente viable y bastante más cómodo que pegar una
+  URL. Se agrega como ítem concreto del roadmap (ver "Cuenta y login" abajo).
+- *Notificaciones "interesantes"*: ver el hallazgo de la auditoría arriba —
+  existe, funciona, pero no tiene un propósito claro todavía.
+
+**Nivel 1 — fundamentales para cualquier beta pública (no son "nice to
+have", son requisitos mínimos para que lanzar sea responsable):**
+- [ ] Aviso legal / términos de servicio
+- [ ] Política de privacidad (con qué datos se guardan, biblioteca de Steam
+      incluida, y por cuánto tiempo)
+- [ ] Aviso de cookies, si la versión web usa alguna más allá del token de
+      sesión en localStorage (revisar primero si aplica de verdad)
+- [ ] Página 404 personalizada
+- [ ] Una sola llamada a la acción clara en cada pantalla de entrada (hoy
+      Inicio ya tiende a esto tras el rediseño de la ronda 4; revisar que
+      login/registro no compitan entre sí)
+- [ ] **Seguridad**: el usuario pidió explícitamente "tocar" esto. Punto de
+      partida real (no específico de esta sesión): revisar rate-limiting en
+      login/registro (fuerza bruta), expiración/rotación de JWT, sanitización
+      de inputs en comentarios/descripciones (XSS), y CORS en producción.
+      Nada de esto se auditó a fondo todavía — es trabajo propio, no una
+      lista de deseos.
+
+**Nivel 2 — mejoras de producto con impacto real, más baratas de lo que
+parecen:**
+- [ ] Formulario de contacto / sugerencias / quejas, con validación real y
+      protección anti-spam básica (honeypot o rate-limit por IP alcanza para
+      una beta; reCAPTCHA es overkill al inicio)
+- [ ] Mensajes de error y de éxito consistentes (hoy varían entre
+      `ScaffoldMessenger.showSnackBar` genérico y `showSteamToast` propio —
+      unificar antes de que crezca más)
+- [ ] Favicon custom (hoy usa el default de Flutter web)
+- [ ] Loading screen inicial (hoy el arranque de Flutter Web puede verse en
+      blanco unos segundos)
+- [ ] Botón "volver arriba" en listas largas (Descubrir, Publicaciones)
+- [ ] Optimización de velocidad: ya se hizo tree-shaking de íconos en cada
+      build; falta medir con Lighthouse una vez esté desplegado, no antes
+- [ ] Arreglar los hallazgos de la auditoría de esta sesión que quedaron
+      pendientes (controles de Configuración que no hacen nada, pestaña
+      "Interesantes" sin propósito, botones fantasma tipo "Match recibido")
+
+**Nivel 3 — pulido visual, alto costo/beneficio dudoso para una beta:**
+- [ ] Animaciones suaves de scroll, microinteracciones en botones, estados
+      hover — Flutter Web ya trae algo de esto gratis (`InkWell`, splash);
+      lo que falta es intencional, no ausente por accidente. Vale la pena
+      solo si hay tiempo sobrante, no es lo que hace o deshace el producto.
+  - [ ] Transiciones entre pantallas
+  - [ ] Animación del hero/banner de bienvenida en Inicio
+- [ ] Selector de idioma (inglés + español Colombia): técnicamente viable
+      con `flutter_localizations`, pero es trabajo real (extraer TODOS los
+      strings hardcodeados del código a archivos `.arb`) — no es un toggle.
+      Opinión: dejarlo para después de tener usuarios reales que lo pidan;
+      hoy sería trabajo especulativo.
+- [ ] Botones de redes sociales: el propio usuario duda del valor — de
+      acuerdo, bajo prioridad. Si se hace, que lleve a compartir un perfil o
+      publicación real, no solo íconos decorativos a redes de la empresa.
+
+**Nivel 4 — funciones grandes, evaluar solo con tracción real de usuarios:**
+- [ ] Login con Google (opcional, ya lo marcó el usuario como no urgente)
+- [ ] Login con Steam vía OpenID (ver opinión arriba — más barato que Google
+      y encaja mejor con la identidad del producto, así que si se hace uno
+      de los dos primero, que sea este)
+- [ ] Monetización tipo Patreon (internacional) + Nequi/Bancolombia para
+      Colombia: separar en dos problemas distintos — (a) la integración de
+      pagos en sí (Nequi/Bancolombia requieren ser persona jurídica o usar
+      un agregador como Wompi/ePayco; Patreon es una API bien documentada
+      pero cobra comisión), y (b) qué se ofrece a cambio (¿solo agradecer,
+      o alguna función real para donantes?). No empezar esto sin tener claro
+      qué se promete al que paga.
+- [ ] Panel de administración renovado a la par del resto de la app (hoy
+      `AdminPanelSection` es funcional pero no ha recibido el mismo
+      tratamiento visual que el resto desde la ronda 4)
+
+**Mi criterio general, ya que se pidió directamente:** no, no hay que hacer
+todo esto — varias cosas de los niveles 3 y 4 son apuestas razonables solo
+si el producto ya tiene usuarios reales dándole señal de qué vale la pena
+(idiomas, redes sociales, Patreon). Lo que sí es innegociable para cualquier
+beta pública responsable es el Nivel 1 completo (legal + seguridad básica) y
+limpiar los hallazgos de la auditoría de hoy (Nivel 2, último punto) antes
+de invertir en pulido visual. El orden sugerido si se retoma esto en una
+sesión futura: Nivel 1 → limpiar hallazgos de auditoría → Nivel 2 → recién
+ahí evaluar Niveles 3 y 4 con la app ya en manos de gente real.
 
 ## 12. Cómo retomar
 

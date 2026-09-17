@@ -25,8 +25,8 @@ class CalificacionesProvider extends ChangeNotifier {
     try {
       final respuesta = await ApiClient.dio.get('/calificaciones/usuario/$userId');
       _resenas = respuesta.data['calificaciones'] ?? [];
-      _promedioResenas =
-          (respuesta.data['promedio'] as num?)?.toDouble() ?? 0;
+      // Postgres devuelve AVG() como string (numeric), no como JSON number.
+      _promedioResenas = double.tryParse('${respuesta.data['promedio']}') ?? 0;
       _totalResenas = respuesta.data['total'] as int? ?? _resenas.length;
       _cargandoResenas = false;
       notifyListeners();
