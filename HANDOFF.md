@@ -256,6 +256,14 @@ identidad genérica inventada.**
 - Azul de acento actualizado a **`#66C0F4`** (el azul real de acento de Steam), en vez
   del `#4C91C9` más apagado que se usaba antes.
 
+**Actualización — este azul pastel se abandonó más adelante.** El usuario lo sintió
+"apagado"/"triste" al ver la app terminada, y tras comparar contra una paleta más
+vívida inspirada en el wireframe (canvas de diseño, confirmado explícitamente), se
+cambió a `#3B82F6`. El resto de la dirección "Fiel a Steam" (una sola tipografía,
+radio casi recto, mayúsculas+tracking en etiquetas) sigue vigente — ver el checklist
+de Fase 5 (entrada "Paleta de color renovada") para el detalle completo de qué tokens
+cambiaron y por qué.
+
 **Implementado en esta sesión (a nivel de tokens del theme, no pantalla por
 pantalla):**
 - `steamlinker_flutter/pubspec.yaml` — agregado `google_fonts: ^6.2.1` (resuelto a
@@ -530,6 +538,33 @@ backend que no vale la pena anticipar sin datos de uso).
       navegador: Inicio/Perfil/Notificaciones en escritorio ya no repiten
       usuario ni logout, y en móvil (375px) cada pantalla conserva su propio
       logout como antes. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+- [x] **Paleta de color renovada — se abandona el azul pastel de "Fiel a
+      Steam" por sentirse apagado.** El usuario mandó una captura del wireframe
+      original y pidió comparar esa dirección de color contra la actual. Se
+      armaron dos opciones lado a lado en un canvas de diseño (Artifact),
+      aplicadas a piezas reales de la UI (nav, card de publicación, botón,
+      chips) — no solo swatches sueltos — y el usuario confirmó explícitamente
+      la nueva dirección: **"siii me gusta la nueva"**. Cambia
+      `lib/theme/colors.dart` (única fuente de verdad de color, así que
+      cascadea a toda la app sin tocar pantalla por pantalla):
+      `bgDeep #0E1621→#0A0E1A`, `bgPanel #1B2838→#121729`,
+      `bgCard #16202D→#141A2E`, `bgInput #0D1117→#10162A`,
+      `border #2A3F5A→#262E45`, `blue #66C0F4→#3B82F6` (más saturado/vívido),
+      `teal #1B9AAA→#22D3EE` (ahora más cian, para el degradado de avatares),
+      `light #C7D5E0→#F2F4F9` (texto principal casi blanco, más contraste),
+      `muted #7A9AB0→#8891AB`, `textSec #8FA8BE→#9AA3BD`. Los semánticos
+      (green/red/yellow/purple/orange) no se tocaron. También se reemplazó el
+      `Color(0xFF2A4A6B)` que estaba *hardcodeado* (no como token) en 6 sitios
+      distintos como primer color del degradado de avatares (perfil, publicación,
+      sidebar/topnav, appbar) por `SteamColors.blue`, para que el degradado
+      combine con la nueva paleta en vez de quedar con el navy viejo. **Esto
+      revierte, a propósito, la decisión de Fase 3 de usar el azul pastel real
+      de Steam** — ver sección 9 para el registro histórico de esa decisión;
+      esta entrada es la actualización vigente. Verificado en navegador
+      (desktop y 375px) con una publicación de prueba real: el degradado
+      azul→cian de los avatares, el botón "Publicar" y la pestaña activa de la
+      nav se ven notablemente más vivos que antes. `flutter analyze`: 0 issues.
+      `flutter test`: 10/10.
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después

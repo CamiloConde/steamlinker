@@ -722,7 +722,7 @@ class _PerfilHeader extends StatelessWidget {
                 height: 92,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                    colors: [SteamColors.blue, SteamColors.teal],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -739,7 +739,7 @@ class _PerfilHeader extends StatelessWidget {
                     border: Border.all(color: SteamColors.bgCard, width: 4),
                     gradient: avatarUrl == null
                         ? const LinearGradient(
-                            colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                            colors: [SteamColors.blue, SteamColors.teal],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )

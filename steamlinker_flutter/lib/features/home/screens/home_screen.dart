@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                      colors: [SteamColors.blue, SteamColors.teal],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

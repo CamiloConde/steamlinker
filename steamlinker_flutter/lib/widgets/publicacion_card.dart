@@ -63,7 +63,7 @@ class PublicacionCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(SteamRadii.avatar),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                            colors: [SteamColors.blue, SteamColors.teal],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
