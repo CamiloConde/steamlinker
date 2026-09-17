@@ -1,6 +1,7 @@
 // Shell de navegación responsive: en móvil delega tal cual en MainShell
-// (bottom nav de 3 pestañas), en escritorio muestra un sidebar persistente
-// con todos los destinos, sin bottom nav. Mismo codebase, mismas pantallas.
+// (bottom nav de 3 pestañas), en escritorio muestra una barra de navegación
+// superior persistente (lenguaje visual del wireframe: nav horizontal, no
+// sidebar), sin bottom nav. Mismo codebase, mismas pantallas.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +12,7 @@ import '../../amistad/screens/amistad_screen.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../busqueda/screens/busqueda_screen.dart';
 import '../../chat/screens/chat_screen.dart';
+import '../../chat/widgets/floating_chat.dart';
 import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../notifications/screens/notifications_screen.dart';
@@ -29,31 +31,13 @@ class ResponsiveShell extends StatefulWidget {
   State<ResponsiveShell> createState() => _ResponsiveShellState();
 }
 
-class _NavEntry {
-  final String label;
-  final IconData icon;
-  final IconData activeIcon;
-  const _NavEntry(this.label, this.icon, this.activeIcon);
-}
-
 class _ResponsiveShellState extends State<ResponsiveShell> {
   int _index = 0;
   bool _notifInit = false;
 
-  static const _items = [
-    _NavEntry('Inicio', Icons.home_outlined, Icons.home_rounded),
-    _NavEntry('Descubrir', Icons.people_outline, Icons.people_rounded),
-    _NavEntry('Publicaciones', Icons.campaign_outlined, Icons.campaign_rounded),
-    _NavEntry('Amigos', Icons.group_outlined, Icons.group_rounded),
-    _NavEntry('Buscar juegos', Icons.search_rounded, Icons.search_rounded),
-    _NavEntry('Mensajes', Icons.chat_bubble_outline, Icons.chat_bubble_rounded),
-    _NavEntry('Notificaciones', Icons.notifications_outlined, Icons.notifications_rounded),
-    _NavEntry('Perfil', Icons.person_outline, Icons.person_rounded),
-  ];
-
   // No es const: HomeScreen recibe el callback para que sus tarjetas de
-  // acceso rápido cambien de sección del sidebar en vez de empujar una
-  // pantalla nueva por encima (ver home_screen.dart).
+  // acceso rápido cambien de sección en vez de empujar una pantalla nueva
+  // por encima (ver home_screen.dart).
   List<Widget> get _pages => [
         HomeScreen(onNavigateIndex: _onSelect),
         const DescubrirGamersScreen(),
@@ -72,7 +56,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // El init de notificaciones de MainShell cubre el caso móvil; aquí solo
-    // hace falta cuando de verdad vamos a mostrar el sidebar de escritorio.
+    // hace falta cuando de verdad vamos a mostrar la nav de escritorio.
     if (!_notifInit && _esEscritorio(context)) {
       _notifInit = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -101,29 +85,36 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      body: Row(
+      body: Column(
         children: [
-          _Sidebar(
-            items: _items,
+          _TopNav(
             currentIndex: _index,
             unreadCount: unreadCount,
             onSelect: _onSelect,
           ),
-          Expanded(child: IndexedStack(index: _index, children: _pages)),
+          Expanded(
+            child: Stack(
+              children: [
+                IndexedStack(index: _index, children: _pages),
+                const Positioned(right: 20, bottom: 20, child: FloatingChat()),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _Sidebar extends StatelessWidget {
-  final List<_NavEntry> items;
+/// Barra de navegación horizontal (lenguaje visual del wireframe): logo a la
+/// izquierda (vuelve a Inicio), pestañas principales al centro con subrayado
+/// azul en la activa, y a la derecha accesos rápidos + usuario.
+class _TopNav extends StatelessWidget {
   final int currentIndex;
   final int unreadCount;
   final ValueChanged<int> onSelect;
 
-  const _Sidebar({
-    required this.items,
+  const _TopNav({
     required this.currentIndex,
     required this.unreadCount,
     required this.onSelect,
@@ -132,15 +123,16 @@ class _Sidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 232,
+      height: 64,
       decoration: const BoxDecoration(
         color: SteamColors.bgPanel,
-        border: Border(right: BorderSide(color: SteamColors.border, width: 1)),
+        border: Border(bottom: BorderSide(color: SteamColors.border, width: 1)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 20, 18, 16),
+          const SizedBox(width: 24),
+          InkWell(
+            onTap: () => onSelect(0),
             child: Row(
               children: [
                 Container(
@@ -160,98 +152,70 @@ class _Sidebar extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(color: SteamColors.border, height: 1),
-          const SizedBox(height: 8),
+          const SizedBox(width: 36),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              itemCount: items.length,
-              itemBuilder: (context, i) {
-                final activo = i == currentIndex;
-                final badge = i == 6 ? unreadCount : 0;
-                return _SidebarItem(
-                  entry: items[i],
-                  activo: activo,
-                  badge: badge,
-                  onTap: () => onSelect(i),
-                );
-              },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _NavTab(label: 'Perfil', active: currentIndex == 7, onTap: () => onSelect(7)),
+                _NavTab(label: 'Descubrir', active: currentIndex == 1, onTap: () => onSelect(1)),
+                _NavTab(label: 'Publicaciones', active: currentIndex == 2, onTap: () => onSelect(2)),
+                _NavTab(label: 'Amigos', active: currentIndex == 3, onTap: () => onSelect(3)),
+              ],
             ),
           ),
-          const Divider(color: SteamColors.border, height: 1),
-          _UserFooter(),
+          IconButton(
+            icon: const Icon(Icons.search_rounded, color: SteamColors.muted),
+            tooltip: 'Buscar juegos',
+            onPressed: () => onSelect(4),
+          ),
+          _NotifBell(
+            unreadCount: unreadCount,
+            active: currentIndex == 6,
+            onTap: () => onSelect(6),
+          ),
+          const SizedBox(width: 8),
+          _UserBadge(onTap: () => onSelect(7)),
+          IconButton(
+            icon: const Icon(Icons.logout, size: 18, color: SteamColors.muted),
+            tooltip: 'Cerrar sesión',
+            onPressed: () => confirmarYCerrarSesion(context),
+          ),
+          const SizedBox(width: 16),
         ],
       ),
     );
   }
 }
 
-class _SidebarItem extends StatelessWidget {
-  final _NavEntry entry;
-  final bool activo;
-  final int badge;
+class _NavTab extends StatelessWidget {
+  final String label;
+  final bool active;
   final VoidCallback onTap;
 
-  const _SidebarItem({
-    required this.entry,
-    required this.activo,
-    required this.badge,
-    required this.onTap,
-  });
+  const _NavTab({required this.label, required this.active, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color: activo ? SteamColors.bgCard : Colors.transparent,
-        borderRadius: BorderRadius.circular(SteamRadii.sm),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(SteamRadii.sm),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            child: Row(
-              children: [
-                Container(
-                  width: 3,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: activo ? SteamColors.blue : Colors.transparent,
-                    borderRadius: BorderRadius.circular(SteamRadii.sm),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Icon(
-                  activo ? entry.activeIcon : entry.icon,
-                  size: 19,
-                  color: activo ? SteamColors.blue : SteamColors.muted,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    entry.label,
-                    style: TextStyle(
-                      color: activo ? SteamColors.light : SteamColors.textSec,
-                      fontSize: 13.5,
-                      fontWeight: activo ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                  ),
-                ),
-                if (badge > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: SteamColors.red,
-                      borderRadius: BorderRadius.circular(SteamRadii.sm),
-                    ),
-                    child: Text(
-                      badge > 9 ? '9+' : '$badge',
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
-                    ),
-                  ),
-              ],
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 14),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: active ? SteamColors.blue : Colors.transparent,
+              width: 2,
             ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? SteamColors.blue : SteamColors.light,
+            fontSize: 14.5,
+            fontWeight: active ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
       ),
@@ -259,7 +223,52 @@ class _SidebarItem extends StatelessWidget {
   }
 }
 
-class _UserFooter extends StatelessWidget {
+class _NotifBell extends StatelessWidget {
+  final int unreadCount;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _NotifBell({required this.unreadCount, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(
+            active ? Icons.notifications_rounded : Icons.notifications_outlined,
+            color: active ? SteamColors.blue : SteamColors.muted,
+          ),
+          tooltip: 'Notificaciones',
+          onPressed: onTap,
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: SteamColors.red,
+                borderRadius: BorderRadius.circular(SteamRadii.avatar),
+              ),
+              child: Text(
+                unreadCount > 9 ? '9+' : '$unreadCount',
+                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _UserBadge extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _UserBadge({required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -267,43 +276,43 @@ class _UserFooter extends StatelessWidget {
         final username = auth.usuario?['username'] ?? 'Usuario';
         final inicial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
-        return Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(SteamRadii.sm),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2A4A6B), SteamColors.teal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(SteamRadii.avatar),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF2A4A6B), SteamColors.teal],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: SteamColors.blue, width: 1.5),
                   ),
-                  border: Border.all(color: SteamColors.blue, width: 1.5),
+                  child: Center(
+                    child: Text(
+                      inicial,
+                      style: const TextStyle(color: SteamColors.light, fontSize: 11, fontWeight: FontWeight.w800),
+                    ),
+                  ),
                 ),
-                child: Center(
+                const SizedBox(width: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 110),
                   child: Text(
-                    inicial,
-                    style: const TextStyle(color: SteamColors.light, fontSize: 12, fontWeight: FontWeight.w800),
+                    username,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: SteamColors.light, fontSize: 12.5, fontWeight: FontWeight.w600),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  username,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: SteamColors.light, fontSize: 12.5, fontWeight: FontWeight.w600),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout, size: 18, color: SteamColors.muted),
-                tooltip: 'Cerrar sesión',
-                onPressed: () => confirmarYCerrarSesion(context),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },

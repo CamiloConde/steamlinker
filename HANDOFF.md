@@ -449,6 +449,52 @@ backend que no vale la pena anticipar sin datos de uso).
       la beta) — sin Steam vinculado no se pudo verificar visualmente la variante
       con foto real ni la insignia de verificación, pero el código sigue el mismo
       patrón ya probado en `PublicacionCard`.
+- [x] **Nav superior + layout de 3 columnas en escritorio, lenguaje visual del
+      wireframe aplicado sobre los nombres/estructura originales** (Descubrir
+      Gamers / Publicaciones / Amigos — ver sección 8, actualización 2, sobre por
+      qué los nombres NO cambiaron). Esta vez el usuario mandó una captura real del
+      wireframe de "Familia" (top nav horizontal + 3 columnas + composer inline +
+      chat flotante) y pidió aplicar exactamente esas posiciones/navegación/colores,
+      no solo la "sensación" como en el rediseño de `PublicacionCard`.
+  - **`ResponsiveShell`** (`home/screens/responsive_shell.dart`): el sidebar
+    izquierdo de escritorio se reemplaza por `_TopNav`, una barra horizontal con
+    logo (vuelve a Inicio), pestañas Perfil/Descubrir/Publicaciones/Amigos con
+    subrayado azul en la activa, e iconos de buscar/notificaciones + avatar+usuario
+    a la derecha — mismo orden y posiciones que el wireframe. Los índices de
+    página (`_pages`) no cambiaron, solo cómo se navega a ellos, así que
+    `home_screen.dart` no necesitó tocarse. "Mensajes" ya no es una pestaña de nav
+    — lo cubre el chat flotante (ver abajo). Solo aplica en escritorio; móvil
+    sigue con `MainShell` (bottom-nav) sin cambios.
+  - **Panel de chat flotante** (`chat/widgets/floating_chat.dart`, nuevo) —
+    burbuja azul anclada abajo a la derecha (ver `ResponsiveShell`, dentro de un
+    `Stack` sobre el `IndexedStack` de páginas); al tocarla abre una ventana
+    anclada (320×440) con lista de conversaciones (reusa `ChatProvider`) o, al
+    tocar una, la conversación embebida (mensajes + composer, misma lógica que
+    `ChatConversationScreen` pero sin `Scaffold` propio). Header con volver/
+    minimizar/cerrar. Minimizar colapsa de vuelta a la burbuja.
+  - **Layout de 3 columnas en `PublicacionesScreen`** (solo escritorio, mismo
+    breakpoint de 768px que `ResponsiveShell`; móvil intacto con el FAB de
+    siempre): columna izquierda "Accesos rápidos" (acceso a Mis solicitudes →
+    `MatchesScreen`, y atajos de filtro por tipo — todo enlaza a funcionalidad que
+    ya existía, nada inventado, a diferencia de "Discusiones"/"Guardados" del
+    wireframe que no tienen equivalente real todavía); columna central con
+    `_ComposerBar` inline ("Comparte algo con la comunidad..." + Publicar, abre el
+    mismo formulario de crear publicación de siempre) sobre el feed real; columna
+    derecha "Chats" (lista compacta de conversaciones, toca para abrir la
+    conversación completa).
+  - Verificado en navegador: nav superior con las 4 pestañas en las posiciones del
+    wireframe, filtro rápido de tipo funcionando, post de prueba creado desde el
+    composer inline y visible en el feed, panel de chat flotante abre/minimiza
+    correctamente, y en móvil (375px) el bottom-nav y el dashboard de Inicio
+    siguen sin regresión (incluye confirmar que el banner+avatar de Perfil se ve
+    bien también al abrirlo empujado desde el dashboard en móvil). No se pudo
+    probar la conversación embebida del chat flotante en vivo (la cuenta de
+    prueba no tenía conversaciones), pero reusa la misma lógica ya probada de
+    `ChatConversationScreen`. `flutter analyze`: 0 issues. `flutter test`: 10/10.
+  - **Pendiente si se retoma esto**: aplicar el mismo patrón de 3 columnas a
+    "Amigos"/"Descubrir" si se decide que también deben verse así (por ahora solo
+    se tocó Publicaciones, que era la referencia más directa del wireframe
+    enviado).
 
 **Nota operativa importante para cualquier sesión futura que use el build web
 local:** Flutter Web registra un *service worker* que cachea agresivamente. Después
