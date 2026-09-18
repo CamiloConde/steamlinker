@@ -250,10 +250,10 @@ router.get('/comparar/:id', verificarToken, async (req, res) => {
 router.get('/:id', verificarToken, async (req, res) => {
     try {
         const usuario = await pool.query(
-            `SELECT id_usu, username_usu, descrip_usu, pais_usu, 
+            `SELECT id_usu, username_usu, descrip_usu, pais_usu,
                     repu_usu, totalrating_usu, tipo_usu, creadoen_usu,
-                    perfil_publico, mostrar_biblioteca, notificaciones_amigos, 
-                    dos_factor, correos_promocionales
+                    perfil_publico, mostrar_biblioteca, notificaciones_amigos,
+                    dos_factor
              FROM usuarios WHERE id_usu = $1`,
             [req.params.id]
         );
@@ -491,26 +491,23 @@ router.put('/privacidad', verificarToken, async (req, res) => {
         perfil_publico,
         mostrar_biblioteca,
         notificaciones_amigos,
-        dos_factor,
-        correos_promocionales
+        dos_factor
     } = req.body;
 
     try {
         const resultado = await pool.query(
-            `UPDATE usuarios 
+            `UPDATE usuarios
              SET perfil_publico = COALESCE($1, perfil_publico),
                  mostrar_biblioteca = COALESCE($2, mostrar_biblioteca),
                  notificaciones_amigos = COALESCE($3, notificaciones_amigos),
-                 dos_factor = COALESCE($4, dos_factor),
-                 correos_promocionales = COALESCE($5, correos_promocionales)
-             WHERE id_usu = $6
-             RETURNING perfil_publico, mostrar_biblioteca, notificaciones_amigos, dos_factor, correos_promocionales`,
+                 dos_factor = COALESCE($4, dos_factor)
+             WHERE id_usu = $5
+             RETURNING perfil_publico, mostrar_biblioteca, notificaciones_amigos, dos_factor`,
             [
                 perfil_publico ?? null,
                 mostrar_biblioteca ?? null,
                 notificaciones_amigos ?? null,
                 dos_factor ?? null,
-                correos_promocionales ?? null,
                 req.usuario.id
             ]
         );

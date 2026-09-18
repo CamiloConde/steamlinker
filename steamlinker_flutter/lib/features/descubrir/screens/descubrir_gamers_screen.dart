@@ -94,10 +94,18 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     var paisEtiqueta = _filtroPaisEtiqueta ?? PaisUtil.todos;
     var juegoEtiqueta = _filtroJuegoNombre ?? 'Todos los juegos';
 
-    final juegosFiltro = [
-      'Todos los juegos',
-      ...perfil.juegos.map((j) => j['nombre']?.toString() ?? 'Juego'),
-    ];
+    // DropdownButton exige valores únicos por item (si dos juegos comparten
+    // nombre, el widget queda en un estado inconsistente: en debug lanza un
+    // assert, y en el build de release ese assert se descarta silenciosamente,
+    // dejando el dropdown sin poder seleccionar nada). Se deduplica por nombre.
+    final nombresVistos = <String>{};
+    final juegosFiltro = <String>['Todos los juegos'];
+    for (final j in perfil.juegos) {
+      final nombre = j['nombre']?.toString();
+      if (nombre != null && nombre.isNotEmpty && nombresVistos.add(nombre)) {
+        juegosFiltro.add(nombre);
+      }
+    }
 
     await showModalBottomSheet<void>(
       context: context,
@@ -266,14 +274,18 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
               );
             },
           ),
-          IconButton(
-            icon: Icon(
-              Icons.tune_rounded,
-              color: filtrosActivos ? SteamColors.blue : SteamColors.muted,
+          // En escritorio el panel lateral ya trae sus propios botones de
+          // filtro (juego/país/tipo) — este ícono duplicaba exactamente la
+          // misma hoja modal. Se mantiene solo en móvil, que no tiene panel.
+          if (!esEscritorio)
+            IconButton(
+              icon: Icon(
+                Icons.tune_rounded,
+                color: filtrosActivos ? SteamColors.blue : SteamColors.muted,
+              ),
+              tooltip: 'Filtros de publicación',
+              onPressed: _abrirFiltros,
             ),
-            tooltip: 'Filtros de publicación',
-            onPressed: _abrirFiltros,
-          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: SteamColors.blue),
             tooltip: 'Actualizar',

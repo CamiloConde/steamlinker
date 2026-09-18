@@ -22,7 +22,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
-  final _filters = ['Todas', 'No leídas', 'Interesantes'];
+  final _filters = ['Todas', 'No leídas', 'Marcadas'];
   bool _inicializado = false;
 
   @override
@@ -102,9 +102,18 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<NotificacionesProvider>();
-    final lista = prov.notificaciones;
     final unread = prov.noLeidas;
-    final interesantes = lista.where((n) => n.interested == true).length;
+    final marcadas = prov.notificaciones.where((n) => n.interested == true).length;
+    // Las marcadas se anclan arriba en "Todas"/"No leídas": para eso sirve
+    // marcar algo — encontrarlo sin desplazarse por el resto de la lista.
+    // En la pestaña "Marcadas" ya vienen filtradas por el backend, así que
+    // el orden original (más reciente primero) es el correcto.
+    final lista = _tabs.index == 2
+        ? prov.notificaciones
+        : [
+            ...prov.notificaciones.where((n) => n.interested == true),
+            ...prov.notificaciones.where((n) => n.interested != true),
+          ];
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
@@ -153,7 +162,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
               tabs: [
                 _buildTab('Todas', 0),
                 _buildTab('No leídas', unread, badgeColor: SteamColors.red),
-                _buildTab('Interesantes', interesantes),
+                _buildTab('Marcadas', marcadas, badgeColor: SteamColors.yellow),
               ],
             ),
           ),
@@ -242,7 +251,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isInteresting = filter == 'Interesantes';
+    final esMarcadas = filter == 'Marcadas';
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -250,15 +259,15 @@ class _EmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isInteresting
-                  ? Icons.thumb_up_outlined
+              esMarcadas
+                  ? Icons.bookmark_border_rounded
                   : Icons.notifications_off_outlined,
               size: 56,
               color: SteamColors.muted.withValues(alpha: 0.35),
             ),
             const SizedBox(height: 16),
             Text(
-              isInteresting ? 'Sin notificaciones marcadas' : 'Todo al día',
+              esMarcadas ? 'Sin notificaciones marcadas' : 'Todo al día',
               style: const TextStyle(
                 color: SteamColors.light,
                 fontSize: 16,
@@ -267,8 +276,9 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isInteresting
-                  ? 'Usa el menú ⋮ para marcar lo que te interesa'
+              esMarcadas
+                  ? 'Toca el menú de tres puntos de una notificación para marcarla: '
+                      'quedará fijada arriba en Todas y No leídas hasta que la desmarques.'
                   : 'Te avisaremos de mensajes, matches y solicitudes de amistad',
               style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
               textAlign: TextAlign.center,

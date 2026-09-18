@@ -29,7 +29,6 @@ class PerfilProvider extends ChangeNotifier {
         'mostrar_biblioteca': raw['mostrar_biblioteca'] ?? true,
         'notificaciones_amigos': raw['notificaciones_amigos'] ?? true,
         'dos_factor': raw['dos_factor'] ?? false,
-        'correos_promocionales': raw['correos_promocionales'] ?? true,
       };
     }
 
@@ -282,7 +281,6 @@ class PerfilProvider extends ChangeNotifier {
     bool? mostrarBiblioteca,
     bool? notificacionesAmigos,
     bool? dosFactor,
-    bool? correosPromocionales,
   }) async {
     try {
       final respuesta = await ApiClient.dio.put(
@@ -292,7 +290,6 @@ class PerfilProvider extends ChangeNotifier {
           'mostrar_biblioteca': mostrarBiblioteca,
           'notificaciones_amigos': notificacionesAmigos,
           'dos_factor': dosFactor,
-          'correos_promocionales': correosPromocionales,
         },
       );
       

@@ -47,15 +47,8 @@ class NotificationTile extends StatelessWidget {
       ),
       items: [
         _buildMenuItem(
-            'interested', Icons.thumb_up_outlined, SteamColors.green,
-            notif.interested == true
-                ? 'Quitar "Me interesa"'
-                : 'Me interesa'),
-        _buildMenuItem(
-            'not_interested', Icons.thumb_down_outlined, SteamColors.red,
-            notif.interested == false
-                ? 'Quitar "No me interesa"'
-                : 'No me interesa'),
+            'marcada', Icons.bookmark_rounded, SteamColors.yellow,
+            notif.interested == true ? 'Quitar marca' : 'Marcar'),
         _buildMenuItem(
             'toggle_read', Icons.done_all_rounded, SteamColors.blue,
             notif.isRead ? 'Marcar no leída' : 'Marcar leída'),
@@ -63,16 +56,8 @@ class NotificationTile extends StatelessWidget {
     ).then((val) async {
       if (val == null) return;
       switch (val) {
-        case 'interested':
+        case 'marcada':
           final nuevo = notif.interested == true ? null : true;
-          if (onInteres != null) {
-            await onInteres!(nuevo);
-          } else {
-            notif.interested = nuevo;
-          }
-          break;
-        case 'not_interested':
-          final nuevo = notif.interested == false ? null : false;
           if (onInteres != null) {
             await onInteres!(nuevo);
           } else {
@@ -244,27 +229,19 @@ class NotificationTile extends StatelessWidget {
                       height: 1.4,
                     ),
                   ),
-                  if (notif.interested != null) ...[
+                  if (notif.interested == true) ...[
                     const SizedBox(height: 6),
                     Row(children: [
-                      Icon(
-                        notif.interested!
-                            ? Icons.thumb_up_rounded
-                            : Icons.thumb_down_rounded,
+                      const Icon(
+                        Icons.bookmark_rounded,
                         size: 12,
-                        color: notif.interested!
-                            ? SteamColors.green
-                            : SteamColors.red,
+                        color: SteamColors.yellow,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        notif.interested!
-                            ? 'Marcada como interesante'
-                            : 'No te interesa',
+                      const Text(
+                        'Marcada',
                         style: TextStyle(
-                          color: notif.interested!
-                              ? SteamColors.green
-                              : SteamColors.red,
+                          color: SteamColors.yellow,
                           fontSize: 10.5,
                           fontWeight: FontWeight.w600,
                         ),

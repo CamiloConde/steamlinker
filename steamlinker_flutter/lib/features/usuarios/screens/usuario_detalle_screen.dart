@@ -304,10 +304,8 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                   color: SteamColors.bgPanel,
                   onSelected: (v) {
                     if (v == 'reportar') _reportarUsuario();
-                    if (v == 'resenas') _verResenas();
                   },
                   itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'resenas', child: Text('Ver reseñas')),
                     PopupMenuItem(value: 'reportar', child: Text('Reportar usuario')),
                   ],
                 ),
@@ -388,21 +386,14 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                               RelacionStatusRow(relacion: _relacion),
                               const SizedBox(height: 12),
                             ],
-                            if (puedeMatch)
+                            if (puedeMatch) ...[
                               SteamButtonPrimary(
                                 label: _enviandoMatch ? 'Enviando...' : 'Enviar match',
                                 icon: Icons.handshake_outlined,
                                 onTap: _enviandoMatch ? null : (_) => _enviarMatch(),
-                              )
-                            else if (_relacion?.matchPendiente == true)
-                              SteamButtonOutline(
-                                label: _relacion!.matchSoySolicitante
-                                    ? 'Match pendiente'
-                                    : 'Match recibido',
-                                onTap: null,
                               ),
-                            if (puedeMatch || _relacion?.matchPendiente == true)
                               const SizedBox(height: 10),
+                            ],
                             if (puedeAmistad)
                               SteamButtonOutline(
                                 label: _enviandoAmistad ? 'Enviando...' : 'Agregar amigo',

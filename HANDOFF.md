@@ -1078,37 +1078,74 @@ rebuild, recarga una segunda vez antes de asumir que el código está mal.
     ganó `overflow: TextOverflow.ellipsis` como defensa adicional.
   - **Bug menor: pluralización** — "1 juegos en común" en
     `comparar_biblioteca_screen.dart` (siempre plural). Arreglado.
-  - **Hallazgo, no bug de código — 3 controles de Configuración no hacen
-    nada**: se confirmó con `grep` que `notificaciones_amigos`, `dos_factor`
-    y `correos_promocionales` se guardan en la base de datos pero **no se
-    leen en ningún otro lugar del backend** — no gatean ninguna conducta
-    real. Compárese con `perfil_publico` y `mostrar_biblioteca`, que sí se
-    usan como condición real en `/perfil/descubrir` y `/perfil/comparar/:id`.
-    "Notificaciones de amigos" además promete algo que no existe (avisar
-    cuando un amigo se conecta) — no hay tracking de presencia en todo el
-    backend. Decisión pendiente: implementarlos de verdad o quitarlos de la
-    pantalla de Configuración; no dejarlos como controles decorativos.
-  - **Hallazgo — la pestaña "Interesantes" de Avisos (marcar notificaciones
-    con 👍/👎) funciona mecánicamente pero no tiene un propósito claro.**
-    No hay ningún algoritmo o filtro que lea esa marca para nada (no
-    reordena ni prioriza notificaciones futuras) — es un archivador manual
-    autorreferencial. Además el texto de ayuda de esa pestaña vacía tiene un
-    glifo roto (▯) en vez de un ícono real. Se deja documentado para
-    decidir: quitarla, o darle un propósito real (ej. que SÍ afecte qué se
-    prioriza).
-  - **Hallazgo — "Match recibido" en el perfil de otro usuario es un botón
-    con `onTap: null`**: mismo componente visual (`SteamButtonOutline`) que
-    los botones reales de esa pantalla, solo diferenciado por un color de
-    texto más apagado cuando está deshabilitado — fácil de confundir con un
-    botón funcional en un vistazo rápido en móvil. Junto con "Amigos"
-    apareciendo dos veces (chip de estado arriba + barra debajo) y "Ver
-    reseñas" apareciendo dos veces (botón + menú de tres puntos) en la misma
-    pantalla — redundancia visual real, no solo percepción del usuario.
   - Resto de la app probado en vivo en móvil (Inicio, Amigos con aceptar
     solicitud real, chat con mensaje real, Publicaciones con crear/filtrar,
     Perfil/Configuración completo, Descubrir) **sin más bugs encontrados** —
     el resto funciona como se diseñó. `flutter analyze`: 0 issues.
     `flutter test`: 10/10.
+- [x] **Segunda pasada de correcciones, pedida tras revisar una captura del
+      panel de Descubrir — todos los hallazgos de la auditoría anterior se
+      cerraron esta ronda:**
+  - **Bug real confirmado por el usuario: en el modal de Filtros, el
+    desplegable "Juego en publicación" no dejaba seleccionar nada.** Causa
+    raíz: `DropdownButton` de Flutter exige que cada `DropdownMenuItem`
+    tenga un `value` único — si dos juegos de la biblioteca comparten el
+    mismo nombre visible, quedan dos items con el mismo `value` y el widget
+    entra en un estado inconsistente. En debug esto lanza un `assert()`
+    visible; en el build de release ese `assert()` se descarta en silencio
+    (mismo patrón que el bug del título invisible: release oculta errores
+    que debug sí muestra), dejando el dropdown sin poder cambiar de
+    selección. Arreglado en `_abrirFiltros()`
+    (`descubrir_gamers_screen.dart`) deduplicando la lista de nombres antes
+    de construir los items. Reproducido a propósito en el backend de prueba
+    (dos juegos con el mismo nombre) para confirmar la causa antes de
+    arreglar.
+  - **Redundancia real: el ícono de filtros (🎛) de la barra superior y los
+    botones de filtro del panel lateral abrían el mismo modal.** Solo pasa
+    en escritorio — en móvil no existe el panel lateral, así que ahí el
+    ícono sigue siendo la única entrada a Filtros. Se ocultó el ícono
+    superior solo cuando `esEscritorio == true`.
+  - **Configuración: los 2 controles decorativos que quedan
+    ("Notificaciones de amigos", "Autenticación en dos pasos") ahora se
+    marcan en la propia UI** con una etiqueta "DECORATIVA · NO FUNCIONAL
+    POR AHORA" (`ToggleRow.decorativo`, `account_settings_screen.dart`) —
+    se guardan igual que antes, pero ya no fingen tener efecto.
+    **"Correos promocionales" se eliminó por completo**: quitado del
+    frontend (`account_settings_screen.dart`, `PerfilProvider`) y del
+    backend (`GET /perfil/:id` y `PUT /perfil/privacidad` en
+    `perfil.js`) — la columna `correos_promocionales` queda huérfana en la
+    base de datos (sin código que la lea o escriba ya), no se hizo
+    migración para borrarla.
+  - **"Interesantes" → "Marcadas", con funcionalidad real nueva**: se
+    simplificó el modelo de tri-estado (👍 me interesa / 👎 no me interesa)
+    a uno binario (marcada / sin marcar) — el estado "no me interesa" nunca
+    tuvo ningún efecto ni en frontend ni en backend, así que se quitó del
+    menú en vez de mantenerlo decorativo. La funcionalidad real que pidió
+    el usuario: **las notificaciones marcadas ahora se anclan arriba de las
+    pestañas "Todas" y "No leídas"** (`notifications_screen.dart`), para
+    que marcar algo sirva para no perderlo de vista en vez de ser un
+    archivador que nadie vuelve a mirar. De paso se corrigió el glifo roto
+    (▯) del estado vacío, reemplazando el carácter "⋮" (que no siempre
+    renderiza bien) por texto ("el menú de tres puntos").
+  - **"Match recibido" (botón fantasma con `onTap: null`) se eliminó** de
+    `usuario_detalle_screen.dart` — mi opinión, dada porque el usuario
+    preguntó si era necesario: no, era pura redundancia. El mismo estado
+    ("Match enviado" / "Match recibido") ya lo comunica
+    `RelacionStatusRow` justo arriba, con un ícono de reloj de arena — el
+    botón deshabilitado no agregaba información, solo el riesgo de que
+    alguien lo confundiera con un botón real. Aprovechando el mismo hallazgo,
+    se quitó también el "Ver reseñas" duplicado del menú ⋮ (queda solo el
+    botón visible del cuerpo — la reseña es una acción común, no debería
+    vivir en un menú secundario junto a "Reportar usuario").
+  - Verificado con `flutter analyze` (0 issues), `flutter test` (10/10) y
+    la suite de backend (15/15). **Pendiente**: no se pudo repetir la
+    verificación visual en vivo en el navegador esta vez — la automatización
+    de clics tuvo problemas de escala de coordenadas contra el build de
+    release (viewport reportado en CSS px vs. tamaño real de la captura,
+    ver nota de entorno de sesiones anteriores) y no valió la pena seguir
+    insistiendo. Recomendado: el usuario prueba manualmente Descubrir →
+    Filtros → Juego, Configuración, y Avisos → Marcadas en el próximo
+    `flutter build web` antes de darlo por cerrado del todo.
 
 ### Roadmap hacia 1.0 — todo lo pedido por el usuario para guardar de cara a
 ### futuras sesiones, con criterio de priorización
@@ -1150,6 +1187,28 @@ have", son requisitos mínimos para que lanzar sea responsable):**
       Nada de esto se auditó a fondo todavía — es trabajo propio, no una
       lista de deseos.
 
+**Nivel 1.5 — pedido explícitamente para el día 1 por el usuario, fuera del
+orden de prioridad que yo hubiera sugerido por defecto:**
+- [ ] **Donaciones / "cómprame un café" estilo SteamDB.** El usuario fue
+      explícito: *"lo de patreon si lo querria funcionando para el dia 1"*.
+      Esto estaba en Nivel 4 en la versión anterior de este roadmap —
+      se sube aquí porque el usuario lo pidió directamente, no porque mi
+      criterio haya cambiado sobre qué tan crítico es para el producto en
+      sí (sigue sin ser parte del SRS ni del flujo core de matching).
+      **Bloqueo real, no de esfuerzo**: no puedo crear cuentas de Patreon,
+      Ko-fi, Nequi/Bancolombia ni ningún procesador de pagos en nombre del
+      usuario (cuentas y datos financieros están fuera de lo que puedo
+      hacer autónomamente) — y fabricar un botón de "donar" que apunte a un
+      link inventado sería activamente engañoso para quien done. **Falta
+      una respuesta del usuario sobre qué cuenta(s) reales va a usar** antes
+      de que esto pueda estar "funcionando" de verdad. Ver la pregunta
+      concreta que se le dejó en el chat en esta misma sesión.
+      Mientras tanto, lo que sí es trabajo mío sin bloqueo: construir la
+      pantalla/sección "Apoya el proyecto" con la estructura visual lista
+      (tarjeta de card, texto explicativo, lista de botones de enlace) pero
+      con los links vacíos/deshabilitados y marcados "Próximamente" hasta
+      tener destinos reales — así el único paso que falta es pegar las URLs.
+
 **Nivel 2 — mejoras de producto con impacto real, más baratas de lo que
 parecen:**
 - [ ] Formulario de contacto / sugerencias / quejas, con validación real y
@@ -1164,9 +1223,17 @@ parecen:**
 - [ ] Botón "volver arriba" en listas largas (Descubrir, Publicaciones)
 - [ ] Optimización de velocidad: ya se hizo tree-shaking de íconos en cada
       build; falta medir con Lighthouse una vez esté desplegado, no antes
-- [ ] Arreglar los hallazgos de la auditoría de esta sesión que quedaron
-      pendientes (controles de Configuración que no hacen nada, pestaña
-      "Interesantes" sin propósito, botones fantasma tipo "Match recibido")
+- [x] ~~Arreglar los hallazgos de la auditoría de esta sesión que quedaron
+      pendientes~~ — cerrado esta ronda, ver la sección 7 de arriba
+      ("Segunda pasada de correcciones").
+- [ ] **Logo / identidad visual propia** (pedido por el usuario en esta
+      misma sesión, de pasada: *"nos faltaria diseñar un logo, algun tipo
+      sello de identidad"*). Hoy el "logo" es un ícono genérico de Material
+      (`Icons.sports_esports`) sobre un círculo con gradiente — funciona
+      como placeholder pero no es una marca propia. Esto es trabajo de
+      diseño gráfico (no de código) — mejor candidato para una sesión
+      dedicada o una herramienta de diseño, no algo que deba improvisarse
+      dentro de una sesión de desarrollo.
 
 **Nivel 3 — pulido visual, alto costo/beneficio dudoso para una beta:**
 - [ ] Animaciones suaves de scroll, microinteracciones en botones, estados
@@ -1189,26 +1256,49 @@ parecen:**
 - [ ] Login con Steam vía OpenID (ver opinión arriba — más barato que Google
       y encaja mejor con la identidad del producto, así que si se hace uno
       de los dos primero, que sea este)
-- [ ] Monetización tipo Patreon (internacional) + Nequi/Bancolombia para
-      Colombia: separar en dos problemas distintos — (a) la integración de
-      pagos en sí (Nequi/Bancolombia requieren ser persona jurídica o usar
-      un agregador como Wompi/ePayco; Patreon es una API bien documentada
-      pero cobra comisión), y (b) qué se ofrece a cambio (¿solo agradecer,
-      o alguna función real para donantes?). No empezar esto sin tener claro
-      qué se promete al que paga.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
+- [ ] Si el "Apoya el proyecto" de Nivel 1.5 funciona bien, evaluar
+      integración de pagos locales reales (Nequi/Bancolombia vía un
+      agregador tipo Wompi/ePayco — requiere persona jurídica o el
+      agregador la absorbe según el plan) más allá de un simple link
+      externo a Patreon/Ko-fi.
 
 **Mi criterio general, ya que se pidió directamente:** no, no hay que hacer
 todo esto — varias cosas de los niveles 3 y 4 son apuestas razonables solo
 si el producto ya tiene usuarios reales dándole señal de qué vale la pena
-(idiomas, redes sociales, Patreon). Lo que sí es innegociable para cualquier
-beta pública responsable es el Nivel 1 completo (legal + seguridad básica) y
-limpiar los hallazgos de la auditoría de hoy (Nivel 2, último punto) antes
-de invertir en pulido visual. El orden sugerido si se retoma esto en una
-sesión futura: Nivel 1 → limpiar hallazgos de auditoría → Nivel 2 → recién
-ahí evaluar Niveles 3 y 4 con la app ya en manos de gente real.
+(idiomas, redes sociales). Lo que sí es innegociable para cualquier beta
+pública responsable es el Nivel 1 completo (legal + seguridad básica).
+Los hallazgos de la auditoría (antes en Nivel 2) ya se cerraron esta sesión.
+Patreon/donaciones se subió a Nivel 1.5 porque el usuario lo pidió
+explícitamente para el día 1, no porque mi criterio por defecto lo pusiera
+ahí — sigue bloqueado en la práctica hasta que el usuario decida qué
+cuenta(s) reales usar. El orden sugerido si se retoma esto en una sesión
+futura: Nivel 1 → Nivel 1.5 (en cuanto haya respuesta sobre las cuentas) →
+Nivel 2 → recién ahí evaluar Niveles 3 y 4 con la app ya en manos de gente
+real.
+
+### Cosas pendientes de esta sesión (no alcanzadas, ordenadas por mi
+### prioridad si se retoma)
+
+1. **Respuesta del usuario sobre Patreon/donaciones** — qué cuenta(s) usar
+   (Patreon, Ko-fi, "Buy Me a Coffee", link directo a Nequi/Bancolombia,
+   alguna combinación) determina si esto puede construirse de verdad. Sin
+   esto, lo máximo responsable es la pantalla-contenedor con links vacíos
+   (ver Nivel 1.5).
+2. **Verificación visual en vivo del build de esta ronda** — los cambios de
+   esta sesión (Descubrir, Configuración, Avisos, perfil de usuario) están
+   cubiertos por `flutter analyze`/`flutter test`/tests de backend, pero no
+   se pudieron ver en el navegador por un problema de escala de coordenadas
+   en la automatización (no un bug de la app). Antes de dar la ronda por
+   cerrada del todo, alguien debería abrir `flutter build web` y probar a
+   ojo: Descubrir (filtros, dropdown de juego), Configuración (etiquetas
+   decorativas), Avisos → Marcadas (que ancle arriba), perfil de otro
+   usuario (que ya no aparezca "Match recibido").
+3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
+   mejor en una sesión dedicada a eso o con una herramienta de diseño.
+4. Todo lo demás del roadmap de Niveles 1–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar
 

@@ -551,7 +551,6 @@ class _PrivacyCardState extends State<_PrivacyCard> {
   bool publicProfile = true;
   bool friendNotifs = true;
   bool twoFA = false;
-  bool promoEmails = true;
   bool _hasChanges = false;
   bool _saving = false;
   bool _inicializado = false;
@@ -572,7 +571,6 @@ class _PrivacyCardState extends State<_PrivacyCard> {
         publicProfile = perfilProv.privacidad!['perfil_publico'] ?? true;
         friendNotifs = perfilProv.privacidad!['notificaciones_amigos'] ?? true;
         twoFA = perfilProv.privacidad!['dos_factor'] ?? false;
-        promoEmails = perfilProv.privacidad!['correos_promocionales'] ?? true;
       });
     }
   }
@@ -592,7 +590,6 @@ class _PrivacyCardState extends State<_PrivacyCard> {
       mostrarBiblioteca: true, // Siempre mostrar biblioteca según el diseño
       notificacionesAmigos: friendNotifs,
       dosFactor: twoFA,
-      correosPromocionales: promoEmails,
     );
 
     if (!mounted) return;
@@ -634,6 +631,7 @@ class _PrivacyCardState extends State<_PrivacyCard> {
             title: 'Notificaciones de amigos',
             description: 'Alerta cuando tus amigos se conecten',
             value: friendNotifs,
+            decorativo: true,
             onChanged: (v) {
               setState(() => friendNotifs = v);
               _marcarCambio();
@@ -643,17 +641,9 @@ class _PrivacyCardState extends State<_PrivacyCard> {
             title: 'Autenticación en dos pasos',
             description: 'Capa extra de seguridad para tu cuenta',
             value: twoFA,
+            decorativo: true,
             onChanged: (v) {
               setState(() => twoFA = v);
-              _marcarCambio();
-            },
-          ),
-          ToggleRow(
-            title: 'Correos promocionales',
-            description: 'Recibe ofertas y novedades de la tienda',
-            value: promoEmails,
-            onChanged: (v) {
-              setState(() => promoEmails = v);
               _marcarCambio();
             },
             showDivider: false,
