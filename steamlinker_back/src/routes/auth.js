@@ -25,6 +25,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const { loginLimiter, registroLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
@@ -123,7 +124,7 @@ function verificarToken(req, res, next) {
  * - 409: Email o username ya existen
  * - 500: Error en la base de datos
  */
-router.post('/registro', async (req, res) => {
+router.post('/registro', registroLimiter, async (req, res) => {
     const { username, email, password, pais } = req.body;
 
     // Validar que lleguen los campos obligatorios
@@ -241,7 +242,7 @@ router.post('/registro', async (req, res) => {
  * - 401: Credenciales incorrectas (email no existe o contraseña es inválida)
  * - 500: Error en la base de datos
  */
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     // Validar que lleguen los campos obligatorios

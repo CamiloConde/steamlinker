@@ -769,6 +769,20 @@ let pages = { usuarios:1, familias:1, solicitudes:1, reportes:1, contenido:1 };
 const PER_PAGE = 15;
 
 // ══════════════════════════════════════════════════════════
+//  ESCAPE DE HTML — todo dato que viene del backend (username, email,
+//  país, motivo de reporte, mensajes de chat, títulos de publicación...)
+//  es texto puesto por usuarios finales, no confiable. Cualquier valor así
+//  que se interpole en un innerHTML DEBE pasar por esc() primero, o un
+//  nombre de usuario/mensaje con <script> o onerror= podría ejecutarse en
+//  la sesión del administrador (robo de sl_token vía localStorage).
+// ══════════════════════════════════════════════════════════
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
+// ══════════════════════════════════════════════════════════
 //  API HELPER
 // ══════════════════════════════════════════════════════════
 async function api(method, url, body=null) {
@@ -800,7 +814,7 @@ function toast(msg, type='info') {
   };
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  el.innerHTML = (icons[type]||icons.info) + `<span>${msg}</span>`;
+  el.innerHTML = (icons[type]||icons.info) + `<span>${esc(msg)}</span>`;
   document.getElementById('toasts').appendChild(el);
   setTimeout(() => el.remove(), 3500);
 }
@@ -1118,15 +1132,15 @@ async function loadDashboard() {
         const estado = u.estado||u.status||'activo';
         const fecha = u.createdAt||u.fechaRegistro||u.created_at;
         return `<tr>
-          <td><div class="user-cell"><div class="avatar-txt">${initials(name)}</div><span>${name}</span></div></td>
-          <td class="mono">${email}</td>
+          <td><div class="user-cell"><div class="avatar-txt">${esc(initials(name))}</div><span>${esc(name)}</span></div></td>
+          <td class="mono">${esc(email)}</td>
           <td>${statusBadge(estado)}</td>
           <td class="mono">${fmtDate(fecha)}</td>
         </tr>`;
       }).join('')
     }</tbody></table>`;
   } catch(e) {
-    document.getElementById('dash-usuarios-list').innerHTML = `<div class="empty"><p>No se pudo cargar. ${e.message}</p></div>`;
+    document.getElementById('dash-usuarios-list').innerHTML = `<div class="empty"><p>No se pudo cargar. ${esc(e.message)}</p></div>`;
   }
 
   // Actividad simulada con datos reales de reportes/solicitudes
@@ -1146,7 +1160,7 @@ async function loadUsuarios() {
     data.usuarios = normalizeArray(res);
     filterUsuarios();
   } catch(e) {
-    document.getElementById('usuarios-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`;
+    document.getElementById('usuarios-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${esc(e.message)}</p></div></td></tr>`;
     toast(e.message, 'err');
   }
 }
@@ -1181,25 +1195,34 @@ function renderUsuarios() {
     const tipo  = (u.tipo_usu    || 'usuario').toLowerCase();
     const fecha = u.creadoen_usu || null;
     return `<tr>
-      <td><div class="user-cell"><div class="avatar-txt">${initials(name)}</div><div><div>${name}</div><div class="mono" style="font-size:10px;">#${id}</div></div></div></td>
-      <td class="mono">${email}</td>
-      <td>${pais}</td>
+      <td><div class="user-cell"><div class="avatar-txt">${esc(initials(name))}</div><div><div>${esc(name)}</div><div class="mono" style="font-size:10px;">#${id}</div></div></div></td>
+      <td class="mono">${esc(email)}</td>
+      <td>${esc(pais)}</td>
       <td>${statusBadge(tipo)}</td>
       <td class="mono">${fmtDate(fecha)}</td>
       <td>
         <div style="display:flex;gap:5px;">
-          <span class="mono" style="font-size:10px;color:var(--t3);">${tipo}</span>
+          <span class="mono" style="font-size:10px;color:var(--t3);">${esc(tipo)}</span>
         </div>
       </td>
     </tr>`;
   }).join('');
 }
 
-async function accionUsuario(accion, id, name) {
+async function accionUsuario(accion, id) {
+  // El nombre se busca en la caché local en vez de recibirlo embebido en el
+  // atributo onclick del botón que disparó esto — un username con comillas
+  // o '<' rompía ese embebido o, peor, se ejecutaba como HTML/JS al pintar
+  // el modal. Ver esc() más arriba.
+  const u = (data.usuarios || []).find((x) => String(x.id_usu) === String(id));
+  const name = u?.username_usu || 'este usuario';
+  // title va por textContent (showModal) y toast() escapa por su cuenta —
+  // solo body necesita escape manual porque showModal lo pinta con innerHTML.
+  const nameHtml = esc(name);
   const cfg = {
-    ban:    { title:`Banear a ${name}`, body:`¿Seguro que quieres banear a <strong>${name}</strong>? No podrá acceder hasta ser desbaneado.`, label:'Banear', type:'yellow' },
-    unban:  { title:`Desbanear a ${name}`, body:`¿Deseas restaurar el acceso de <strong>${name}</strong>?`, label:'Desbanear', type:'green' },
-    delete: { title:`Eliminar a ${name}`, body:`Esta acción es <strong>irreversible</strong>. Se eliminarán todos los datos de <strong>${name}</strong>.`, label:'Eliminar', type:'red' },
+    ban:    { title:`Banear a ${name}`, body:`¿Seguro que quieres banear a <strong>${nameHtml}</strong>? No podrá acceder hasta ser desbaneado.`, label:'Banear', type:'yellow' },
+    unban:  { title:`Desbanear a ${name}`, body:`¿Deseas restaurar el acceso de <strong>${nameHtml}</strong>?`, label:'Desbanear', type:'green' },
+    delete: { title:`Eliminar a ${name}`, body:`Esta acción es <strong>irreversible</strong>. Se eliminarán todos los datos de <strong>${nameHtml}</strong>.`, label:'Eliminar', type:'red' },
   }[accion];
   showModal(cfg.title, cfg.body, cfg.label, cfg.type, async () => {
     try {
@@ -1246,7 +1269,7 @@ async function loadFamilias() {
     data.familias = Array.isArray(res) ? res : (res?.data || res?.familias || []);
     filterFamilias();
   } catch(e) {
-    document.getElementById('familias-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`;
+    document.getElementById('familias-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${esc(e.message)}</p></div></td></tr>`;
     toast(e.message, 'err');
   }
 }
@@ -1280,8 +1303,8 @@ function renderFamilias() {
     const fecha     = f.creadoen_match || null;
     return `<tr>
       <td><div class="mono" style="font-size:10px;">#${id}</div></td>
-      <td>${sol}</td>
-      <td>${rec}</td>
+      <td>${esc(sol)}</td>
+      <td>${esc(rec)}</td>
       <td>${statusBadge(estado)}</td>
       <td class="mono">${fmtDate(fecha)}</td>
     </tr>`;
@@ -1289,7 +1312,8 @@ function renderFamilias() {
 }
 
 async function deleteFamily(id, name) {
-  showModal(`Eliminar familia "${name}"`, `¿Eliminar la familia <strong>${name}</strong>? Los miembros quedarán sin familia.`, 'Eliminar', 'red', async () => {
+  const nameHtml = esc(name);
+  showModal(`Eliminar familia "${name}"`, `¿Eliminar la familia <strong>${nameHtml}</strong>? Los miembros quedarán sin familia.`, 'Eliminar', 'red', async () => {
     try {
       await api('DELETE', ENDPOINTS.familia(id));
       toast(`Familia "${name}" eliminada`, 'ok');
@@ -1312,7 +1336,7 @@ async function loadSolicitudes() {
     else badge.style.display='none';
     filterSolicitudes();
   } catch(e) {
-    document.getElementById('solicitudes-tbody').innerHTML = `<tr><td colspan="6"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`;
+    document.getElementById('solicitudes-tbody').innerHTML = `<tr><td colspan="6"><div class="empty"><p>Error: ${esc(e.message)}</p></div></td></tr>`;
     toast(e.message, 'err');
   }
 }
@@ -1374,7 +1398,7 @@ async function loadReportes() {
     else badge.style.display='none';
     filterReportes();
   } catch(e) {
-    document.getElementById('reportes-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`;
+    document.getElementById('reportes-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${esc(e.message)}</p></div></td></tr>`;
     toast(e.message, 'err');
   }
 }
@@ -1408,9 +1432,9 @@ function renderReportes() {
     const estado = r.estado_repor || '—';
     const fecha  = r.creadoen_repor || null;
     return `<tr>
-      <td><div class="user-cell"><div class="avatar-txt">${initials(rep)}</div>${rep}</div></td>
-      <td>${by}</td>
-      <td style="max-width:200px;">${truncate(motivo, 50)}</td>
+      <td><div class="user-cell"><div class="avatar-txt">${esc(initials(rep))}</div>${esc(rep)}</div></td>
+      <td>${esc(by)}</td>
+      <td style="max-width:200px;">${esc(truncate(motivo, 50))}</td>
       <td>${statusBadge(estado)}</td>
       <td class="mono">${fmtDateTime(fecha)}</td>
       <td><span class="mono" style="font-size:10px;color:var(--t3);">#${id}</span></td>
@@ -1443,7 +1467,7 @@ async function loadContenido() {
     data.contenido = Array.isArray(res) ? res : (res?.data || res?.contenido || []);
     filterContenido();
   } catch(e) {
-    document.getElementById('contenido-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${e.message}</p></div></td></tr>`;
+    document.getElementById('contenido-tbody').innerHTML = `<tr><td colspan="7"><div class="empty"><p>Error: ${esc(e.message)}</p></div></td></tr>`;
     toast(e.message, 'err');
   }
 }
@@ -1479,8 +1503,8 @@ function renderContenido() {
     const fecha  = c.creadoen_publi || null;
     return `<tr>
       <td>${statusBadge(tipo)}</td>
-      <td>${autor}</td>
-      <td style="max-width:220px;">${truncate(titulo, 60)}</td>
+      <td>${esc(autor)}</td>
+      <td style="max-width:220px;">${esc(truncate(titulo, 60))}</td>
       <td>${statusBadge(estado)}</td>
       <td class="mono">${fmtDate(fecha)}</td>
       <td><span class="mono" style="font-size:10px;color:var(--t3);">#${id}</span></td>
@@ -1554,7 +1578,7 @@ async function testConnection() {
     el.textContent = `✓ Respuesta en ${ms}ms (HTTP ${res.status})`;
     el.style.color = 'var(--green)';
   } catch(e) {
-    el.textContent = `✗ No se pudo conectar: ${e.message}`;
+    el.textContent = `✗ No se pudo conectar: ${esc(e.message)}`;
     el.style.color = 'var(--red)';
   }
 }

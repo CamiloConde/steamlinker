@@ -47,8 +47,8 @@
           const nivel = u.repu_usu != null ? `★ ${Number(u.repu_usu).toFixed(1)}` : '—';
           const estado = u.baneado_usu ? 'baneado' : 'activo';
           return `<tr>
-            <td>${name}</td>
-            <td class="mono">${email}</td>
+            <td>${esc(name)}</td>
+            <td class="mono">${esc(email)}</td>
             <td>${nivel}</td>
             <td>${statusBadge(estado)}</td>
           </tr>`;
@@ -56,7 +56,7 @@
         .join('')}</tbody></table>`;
     } catch (e) {
       document.getElementById('dash-usuarios-list').innerHTML =
-        `<div class="empty"><p>No se pudo cargar usuarios. ${e.message}</p></div>`;
+        `<div class="empty"><p>No se pudo cargar usuarios. ${esc(e.message)}</p></div>`;
     }
 
     const actEl = document.getElementById('dash-activity');
@@ -75,17 +75,17 @@
           const tipo = (ev.tipo || '').toLowerCase();
           const d = dot[tipo] || 'blue';
           const titulo = ev.titulo || '—';
-          const det = ev.detalle ? '<span> — ' + truncate(ev.detalle, 60) + '</span>' : '';
+          const det = ev.detalle ? '<span> — ' + esc(truncate(ev.detalle, 60)) + '</span>' : '';
           return (
             '<div class="activity-item">' +
             '<div class="activity-dot ' + d + '"></div>' +
-            '<div class="activity-text"><strong>' + (label[tipo] || tipo) + '</strong> · ' + titulo + det + '</div>' +
+            '<div class="activity-text"><strong>' + esc(label[tipo] || tipo) + '</strong> · ' + esc(titulo) + det + '</div>' +
             '<div class="activity-time">' + fmtDateTime(ev.fecha) + '</div></div>'
           );
         })
         .join('');
     } catch (e) {
-      actEl.innerHTML = '<p style="color:var(--t3);font-size:12px;">Actividad: ' + e.message + '</p>';
+      actEl.innerHTML = '<p style="color:var(--t3);font-size:12px;">Actividad: ' + esc(e.message) + '</p>';
     }
   };
 
@@ -129,17 +129,16 @@
         const baneado = u.baneado_usu === true;
         const esAdmin = tipo === 'admin';
         const estado = baneado ? 'baneado' : 'activo';
-        const nameEsc = name.replace(/'/g, "\\'");
         let acciones = '<button class="btn btn-ghost btn-sm" onclick="verUsuario(' + id + ')">Ver</button>';
         if (!esAdmin) {
           acciones += baneado
-            ? ` <button class="btn btn-green btn-sm" onclick="accionUsuario('unban',${id},'${nameEsc}')">Desbanear</button>`
-            : ` <button class="btn btn-yellow btn-sm" onclick="accionUsuario('ban',${id},'${nameEsc}')">Banear</button>`;
-          acciones += ` <button class="btn btn-red btn-sm" onclick="accionUsuario('delete',${id},'${nameEsc}')">Eliminar</button>`;
+            ? ` <button class="btn btn-green btn-sm" onclick="accionUsuario('unban',${id})">Desbanear</button>`
+            : ` <button class="btn btn-yellow btn-sm" onclick="accionUsuario('ban',${id})">Banear</button>`;
+          acciones += ` <button class="btn btn-red btn-sm" onclick="accionUsuario('delete',${id})">Eliminar</button>`;
         }
         return `<tr>
-          <td><div class="user-cell"><div class="avatar-txt">${initials(name)}</div><div><div>${name}</div><div class="mono" style="font-size:10px;">#${id}${u.steam_id ? ' · Steam' : ''}</div></div></div></td>
-          <td class="mono">${email}</td>
+          <td><div class="user-cell"><div class="avatar-txt">${esc(initials(name))}</div><div><div>${esc(name)}</div><div class="mono" style="font-size:10px;">#${id}${u.steam_id ? ' · Steam' : ''}</div></div></div></td>
+          <td class="mono">${esc(email)}</td>
           <td>★ ${nivel} <span class="mono" style="color:var(--t3)">(${u.totalrating_usu || 0})</span></td>
           <td>${familias}</td>
           <td>${statusBadge(estado)}</td>
@@ -173,9 +172,9 @@
              <button class="btn btn-red btn-sm" onclick="banearDesdeReporte(${id})">Banear</button>`
           : '<span class="mono" style="color:var(--t3)">—</span>';
         return `<tr>
-          <td><div class="user-cell"><div class="avatar-txt">${initials(rep)}</div>${rep}</div></td>
-          <td>${by}</td>
-          <td style="max-width:200px;">${truncate(motivo, 50)}</td>
+          <td><div class="user-cell"><div class="avatar-txt">${esc(initials(rep))}</div>${esc(rep)}</div></td>
+          <td>${esc(by)}</td>
+          <td style="max-width:200px;">${esc(truncate(motivo, 50))}</td>
           <td>${statusBadge(estado)}</td>
           <td class="mono">${fmtDateTime(fecha)}</td>
           <td><div style="display:flex;gap:6px;flex-wrap:wrap;">${acciones}</div></td></tr>`;
@@ -199,8 +198,8 @@
         const fecha = s.creadoen_match;
         return `<tr>
           <td><span class="mono">#${id}</span></td>
-          <td>${sol}</td>
-          <td>${rec}</td>
+          <td>${esc(sol)}</td>
+          <td>${esc(rec)}</td>
           <td>${statusBadge(estado)}</td>
           <td class="mono">${fmtDate(fecha)}</td>
         </tr>`;
@@ -230,8 +229,8 @@
           ` <button class="btn btn-red btn-sm" onclick="accionContenido('delete',${id})">Eliminar</button>`;
         return `<tr>
           <td>${statusBadge(tipo)}</td>
-          <td>${autor}</td>
-          <td style="max-width:220px;">${truncate(titulo, 60)}</td>
+          <td>${esc(autor)}</td>
+          <td style="max-width:220px;">${esc(truncate(titulo, 60))}</td>
           <td>${statusBadge(estadoLabel)}</td>
           <td class="mono">${fmtDate(fecha)}</td>
           <td>${acciones}</td>
@@ -359,7 +358,7 @@
       data.chats = Array.isArray(res) ? res : [];
       filterChats();
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><p>' + e.message + '</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><p>' + esc(e.message) + '</p></div></td></tr>';
     }
   };
 
@@ -389,11 +388,11 @@
           '<tr><td class="mono">#' +
           (c.id_chat || '?') +
           '</td><td>' +
-          (c.usuario_a || '—') +
+          esc(c.usuario_a || '—') +
           ' ↔ ' +
-          (c.usuario_b || '—') +
+          esc(c.usuario_b || '—') +
           '</td><td>' +
-          truncate(c.ultimo_mensaje || '—', 70) +
+          esc(truncate(c.ultimo_mensaje || '—', 70)) +
           '</td><td class="mono">' +
           (c.total_mensajes ?? 0) +
           '</td><td class="mono">' +
@@ -418,14 +417,15 @@
       document.getElementById('usuario-modal-title').textContent = u.username_usu || 'Usuario #' + id;
       const baneado = u.baneado_usu === true;
       const esAdmin = (u.tipo_usu || '').toLowerCase() === 'admin';
-      const nameEsc = (u.username_usu || '').replace(/'/g, "\\'");
       const steam = u.steam_id
         ? '<a href="' +
-          (u.perfil_url || '#') +
+          esc(u.perfil_url || '#') +
           '" target="_blank" style="color:var(--accent)">' +
-          (u.username_steperfil || u.steam_id) +
+          esc(u.username_steperfil || u.steam_id) +
           '</a>'
         : 'No vinculado';
+      // El nombre para los botones de acción se busca dentro de accionUsuario()
+      // a partir del id — no se embebe aquí (ver comentario en accionUsuario).
       let acc =
         '<button class="btn btn-ghost btn-sm" onclick="cambiarRepuUsuario(' + id + ')">Ajustar reputación</button>';
       if (!esAdmin) {
@@ -434,30 +434,17 @@
           id +
           ", 'admin')\">Hacer admin</button>";
         acc += baneado
-          ? ' <button class="btn btn-green btn-sm" onclick="closeUsuarioModal();accionUsuario(\'unban\',' +
-            id +
-            ",'" +
-            nameEsc +
-            "')\">Desbanear</button>"
-          : ' <button class="btn btn-yellow btn-sm" onclick="closeUsuarioModal();accionUsuario(\'ban\',' +
-            id +
-            ",'" +
-            nameEsc +
-            "')\">Banear</button>";
-        acc +=
-          ' <button class="btn btn-red btn-sm" onclick="closeUsuarioModal();accionUsuario(\'delete\',' +
-          id +
-          ",'" +
-          nameEsc +
-          "')\">Eliminar</button>";
+          ? ` <button class="btn btn-green btn-sm" onclick="closeUsuarioModal();accionUsuario('unban',${id})">Desbanear</button>`
+          : ` <button class="btn btn-yellow btn-sm" onclick="closeUsuarioModal();accionUsuario('ban',${id})">Banear</button>`;
+        acc += ` <button class="btn btn-red btn-sm" onclick="closeUsuarioModal();accionUsuario('delete',${id})">Eliminar</button>`;
       }
       body.innerHTML =
         '<div class="detail-grid">' +
         '<div class="detail-field"><div class="df-label">Email</div><div class="df-value mono">' +
-        (u.email_usu || '—') +
+        esc(u.email_usu || '—') +
         '</div></div>' +
         '<div class="detail-field"><div class="df-label">País</div><div class="df-value">' +
-        (u.pais_usu || '—') +
+        esc(u.pais_usu || '—') +
         '</div></div>' +
         '<div class="detail-field"><div class="df-label">Tipo</div><div class="df-value">' +
         statusBadge(u.tipo_usu || 'usuario') +
@@ -484,7 +471,7 @@
         '</div></div>' +
         '</div>' +
         (baneado && u.motivo_ban
-          ? '<p style="margin-top:10px;color:var(--red);font-size:12px;">Motivo: ' + u.motivo_ban + '</p>'
+          ? '<p style="margin-top:10px;color:var(--red);font-size:12px;">Motivo: ' + esc(u.motivo_ban) + '</p>'
           : '') +
         '<div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;">' +
         acc +

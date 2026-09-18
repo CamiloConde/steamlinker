@@ -1180,12 +1180,46 @@ have", son requisitos mínimos para que lanzar sea responsable):**
 - [ ] Una sola llamada a la acción clara en cada pantalla de entrada (hoy
       Inicio ya tiende a esto tras el rediseño de la ronda 4; revisar que
       login/registro no compitan entre sí)
-- [ ] **Seguridad**: el usuario pidió explícitamente "tocar" esto. Punto de
-      partida real (no específico de esta sesión): revisar rate-limiting en
-      login/registro (fuerza bruta), expiración/rotación de JWT, sanitización
-      de inputs en comentarios/descripciones (XSS), y CORS en producción.
-      Nada de esto se auditó a fondo todavía — es trabajo propio, no una
-      lista de deseos.
+- [~] **Seguridad**: el usuario pidió explícitamente "tocar" esto. Auditado
+      y con la parte más urgente ya arreglada esta sesión (mientras el
+      usuario abría la cuenta de Ko-fi):
+  - [x] **XSS real y explotable en el panel de administración,
+        encontrado y arreglado.** Casi todas las funciones de
+        `public/admin/index.html` y `admin-panel.js` interpolaban campos
+        controlados por usuarios finales (username, email, país, motivo
+        de reporte, mensajes de chat, títulos de publicación, motivo de
+        baneo) directamente en `innerHTML` sin escapar. Un username o
+        mensaje con `<img src=x onerror=...>` se habría ejecutado en la
+        sesión del administrador que abre Usuarios/Reportes/Chats —
+        y el panel guarda su propio JWT en `localStorage.sl_token`,
+        así que era robo de sesión de admin, no solo un `alert()`.
+        Arreglado con una función `esc()` compartida aplicada en todos
+        los puntos de interpolación (~25 sitios entre los dos archivos),
+        y se eliminó el patrón fragil de pasar el nombre del usuario
+        embebido en un atributo `onclick="...('nombre')"` (se rompía o
+        era otro vector de inyección con comillas/`<` en el nombre) —
+        ahora `accionUsuario(accion, id)` busca el nombre en la caché
+        local y lo escapa recién al pintarlo.
+  - [x] **Rate-limiting en `/auth/login` y `/auth/registro`** con
+        `express-rate-limit` (login: 10 intentos/15 min por IP; registro:
+        20 cuentas/hora por IP; desactivado en `NODE_ENV=test` para no
+        romper la suite). Verificado en vivo: el intento #11 de login
+        devuelve `429`.
+  - [x] CORS en producción: ya estaba bien resuelto de antes (orígenes
+        explícitos vía `CORS_ORIGINS`, sin fallback abierto) — confirmado
+        al auditar, sin cambios necesarios.
+  - [ ] **Pendiente, no arreglado esta sesión**: JWT no tiene rotación ni
+        revocación — expira solo (7 días en registro, 30 en login) pero
+        no hay forma de invalidar un token robado antes de su expiración
+        natural (necesitaría refresh tokens + tabla de sesiones, cambio
+        de esquema más grande — no se improvisó dentro de esta pasada).
+        Tampoco se sanitizan explícitamente comentarios/descripciones en
+        el **lado Flutter** (bajo riesgo real: Flutter no interpreta HTML
+        en `Text()`, así que el vector serio era el panel admin, ya
+        cerrado) ni se revisó `npm audit` a fondo — hay una vulnerabilidad
+        moderada conocida en `qs` (dependencia transitiva de `express`,
+        DoS en `qs.stringify` con arrays anidados) sin fix automático
+        disponible todavía sin subir `express` de versión mayor.
 
 **Nivel 1.5 — pedido explícitamente para el día 1 por el usuario, fuera del
 orden de prioridad que yo hubiera sugerido por defecto:**
