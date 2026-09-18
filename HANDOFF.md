@@ -1528,22 +1528,39 @@ real.
    "Match recibido"), Inicio → "Apoya el proyecto" (que el botón abra
    https://ko-fi.com/camiko31), el registro (que muestre y abra los enlaces
    legales), y una URL rota (que caiga en la 404 con estilo).
-2. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
+2. **Selector de idioma: traducir el resto de la app.** La infraestructura
+   (`.arb`, `AppLocalizations`, `LocaleProvider`, tarjeta "Idioma" en
+   Configuración) ya está completa y funcionando — lo que falta es
+   traducción pantalla por pantalla. Elegir inglés hoy solo traduce
+   login/registro, el bottom nav móvil y el sidebar de escritorio; el
+   resto de la app (Inicio, Descubrir, Publicaciones, Perfil,
+   Configuración, Chat, Notificaciones, Amistad, Aviso legal/Privacidad,
+   Contacto, panel de admin) sigue en español sin importar el idioma
+   elegido. Patrón para continuar: agregar claves a
+   `lib/l10n/app_es.arb`/`app_en.arb` → `flutter pub get` (regenera
+   `AppLocalizations`) → reemplazar los `Text('...')` literales por
+   `AppLocalizations.of(context)!.miClave`, pantalla por pantalla completa
+   (nunca a medias dentro de una misma pantalla, para no mezclar idiomas
+   en el mismo lugar). Ojo con Inicio en particular: depende de
+   `PublicacionConstants.etiquetaTipo()` y `PaisUtil.codigoANombre()`
+   (nombres de tipo de publicación y de país), que hay que traducir
+   primero para que Inicio quede completo de verdad.
+3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
    mejor en una sesión dedicada a eso o con una herramienta de diseño. De
    paso quedan pendientes los íconos grandes de instalación PWA
    (`web/icons/Icon-*.png`, 192/512), que siguen con el logo de Flutter.
-3. Nivel 1 queda esencialmente cerrado (legal, privacidad, seguridad
+4. Nivel 1 queda esencialmente cerrado (legal, privacidad, seguridad
    urgente, 404, CTA única, cookies confirmado que no aplica). Lo único
    pendiente ahí: rotación/revocación de JWT (requiere refresh tokens +
    tabla de sesiones, cambio de esquema más grande) y revisar a fondo
    `npm audit` (vulnerabilidad moderada conocida en `qs`, dependencia
    transitiva de `express`).
-4. Nivel 2 queda prácticamente cerrado esta sesión (loading screen, botón
+5. Nivel 2 queda prácticamente cerrado esta sesión (loading screen, botón
    volver arriba, mensajes de error/éxito unificados, formulario de
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-5. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
+6. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar
 
