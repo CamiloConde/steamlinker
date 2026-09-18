@@ -1972,14 +1972,38 @@ real.
    (sistemas de strings aparte que Inicio también usa).
 3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código.
    Iconos PWA (`web/icons/Icon-*.png`) siguen con el logo de Flutter.
-4. **Pulido menor pendiente de esta ronda** (bajo esfuerzo si se retoma):
-   agregar tags de género y avatares de "juegan en común" a
-   `PublicacionCard` (el usuario dijo "cuando puedas", sin prisa); revisar
-   si el stat "FAMILIA" del grid de Perfil necesita el mismo tipo de
-   aclaración que se le hizo a "TU ESTADO" en Inicio.
+4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
+   prisa — revisado el alcance real, es más grande de lo que parecía):
+   - **"Juegos en común" en `PublicacionCard`**: NO es solo un cambio de
+     UI. `/perfil/descubrir` ya calcula esto server-side para las
+     tarjetas de Descubrir (`juegos_en_comun`/`juegos_comunes_muestra`),
+     pero el endpoint que alimenta Publicaciones no trae ese dato para
+     el autor de cada publicación — hace falta agregarlo ahí primero
+     (backend) antes de poder mostrarlo en la tarjeta (frontend). Sin
+     ese campo, no hay con qué pintar el indicador.
+   - **Tags de género (Soulslike/Co-op/RRG/...)**: tampoco es solo UI —
+     la tabla `juegos` no guarda género/tags en absoluto hoy (columnas:
+     `appid, nom_jg, headerimg_jg, capsuleimg_jg`). Requeriría traer esa
+     info de la Steam Store API al importar/agregar un juego y guardarla,
+     antes de poder mostrarla en ningún lado.
+   - Revisar si el stat "FAMILIA" del grid de Perfil necesita el mismo
+     tipo de aclaración que se le hizo a "TU ESTADO" en Inicio (bajo
+     esfuerzo real, sí se puede hacer directo cuando se retome).
 5. Nivel 1: rotación/revocación de JWT (refresh tokens + tabla de
-   sesiones) y `npm audit` a fondo (vulnerabilidad moderada conocida en
-   `qs`, transitiva de `express`) — sin cambios esta ronda.
+   sesiones) — sigue pendiente, sin cambios. **`npm audit` sí se
+   investigó a fondo esta ronda**: la vulnerabilidad moderada de `qs`
+   (2.2.5-6.15.3) **no viene de `express`** como se pensaba — `express`
+   (vía `body-parser`) ya usa `qs@6.16.0`, una versión segura fuera del
+   rango vulnerable. La única instancia vulnerable (`qs@6.14.2`) llega
+   por `supertest` → `superagent`, y `supertest` es **devDependency**
+   (solo se usa corriendo tests, nunca se instala ni corre en
+   producción). `npm audit fix` (con y sin `--force`) confirma que no
+   hay una versión más nueva de `superagent` que resuelva esto todavía —
+   es un problema sin arreglar en esa librería, no algo que este proyecto
+   pueda corregir por su cuenta. Conclusión: **no hay riesgo real en el
+   backend desplegado**, solo en el entorno de desarrollo/tests. No amerita
+   más acción que revisar de nuevo si `superagent` publica una versión
+   nueva más adelante.
 6. Nivel 2: optimización de velocidad (Lighthouse, una vez desplegado) —
    sin cambios esta ronda.
 7. Nivel 3: solo "botones de redes sociales" pendiente (el usuario duda
