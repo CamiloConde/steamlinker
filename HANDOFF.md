@@ -1989,9 +1989,50 @@ real.
    - Revisar si el stat "FAMILIA" del grid de Perfil necesita el mismo
      tipo de aclaración que se le hizo a "TU ESTADO" en Inicio (bajo
      esfuerzo real, sí se puede hacer directo cuando se retome).
-5. Nivel 1: rotación/revocación de JWT (refresh tokens + tabla de
-   sesiones) — sigue pendiente, sin cambios. **`npm audit` sí se
-   investigó a fondo esta ronda**: la vulnerabilidad moderada de `qs`
+5. Nivel 1: **rotación/revocación de JWT — hecho esta ronda, Nivel 1
+   queda cerrado del todo.** Antes el JWT era el único factor: firmado,
+   sin ningún registro del lado del servidor, válido hasta 30 días sin
+   forma de invalidarlo antes de tiempo (ni al cerrar sesión, ni al
+   banear a alguien, ni si se filtraba). Ahora:
+   - Nueva tabla `sesiones` (migración `009_create_sesiones.sql`):
+     guarda el hash SHA-256 de cada refresh token, con expiración y
+     revocación.
+   - El **access token** (JWT) baja de 7-30 días a **1 hora** — sigue
+     sin estado como siempre (eso no cambia), pero ahora una revocación
+     tarda como máximo 1h en tomar efecto en vez de hasta 30 días.
+   - El **refresh token** (string aleatorio de 40 bytes, no un JWT) vive
+     30 días y **rota en cada uso**: `POST /auth/refresh` revoca el que
+     se usó y devuelve uno nuevo — si alguien reutiliza uno ya rotado
+     (señal de que se filtró), la sesión completa queda invalidada de
+     una vez (no hay fila viva con ese hash).
+   - `POST /auth/logout` revoca el refresh token — idempotente a
+     propósito (siempre 200).
+   - Banear a un usuario (las 2 rutas que lo hacen en `admin.js`) y
+     cambiar la contraseña ahora **revocan todas las sesiones activas**
+     de esa cuenta — antes un usuario baneado o con contraseña
+     comprometida seguía con acceso completo hasta que su JWT expirara
+     solo.
+   - `DELETE /auth/cuenta` no necesitó cambios — `sesiones` tiene
+     `ON DELETE CASCADE` hacia `usuarios`.
+   - **Frontend**: `ApiClient` (Dio) gana un interceptor que, ante un
+     401, intenta refrescar el token automáticamente y reintenta la
+     petición original una sola vez antes de rendirse y cerrar sesión
+     (`_refreshing` evita que dos peticiones que fallan casi a la vez
+     disparen dos refresh en paralelo, importante porque el refresh
+     token rota). `TokenStorage` guarda ambos tokens; `AuthProvider`
+     los persiste al registrarse/loguear, y `logout()` ahora llama a
+     `POST /auth/logout` antes de borrar el token local (mejor esfuerzo:
+     si falla por falta de red, igual cierra sesión local).
+   - Cubierto por 9 tests nuevos (`tests/auth.refreshLogout.test.js`):
+     login devuelve ambos tokens, refresh rota, reuso de un token ya
+     rotado se rechaza, token inexistente/vacío se rechaza, logout
+     revoca y es idempotente, cambiar contraseña revoca sesiones,
+     banear revoca sesiones. **Verificado también en vivo contra el
+     backend de desarrollo real corriendo** (`curl`): login real emite
+     ambos tokens, refresh real rota correctamente, reuso del token
+     viejo devuelve 401 — no solo tests, el flujo completo end-to-end
+     funciona tal cual (36/36 tests de backend pasando en total).
+   **`npm audit` sí se investigó a fondo esta ronda**: la vulnerabilidad moderada de `qs`
    (2.2.5-6.15.3) **no viene de `express`** como se pensaba — `express`
    (vía `body-parser`) ya usa `qs@6.16.0`, una versión segura fuera del
    rango vulnerable. La única instancia vulnerable (`qs@6.14.2`) llega

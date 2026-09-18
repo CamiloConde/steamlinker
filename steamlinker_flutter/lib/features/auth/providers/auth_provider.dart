@@ -53,9 +53,10 @@ class AuthProvider extends ChangeNotifier {
       });
 
       final token = respuesta.data['token'];
+      final refreshToken = respuesta.data['refreshToken'];
       final usuario = respuesta.data['usuario'];
 
-      await TokenStorage.guardarToken(token, usuario['id']);
+      await TokenStorage.guardarToken(token, usuario['id'], refreshToken: refreshToken);
       _usuario = usuario;
       _autenticado = true;
       _cargando = false;
@@ -86,9 +87,10 @@ class AuthProvider extends ChangeNotifier {
       });
 
       final token = respuesta.data['token'];
+      final refreshToken = respuesta.data['refreshToken'];
       final usuario = respuesta.data['usuario'];
 
-      await TokenStorage.guardarToken(token, usuario['id']);
+      await TokenStorage.guardarToken(token, usuario['id'], refreshToken: refreshToken);
       _usuario = usuario;
       _autenticado = true;
       _cargando = false;
@@ -105,6 +107,17 @@ class AuthProvider extends ChangeNotifier {
 
   // Cerrar sesion (limpia token y estado; usar confirmarYCerrarSesion en UI para ir al login)
   Future<void> logout() async {
+    // Revoca la sesión del lado del servidor antes de borrar el token
+    // local -- si no, el refresh token sigue vivo en `sesiones` y en
+    // teoría podría reusarse hasta que expire solo (30 días). Es
+    // "mejor esfuerzo": si falla (sin red, etc.) igual se cierra sesión
+    // local, no vale la pena bloquear el logout por esto.
+    final refreshToken = await TokenStorage.obtenerRefreshToken();
+    if (refreshToken != null) {
+      try {
+        await ApiClient.dio.post('/auth/logout', data: {'refreshToken': refreshToken});
+      } catch (_) {}
+    }
     await TokenStorage.eliminarToken();
     _usuario = null;
     _autenticado = false;

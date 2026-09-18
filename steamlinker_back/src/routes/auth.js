@@ -24,10 +24,51 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../db');
 const { loginLimiter, registroLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
+
+// ── Rotación/revocación de sesiones (refresh tokens) ────────────────
+// El access token (JWT) ahora vive poco (1h) y sigue sin estado como
+// siempre -- lo que cambia es que ya no es el único factor de sesión.
+// El refresh token es una cadena aleatoria de alta entropía (no un JWT):
+// se guarda hasheada en la tabla `sesiones`, así que SÍ se puede revocar
+// de verdad (cerrar sesión, banear a alguien, eliminar la cuenta) en vez
+// de tener que esperar a que expire solo. Se hashea con SHA-256 (no
+// bcrypt): a diferencia de una contraseña elegida por una persona, un
+// refresh token ya es aleatorio de 256 bits -- no hace falta el costo
+// computacional de bcrypt para defenderse de fuerza bruta.
+const ACCESS_TOKEN_TTL = '1h';
+const REFRESH_TOKEN_DIAS = 30;
+
+function generarAccessToken(usuario) {
+    return jwt.sign(
+        { id: usuario.id_usu, username: usuario.username_usu, tipo: usuario.tipo_usu },
+        process.env.JWT_SECRET,
+        { expiresIn: ACCESS_TOKEN_TTL }
+    );
+}
+
+function hashRefreshToken(refreshToken) {
+    return crypto.createHash('sha256').update(refreshToken).digest('hex');
+}
+
+// Crea una sesión nueva (fila en `sesiones`) y devuelve el refresh token
+// en crudo (solo existe en este momento -- lo que se guarda es su hash).
+async function crearSesion(idUsu) {
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const expiraEn = new Date(Date.now() + REFRESH_TOKEN_DIAS * 24 * 60 * 60 * 1000);
+
+    await pool.query(
+        `INSERT INTO sesiones (id_usu, refresh_hash, expiraen_sesion)
+         VALUES ($1, $2, $3)`,
+        [idUsu, hashRefreshToken(refreshToken), expiraEn]
+    );
+
+    return refreshToken;
+}
 
 /**
  * MIDDLEWARE: verificarToken
@@ -159,18 +200,16 @@ router.post('/registro', registroLimiter, async (req, res) => {
 
         const usuario = resultado.rows[0];
 
-        // Generar token JWT para que el usuario quede logueado inmediatamente
-        // El token contiene: id, username, tipo
-        // Válido por 7 días y se firma con la clave JWT_SECRET del .env
-        const token = jwt.sign(
-            { id: usuario.id_usu, username: usuario.username_usu, tipo: usuario.tipo_usu },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
+        // Access token (JWT, 1h) + refresh token (guardado hasheado en
+        // `sesiones`, revocable de verdad) -- ver comentario junto a
+        // crearSesion() arriba.
+        const token = generarAccessToken(usuario);
+        const refreshToken = await crearSesion(usuario.id_usu);
 
         // Normalizar la respuesta para que tenga la misma forma que el login
         res.status(201).json({
             token,
+            refreshToken,
             usuario: {
                 id: usuario.id_usu,
                 username: usuario.username_usu,
@@ -278,19 +317,17 @@ router.post('/login', loginLimiter, async (req, res) => {
             });
         }
 
-        // Si las credenciales son correctas, generar token JWT
-        // El token es válido por 30 días
-        // Incluye: id del usuario, username, y tipo de cuenta
-        const token = jwt.sign(
-            { id: usuario.id_usu, username: usuario.username_usu, tipo: usuario.tipo_usu },
-            process.env.JWT_SECRET,
-            { expiresIn: '30d' }
-        );
+        // Access token (JWT, 1h) + refresh token (guardado hasheado en
+        // `sesiones`, revocable de verdad) -- ver comentario junto a
+        // crearSesion() arriba.
+        const token = generarAccessToken(usuario);
+        const refreshToken = await crearSesion(usuario.id_usu);
 
         // Retorna el token + datos públicos del usuario
         // (no incluye el hash de contraseña por seguridad)
         res.json({
             token,
+            refreshToken,
             usuario: {
                 id: usuario.id_usu,
                 username: usuario.username_usu,
@@ -303,6 +340,70 @@ router.post('/login', loginLimiter, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+
+// POST /auth/refresh
+// Intercambia un refresh token vivo por un access token nuevo. Rota el
+// refresh token en cada uso (se revoca el viejo, se crea uno nuevo) --
+// si alguien reutiliza uno ya rotado (señal de que se filtró), la sesión
+// completa queda invalidada de una: no hay fila viva con ese hash.
+router.post('/refresh', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+        return res.status(400).json({ error: 'refreshToken es obligatorio' });
+    }
+
+    try {
+        const hash = hashRefreshToken(refreshToken);
+        const sesion = await pool.query(
+            `SELECT s.id_sesion, s.id_usu, u.username_usu, u.tipo_usu, u.baneado_usu
+             FROM sesiones s
+             JOIN usuarios u ON u.id_usu = s.id_usu
+             WHERE s.refresh_hash = $1
+               AND s.revocadaen_sesion IS NULL
+               AND s.expiraen_sesion > NOW()`,
+            [hash]
+        );
+
+        if (sesion.rows.length === 0) {
+            return res.status(401).json({ error: 'Sesión inválida o expirada' });
+        }
+
+        const fila = sesion.rows[0];
+
+        if (fila.baneado_usu === true) {
+            return res.status(403).json({ error: 'Cuenta suspendida por un administrador' });
+        }
+
+        await pool.query(
+            'UPDATE sesiones SET revocadaen_sesion = NOW() WHERE id_sesion = $1',
+            [fila.id_sesion]
+        );
+
+        const usuario = { id_usu: fila.id_usu, username_usu: fila.username_usu, tipo_usu: fila.tipo_usu };
+        const token = generarAccessToken(usuario);
+        const nuevoRefreshToken = await crearSesion(fila.id_usu);
+
+        res.json({ token, refreshToken: nuevoRefreshToken });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /auth/logout
+// Revoca el refresh token -- idempotente a propósito (siempre 200,
+// exista o no la sesión) para que el cliente pueda "cerrar sesión"
+// tranquilo sin manejar un caso especial si ya estaba revocada.
+router.post('/logout', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+        await pool.query(
+            'UPDATE sesiones SET revocadaen_sesion = NOW() WHERE refresh_hash = $1 AND revocadaen_sesion IS NULL',
+            [hashRefreshToken(refreshToken)]
+        );
+    }
+    res.json({ mensaje: 'Sesión cerrada' });
 });
 
 
@@ -414,6 +515,15 @@ router.put('/cambiar-contrasena', verificarToken, async (req, res) => {
         await pool.query(
             'UPDATE usuarios SET pwhash_usu = $1 WHERE id_usu = $2',
             [hash, req.usuario.id]
+        );
+
+        // Cambiar la contraseña revoca todas las sesiones -- si alguien
+        // más tenía acceso (token filtrado), este es el momento en que
+        // se le cierra la puerta de verdad. El propio usuario va a tener
+        // que iniciar sesión de nuevo, que es el comportamiento esperado.
+        await pool.query(
+            'UPDATE sesiones SET revocadaen_sesion = NOW() WHERE id_usu = $1 AND revocadaen_sesion IS NULL',
+            [req.usuario.id]
         );
 
         res.json({ mensaje: 'Contraseña actualizada correctamente' });

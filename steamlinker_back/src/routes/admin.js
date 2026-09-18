@@ -351,6 +351,16 @@ router.post('/usuarios/:id/ban', verificarToken, requireAdmin, async (req, res) 
             [motivo, id]
         );
 
+        // Revoca las sesiones activas -- si no, el usuario baneado sigue
+        // pudiendo refrescar su token y seguir usando la cuenta hasta que
+        // su access token expire solo (hasta 1h). El access token en sí
+        // ya emitido no se puede invalidar sin estado, pero esto corta
+        // cualquier renovación.
+        await pool.query(
+            'UPDATE sesiones SET revocadaen_sesion = NOW() WHERE id_usu = $1 AND revocadaen_sesion IS NULL',
+            [id]
+        );
+
         res.json({ mensaje: 'Usuario baneado', usuario: resultado.rows[0] });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -612,6 +622,11 @@ router.post('/reportes/:id/ban-reportado', verificarToken, requireAdmin, async (
              SET baneado_usu = TRUE, motivo_ban = $1, fechaban_usu = NOW()
              WHERE id_usu = $2`,
             [motivo.slice(0, 500), row.id_reportado]
+        );
+
+        await pool.query(
+            'UPDATE sesiones SET revocadaen_sesion = NOW() WHERE id_usu = $1 AND revocadaen_sesion IS NULL',
+            [row.id_reportado]
         );
 
         await pool.query(
