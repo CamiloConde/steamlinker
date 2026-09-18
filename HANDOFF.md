@@ -1212,9 +1212,13 @@ have", son requisitos mínimos para que lanzar sea responsable):**
       cae en una URL rota sigue yendo primero a `/login` (el `redirect`
       global corre antes que el `errorBuilder`) — comportamiento correcto,
       no se cambió.
-- [ ] Una sola llamada a la acción clara en cada pantalla de entrada (hoy
-      Inicio ya tiende a esto tras el rediseño de la ronda 4; revisar que
-      login/registro no compitan entre sí)
+- [x] **Una sola llamada a la acción clara — revisado, ya cumplía.**
+      Login/registro: un único formulario con un único botón primario
+      ("INGRESAR"/"CREAR CUENTA"); el toggle login↔registro no es una CTA
+      que compita, es navegación entre los dos estados de la misma
+      pantalla de un solo propósito. El resto (nota de Steam, y ahora el
+      enlace a Aviso legal/Privacidad) es informativo, no otra acción.
+      Inicio ya cumplía esto desde el rediseño de la ronda 4.
 - [~] **Seguridad**: el usuario pidió explícitamente "tocar" esto. Auditado
       y con la parte más urgente ya arreglada esta sesión (mientras el
       usuario abría la cuenta de Ko-fi):
@@ -1370,22 +1374,30 @@ real.
 ### Cosas pendientes de esta sesión (no alcanzadas, ordenadas por mi
 ### prioridad si se retoma)
 
-1. **Verificación visual en vivo del build de esta ronda** — los cambios de
-   esta sesión (Descubrir, Configuración, Avisos, perfil de usuario,
-   "Apoya el proyecto") están cubiertos por `flutter analyze`/`flutter
-   test`/tests de backend, pero no se pudieron ver en el navegador por un
-   problema de escala de coordenadas en la automatización (no un bug de la
-   app). Antes de dar la ronda por cerrada del todo, alguien debería abrir
+1. **Verificación visual en vivo de toda la sesión** — los cambios (Descubrir,
+   Configuración, Avisos, perfil de usuario, "Apoya el proyecto", 404,
+   favicon, Aviso legal/Privacidad) están cubiertos por `flutter
+   analyze`/`flutter test`/tests de backend (16/16 backend, 10/10
+   frontend), pero no se pudieron ver en el navegador por un problema de
+   escala de coordenadas en la automatización (no un bug de la app). Antes
+   de dar la sesión por cerrada del todo, alguien debería abrir
    `flutter build web` y probar a ojo: Descubrir (filtros, dropdown de
-   juego), Configuración (etiquetas decorativas), Avisos → Marcadas (que
-   ancle arriba), perfil de otro usuario (que ya no aparezca "Match
-   recibido"), y Perfil → "Apoya el proyecto" (que el botón abra
-   https://ko-fi.com/camiko31 de verdad).
+   juego), Configuración (etiquetas decorativas + tarjeta Legal), Avisos →
+   Marcadas (que ancle arriba), perfil de otro usuario (que ya no aparezca
+   "Match recibido"), Perfil → "Apoya el proyecto" (que el botón abra
+   https://ko-fi.com/camiko31), el registro (que muestre y abra los enlaces
+   legales), y una URL rota (que caiga en la 404 con estilo).
 2. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
-   mejor en una sesión dedicada a eso o con una herramienta de diseño.
-3. Rotación/revocación de JWT (ver sección de Seguridad arriba) y revisar
-   a fondo `npm audit` (vulnerabilidad moderada conocida en `qs`).
-4. Todo lo demás del roadmap de Niveles 1–4 de arriba, en ese orden.
+   mejor en una sesión dedicada a eso o con una herramienta de diseño. De
+   paso quedan pendientes los íconos grandes de instalación PWA
+   (`web/icons/Icon-*.png`, 192/512), que siguen con el logo de Flutter.
+3. Nivel 1 queda esencialmente cerrado (legal, privacidad, seguridad
+   urgente, 404, CTA única, cookies confirmado que no aplica). Lo único
+   pendiente ahí: rotación/revocación de JWT (requiere refresh tokens +
+   tabla de sesiones, cambio de esquema más grande) y revisar a fondo
+   `npm audit` (vulnerabilidad moderada conocida en `qs`, dependencia
+   transitiva de `express`).
+4. Todo lo demás del roadmap de Niveles 2–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar
 
