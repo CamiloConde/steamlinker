@@ -1,11 +1,11 @@
 {
-    "name": "steamlinker_flutter",
-    "short_name": "steamlinker_flutter",
+    "name": "SteamMatch",
+    "short_name": "SteamMatch",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0A0E1A",
+    "theme_color": "#3B82F6",
+    "description": "Encuentra compañeros de juego reales según los juegos que ya tienes en tu biblioteca.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

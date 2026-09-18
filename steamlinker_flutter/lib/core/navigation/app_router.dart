@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/account/screens/account_settings_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/errors/screens/not_found_screen.dart';
 import '../../features/home/screens/responsive_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -33,5 +34,7 @@ GoRouter createAppRouter(AuthProvider auth) {
         builder: (context, state) => const AccountSettingsScreen(),
       ),
     ],
+    errorBuilder: (context, state) =>
+        NotFoundScreen(rutaPedida: state.uri.toString()),
   );
 }

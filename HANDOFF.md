@@ -1176,7 +1176,15 @@ have", son requisitos mínimos para que lanzar sea responsable):**
       incluida, y por cuánto tiempo)
 - [ ] Aviso de cookies, si la versión web usa alguna más allá del token de
       sesión en localStorage (revisar primero si aplica de verdad)
-- [ ] Página 404 personalizada
+- [x] **Página 404 personalizada — hecha.** `NotFoundScreen`
+      (`lib/features/errors/screens/not_found_screen.dart`), conectada como
+      `errorBuilder` de GoRouter en `app_router.dart`. Con la paleta y
+      tipografía del resto de la app (no el error genérico sin estilo de
+      GoRouter), muestra la ruta pedida cuando la conoce, y una sola
+      llamada a la acción: "Volver a Inicio". Un usuario sin sesión que
+      cae en una URL rota sigue yendo primero a `/login` (el `redirect`
+      global corre antes que el `errorBuilder`) — comportamiento correcto,
+      no se cambió.
 - [ ] Una sola llamada a la acción clara en cada pantalla de entrada (hoy
       Inicio ya tiende a esto tras el rediseño de la ronda 4; revisar que
       login/registro no compitan entre sí)
@@ -1257,7 +1265,20 @@ parecen:**
 - [ ] Mensajes de error y de éxito consistentes (hoy varían entre
       `ScaffoldMessenger.showSnackBar` genérico y `showSteamToast` propio —
       unificar antes de que crezca más)
-- [ ] Favicon custom (hoy usa el default de Flutter web)
+- [~] **Favicon custom — parcial.** El ícono del logo (`Icons.sports_esports`
+      sobre círculo con gradiente azul→teal, el mismo motivo que login/
+      sidebar) se generó como PNG real vía canvas del navegador y
+      reemplazó `web/favicon.png` (el ícono azul de Flutter por defecto).
+      También se corrigieron `<title>`, meta `description` y
+      `web/manifest.json` (nombre/descripción/colores), que todavía tenían
+      el texto genérico de plantilla ("steamlinker_flutter", "A new
+      Flutter project."). **No se tocaron** `web/icons/Icon-*.png` (192/512
+      y variantes maskable, usados al instalar como PWA) — intentar
+      generarlos por el mismo camino (canvas → base64 → decodificar)
+      falló por el tamaño del base64 al transcribirlo; de bajo impacto
+      real hoy porque nadie está instalando la PWA todavía, y de todas
+      formas hay que rehacerlos cuando exista el logo real (ver pendiente
+      de identidad visual, sección de Nivel 2).
 - [ ] Loading screen inicial (hoy el arranque de Flutter Web puede verse en
       blanco unos segundos)
 - [ ] Botón "volver arriba" en listas largas (Descubrir, Publicaciones)
