@@ -4,6 +4,7 @@ import '../../../core/config/app_config.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/steam_card.dart';
+import '../../../widgets/steam_toast.dart';
 
 /// "Apoya el proyecto": pedido explícitamente por el usuario para el día 1
 /// del lanzamiento (ver HANDOFF.md, "Nivel 1.5"), modelado como el enlace de
@@ -27,8 +28,11 @@ class ApoyarProyectoCard extends StatelessWidget {
   }
 
   void _avisar(BuildContext context, String url) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('No se pudo abrir el navegador. Copia el enlace:\n$url')),
+    showSteamToast(
+      context,
+      'No se pudo abrir el navegador. Copia el enlace:\n$url',
+      SteamColors.orange,
+      duration: const Duration(seconds: 6),
     );
   }
 

@@ -1296,9 +1296,28 @@ parecen:**
 - [ ] Formulario de contacto / sugerencias / quejas, con validación real y
       protección anti-spam básica (honeypot o rate-limit por IP alcanza para
       una beta; reCAPTCHA es overkill al inicio)
-- [ ] Mensajes de error y de éxito consistentes (hoy varían entre
-      `ScaffoldMessenger.showSnackBar` genérico y `showSteamToast` propio —
-      unificar antes de que crezca más)
+- [x] **Mensajes de error y de éxito consistentes — unificados.** Se
+      encontró un bug real al auditar: `showSteamToast` siempre mostraba
+      un ícono de palomita verde (✓) sin importar el color pasado — un
+      toast de error en rojo mostraba de todos modos un check de éxito.
+      Arreglado con un ícono elegido según el color
+      (`error_outline`/`warning_amber_rounded`/`check_circle_outline`/
+      `info_outline`), sin tener que tocar los ~30 sitios que ya llamaban
+      a `showSteamToast`. Además se migraron **13 `SnackBar` genéricos sin
+      estilo** (grises, del tema por defecto de Material, chocando con el
+      resto de la app) a `showSteamToast` en: `login_screen.dart` (las 7
+      validaciones del formulario + el mensaje de sesión iniciada — de
+      paso se corrigieron tildes: "Sesion"→"Sesión", "contrasena"→
+      "contraseña"), `amistad_screen.dart`, `chat_conversation_screen.dart`,
+      `matches_screen.dart` (×2), `publicaciones_screen.dart`,
+      `admin_panel_section.dart` (×2) y `apoyar_proyecto_card.dart`. Se
+      agregó soporte opcional de `action`/`duration` a `showSteamToast`
+      para no perder el botón "Copiar" que tenía el aviso del panel admin.
+      **Sin tocar a propósito**: `login_dev_server_chip.dart` (herramienta
+      de depuración solo para desarrollo local, nunca la ve un usuario
+      real) y los `TextStyle(color: Colors.red)` inline de texto de error
+      (ej. mensajes de carga fallida) — eso es texto en pantalla, no
+      notificaciones tipo toast, y no era el problema reportado.
 - [~] **Favicon custom — parcial.** El ícono del logo (`Icons.sports_esports`
       sobre círculo con gradiente azul→teal, el mismo motivo que login/
       sidebar) se generó como PNG real vía canvas del navegador y

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
+import '../../../widgets/steam_toast.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../widgets/chat_context_banner.dart';
@@ -80,9 +81,7 @@ class _ChatConversationScreenState extends State<ChatConversationScreen> {
       _mensajeController.clear();
       _scrollAlFinal();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(chatProv.error ?? 'No se pudo enviar el mensaje')),
-      );
+      showSteamToast(context, chatProv.error ?? 'No se pudo enviar el mensaje', SteamColors.red);
     }
   }
 

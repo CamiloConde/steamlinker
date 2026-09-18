@@ -11,6 +11,7 @@ import '../../legal/screens/aviso_legal_screen.dart';
 import '../../legal/screens/politica_privacidad_screen.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_dev_server_chip.dart';
+import '../../../widgets/steam_toast.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,44 +41,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     // Validaciones antes de llamar al backend
     if (_emailController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El correo es obligatorio')),
-      );
+      showSteamToast(context, 'El correo es obligatorio', SteamColors.orange);
       return;
     }
 
     if (!_emailController.text.trim().contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El correo no tiene un formato valido')),
-      );
+      showSteamToast(context, 'El correo no tiene un formato válido', SteamColors.orange);
       return;
     }
 
     if (_passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La contrasena es obligatoria')),
-      );
+      showSteamToast(context, 'La contraseña es obligatoria', SteamColors.orange);
       return;
     }
 
     if (_passwordController.text.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La contrasena debe tener al menos 4 caracteres')),
-      );
+      showSteamToast(context, 'La contraseña debe tener al menos 4 caracteres', SteamColors.orange);
       return;
     }
 
     if (_mostrarRegistro && _usernameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El nombre de usuario es obligatorio')),
-      );
+      showSteamToast(context, 'El nombre de usuario es obligatorio', SteamColors.orange);
       return;
     }
 
     if (_mostrarRegistro && _usernameController.text.trim().length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El usuario debe tener al menos 3 caracteres')),
-      );
+      showSteamToast(context, 'El usuario debe tener al menos 3 caracteres', SteamColors.orange);
       return;
     }
 
@@ -98,9 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (exito && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sesion iniciada correctamente')),
-      );
+      showSteamToast(context, 'Sesión iniciada correctamente', SteamColors.green);
     }
   }
 

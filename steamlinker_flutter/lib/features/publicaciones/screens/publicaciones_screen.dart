@@ -10,6 +10,7 @@ import '../../../widgets/drop_field.dart';
 import '../../../widgets/publicacion_card.dart';
 import '../../../widgets/scroll_to_top_fab.dart';
 import '../../../widgets/steam_app_bar.dart';
+import '../../../widgets/steam_toast.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../chat/providers/chat_provider.dart';
@@ -507,9 +508,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                   await publicacionesProv.cerrar(publicacion['id_publi']);
                   if (!context.mounted) return;
                   if (publicacionesProv.error != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(publicacionesProv.error!)),
-                    );
+                    showSteamToast(context, publicacionesProv.error!, SteamColors.red);
                   }
                 }
               : null,

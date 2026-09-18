@@ -179,18 +179,14 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   await prov.responder(item['id_match'], 'Aceptada');
                   if (!context.mounted) return;
                   context.read<NotificacionesProvider>().cargarContador();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Solicitud aceptada — chat creado')),
-                  );
+                  showSteamToast(context, 'Solicitud aceptada — chat creado', SteamColors.green);
                 }
               : null,
           onReject: estado == 'Pendiente' && recibido
               ? () async {
                   await prov.responder(item['id_match'], 'Rechazada');
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Solicitud rechazada')),
-                  );
+                  showSteamToast(context, 'Solicitud rechazada', SteamColors.muted);
                 }
               : null,
           onCalificar: estado == 'Aceptada' && miId != null

@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_config.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/steam_toast.dart';
 
 /// Bloque visible solo para cuentas con rol administrador.
 class AdminPanelSection extends StatelessWidget {
@@ -27,31 +28,28 @@ class AdminPanelSection extends StatelessWidget {
   }
 
   void _mostrarAyuda(BuildContext context, String url) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'No se pudo abrir el navegador. Copia el enlace:\n$url',
-          maxLines: 4,
-        ),
-        action: SnackBarAction(
-          label: 'Copiar',
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: url));
-          },
-        ),
-        duration: const Duration(seconds: 6),
+    showSteamToast(
+      context,
+      'No se pudo abrir el navegador. Copia el enlace:\n$url',
+      SteamColors.orange,
+      action: SnackBarAction(
+        label: 'Copiar',
+        onPressed: () {
+          Clipboard.setData(ClipboardData(text: url));
+        },
       ),
+      duration: const Duration(seconds: 6),
     );
   }
 
   void _copiarEnlace(BuildContext context) {
     final url = AppConfig.adminPanelUrl;
     Clipboard.setData(ClipboardData(text: url));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Enlace del panel copiado al portapapeles'),
-        duration: Duration(seconds: 2),
-      ),
+    showSteamToast(
+      context,
+      'Enlace del panel copiado al portapapeles',
+      SteamColors.green,
+      duration: const Duration(seconds: 2),
     );
   }
 

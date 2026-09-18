@@ -5,6 +5,7 @@ import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_buttons.dart';
+import '../../../widgets/steam_toast.dart';
 import '../../../widgets/usuario_card.dart';
 import '../providers/amistad_provider.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
@@ -119,9 +120,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
                     await prov.responder(s['id_amistad'], 'Aceptada');
                     if (!context.mounted) return;
                     context.read<NotificacionesProvider>().cargarContador();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Amistad aceptada')),
-                    );
+                    showSteamToast(context, 'Amistad aceptada', SteamColors.green);
                   },
                 ),
                 const SizedBox(height: 6),
