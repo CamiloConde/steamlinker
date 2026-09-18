@@ -9,7 +9,10 @@ import '../../../widgets/toggle_row.dart';
 import '../../../widgets/drop_field.dart';
 import '../../../widgets/steam_toast.dart';
 import '../../../core/auth/session_actions.dart';
+import '../../../core/navigation/app_navigator.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../legal/screens/aviso_legal_screen.dart';
+import '../../legal/screens/politica_privacidad_screen.dart';
 import '../../perfil/providers/perfil_provider.dart';
 
 class AccountSettingsScreen extends StatefulWidget {
@@ -220,6 +223,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       const _SecurityCard(),
       const SizedBox(height: 16),
       const _PrivacyCard(),
+      const SizedBox(height: 16),
+      const _LegalCard(),
       const SizedBox(height: 16),
       const _DangerCard(),
     ];
@@ -658,6 +663,36 @@ class _PrivacyCardState extends State<_PrivacyCard> {
                   ? (_) {}
                   : (_) => _guardarPrivacidad(),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegalCard extends StatelessWidget {
+  const _LegalCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return SteamCard(
+      icon: Icons.gavel_outlined,
+      title: 'Legal',
+      child: Column(
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.description_outlined, color: SteamColors.muted, size: 20),
+            title: const Text('Aviso legal', style: TextStyle(color: SteamColors.light, fontSize: 13.5)),
+            trailing: const Icon(Icons.chevron_right, color: SteamColors.muted, size: 18),
+            onTap: () => pushAppScreen(context, const AvisoLegalScreen()),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.privacy_tip_outlined, color: SteamColors.muted, size: 20),
+            title: const Text('Política de privacidad', style: TextStyle(color: SteamColors.light, fontSize: 13.5)),
+            trailing: const Icon(Icons.chevron_right, color: SteamColors.muted, size: 18),
+            onTap: () => pushAppScreen(context, const PoliticaPrivacidadScreen()),
           ),
         ],
       ),

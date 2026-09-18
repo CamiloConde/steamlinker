@@ -424,15 +424,82 @@ router.put('/cambiar-contrasena', verificarToken, async (req, res) => {
 
 // DELETE /auth/cuenta
 // Elimina la cuenta del usuario autenticado y limpia sus datos relacionados.
+//
+// usuarios_juegos, perfiles_steam, publicaciones, notificaciones y
+// comentario_publicacion tienen ON DELETE CASCADE hacia usuarios y no
+// necesitan limpieza manual. matches, calificaciones, chat, mensaje,
+// reportes y amistad NO la tienen (referencian usuarios sin CASCADE), así
+// que borrar la fila de usuarios sin limpiarlas antes fallaba con una
+// violación de llave foránea para cualquier cuenta con historial real
+// (match, chat, calificación, reporte o amistad) — "Eliminar cuenta" no
+// funcionaba salvo en cuentas nuevas sin actividad. Se limpia todo dentro
+// de una transacción para no dejar la cuenta a medio borrar si algo falla.
 router.delete('/cuenta', verificarToken, async (req, res) => {
+    const id = req.usuario.id;
+    const client = await pool.connect();
     try {
-        await pool.query('DELETE FROM usuarios_juegos WHERE id_usu = $1', [req.usuario.id]);
-        await pool.query('DELETE FROM perfiles_steam WHERE id_usu = $1', [req.usuario.id]);
-        await pool.query('DELETE FROM usuarios WHERE id_usu = $1', [req.usuario.id]);
+        await client.query('BEGIN');
 
+        // mensaje.parent_mensaje se autorreferencia sin CASCADE: se rompe
+        // el hilo antes de borrar para no violar esa llave foránea.
+        await client.query(
+            `UPDATE mensaje SET parent_mensaje = NULL
+             WHERE parent_mensaje IN (
+                 SELECT id_mensaje FROM mensaje
+                 WHERE id_emisor = $1
+                    OR id_chat IN (
+                        SELECT id_chat FROM chat
+                        WHERE id_participante1 = $1 OR id_participante2 = $1
+                    )
+             )`,
+            [id]
+        );
+        await client.query(
+            `DELETE FROM mensaje
+             WHERE id_emisor = $1
+                OR id_chat IN (
+                    SELECT id_chat FROM chat
+                    WHERE id_participante1 = $1 OR id_participante2 = $1
+                )`,
+            [id]
+        );
+        await client.query(
+            'DELETE FROM chat WHERE id_participante1 = $1 OR id_participante2 = $1',
+            [id]
+        );
+        // calificaciones.id_match referencia matches sin CASCADE: debe
+        // borrarse antes que los matches, no después.
+        await client.query(
+            `DELETE FROM calificaciones
+             WHERE id_calificador = $1
+                OR id_calificado = $1
+                OR id_match IN (
+                    SELECT id_match FROM matches
+                    WHERE id_solicitante = $1 OR id_receptor = $1
+                )`,
+            [id]
+        );
+        await client.query(
+            'DELETE FROM matches WHERE id_solicitante = $1 OR id_receptor = $1',
+            [id]
+        );
+        await client.query(
+            'DELETE FROM reportes WHERE id_reportador = $1 OR id_reportado = $1',
+            [id]
+        );
+        await client.query(
+            'DELETE FROM amistad WHERE id_solicitante = $1 OR id_receptor = $1',
+            [id]
+        );
+        await client.query('DELETE FROM usuarios WHERE id_usu = $1', [id]);
+
+        await client.query('COMMIT');
         res.json({ mensaje: 'Cuenta eliminada correctamente' });
     } catch (err) {
+        await client.query('ROLLBACK');
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
     }
 });
 

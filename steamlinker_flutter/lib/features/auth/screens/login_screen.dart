@@ -1,10 +1,14 @@
 // Pantalla de login y registro
 // Permite iniciar sesion o crear una cuenta nueva
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/navigation/app_navigator.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../legal/screens/aviso_legal_screen.dart';
+import '../../legal/screens/politica_privacidad_screen.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_dev_server_chip.dart';
 
@@ -320,6 +324,35 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+                if (_mostrarRegistro) ...[
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
+                        children: [
+                          const TextSpan(text: 'Al crear tu cuenta, aceptas nuestro '),
+                          TextSpan(
+                            text: 'Aviso legal',
+                            style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w600),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => pushAppScreen(context, const AvisoLegalScreen()),
+                          ),
+                          const TextSpan(text: ' y nuestra '),
+                          TextSpan(
+                            text: 'Política de privacidad',
+                            style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w600),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () => pushAppScreen(context, const PoliticaPrivacidadScreen()),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
 
                 // Alternar entre login y registro

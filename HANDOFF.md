@@ -1171,11 +1171,38 @@ mochila de trabajo pendiente para ir sacando por partes, priorizada.
 
 **Nivel 1 — fundamentales para cualquier beta pública (no son "nice to
 have", son requisitos mínimos para que lanzar sea responsable):**
-- [ ] Aviso legal / términos de servicio
-- [ ] Política de privacidad (con qué datos se guardan, biblioteca de Steam
-      incluida, y por cuánto tiempo)
-- [ ] Aviso de cookies, si la versión web usa alguna más allá del token de
-      sesión en localStorage (revisar primero si aplica de verdad)
+- [x] **Aviso legal + Política de privacidad — hechos.**
+      `lib/features/legal/screens/` (`aviso_legal_screen.dart`,
+      `politica_privacidad_screen.dart`, compartiendo el armazón
+      `legal_document_screen.dart`). Contenido redactado a partir del
+      esquema real de la base de datos (qué tablas existen, cuáles tienen
+      `ON DELETE CASCADE` y cuáles no, qué se guarda de Steam solo si el
+      usuario vincula su cuenta, que no hay cookies ni analítica ni
+      publicidad, que las donaciones de Ko-fi ocurren fuera de la app) —
+      no es texto genérico de plantilla legal. Enlazados desde
+      Configuración → tarjeta "Legal", y desde el formulario de registro
+      ("Al crear tu cuenta, aceptas nuestro Aviso legal y nuestra Política
+      de privacidad", con enlaces tocables reales, visible solo en modo
+      registro).
+      **Al redactar la política de privacidad se encontró y arregló un bug
+      real**: `DELETE /auth/cuenta` ("Eliminar cuenta" en Zona de Peligro)
+      solo limpiaba `usuarios_juegos` y `perfiles_steam` antes de borrar al
+      usuario — pero `matches`, `calificaciones`, `chat`, `mensaje`,
+      `reportes` y `amistad` referencian `usuarios` **sin** `ON DELETE
+      CASCADE`, así que borrar una cuenta con cualquier match, chat,
+      calificación, reporte o amistad fallaba con un error 500 de llave
+      foránea — "Eliminar cuenta" solo funcionaba en cuentas nuevas sin
+      actividad. Arreglado con una transacción que limpia todo en el orden
+      correcto (los mensajes que son respuesta de otro rompen ese enlace
+      antes de borrarse; `calificaciones` se borra antes que `matches`
+      porque depende de esa llave). Cubierto por un test nuevo
+      (`tests/auth.eliminarCuenta.test.js`) que reproduce el escenario
+      exacto que fallaba antes del fix. Suite de backend: 16/16.
+- [x] **Aviso de cookies — no aplica, confirmado por código, no supuesto.**
+      Se revisó todo el backend y frontend: no hay `cookie-parser`, no hay
+      cookies de sesión (el login usa JWT guardado vía `SharedPreferences`,
+      no cookies), y `express-session` estaba en las dependencias del
+      backend sin usarse en ningún lado — se quitó del `package.json`.
 - [x] **Página 404 personalizada — hecha.** `NotFoundScreen`
       (`lib/features/errors/screens/not_found_screen.dart`), conectada como
       `errorBuilder` de GoRouter en `app_router.dart`. Con la paleta y
