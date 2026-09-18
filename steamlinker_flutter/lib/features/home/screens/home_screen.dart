@@ -408,6 +408,13 @@ class _FooterInicio extends StatelessWidget {
 /// leve subida y escala al aparecer, una sola vez al montar la pantalla.
 /// Nada de bucles infinitos ni movimiento constante — eso cansa la vista
 /// en una pantalla que se revisita todo el tiempo.
+///
+/// Importante: una vez que termina (t==1), se devuelve el child SIN
+/// envolver en Opacity/Transform. Dejar esos widgets puestos para siempre
+/// (aunque sean un no-op en t=1) mantiene una capa de composición aparte
+/// en el renderer HTML de Flutter Web, y esa capa puede desincronizarse
+/// del resto del scroll -- el hueco/"separación" reportado en Inicio al
+/// hacer scroll era justo esto. Ver HANDOFF.md.
 class _HeroEntrada extends StatelessWidget {
   final Widget child;
   const _HeroEntrada({required this.child});
@@ -419,6 +426,7 @@ class _HeroEntrada extends StatelessWidget {
       duration: const Duration(milliseconds: 480),
       curve: Curves.easeOutCubic,
       builder: (context, t, child) {
+        if (t >= 1.0) return child!;
         return Opacity(
           opacity: t,
           child: Transform.translate(

@@ -1594,9 +1594,7 @@ parecen:**
         "juegos en común" para matchear — el usuario lo probó agregando
         Baldur's Gate 3 sin tenerlo realmente. Arreglado con una columna
         nueva `origen_usujg` ('steam' | 'manual') en `usuarios_juegos`
-        (migración `008_add_origen_juegos.sql`, con backfill de mejor
-        esfuerzo: cuentas ya vinculadas a Steam se marcan 'steam' para
-        sus filas existentes). `importarBibliotecaSteam` siempre estampa
+        (migración `008_add_origen_juegos.sql`). `importarBibliotecaSteam` siempre estampa
         'steam' (incluso sobre un juego agregado a mano antes — un import
         real de Steam es autoritativo); `POST /juegos/agregar` estampa
         'manual' solo en el INSERT inicial (editar horas/favorito después
@@ -1610,6 +1608,23 @@ parecen:**
         detalle de una publicación también exige origen 'steam'. Test
         `perfil.descubrir.test.js` actualizado para cubrir ambos casos
         (27/27 tests de backend pasando).
+        **Bug real encontrado al probarlo**: la primera versión de la
+        migración traía un backfill por SQL que marcaba 'steam' a TODAS
+        las filas existentes de cualquier cuenta ya vinculada — sin mirar
+        si el juego venía de verdad de Steam o se había agregado a mano
+        antes de vincular. El usuario lo encontró de inmediato: su
+        Baldur's Gate 3 (agregado a mano, nunca lo tuvo en Steam de
+        verdad) quedó marcado como verificado por ese backfill ciego.
+        Corregido quitando el backfill por SQL de la migración y
+        agregando `scripts/reconciliar_origen_juegos.js`: para cada
+        cuenta vinculada, pide la biblioteca REAL a la API de Steam y
+        ajusta `origen_usujg` juego por juego según si el appid está ahí
+        o no. Ya se corrió una vez contra la cuenta real del usuario
+        (`node scripts/reconciliar_origen_juegos.js`): de 55 juegos, 54
+        confirmados como 'steam' y 1 (Baldur's Gate 3) corregido a
+        'manual'. Cualquier despliegue nuevo que ya tenga cuentas
+        vinculadas con juegos agregados a mano antes de esta migración
+        debe correr ese script una vez.
   - [x] **¿Qué pasa si alguien vincula con el perfil de Steam en
         privado? — pregunta directa del usuario, respondida con UI
         nueva.** Antes: la cuenta quedaba vinculada pero sin biblioteca,
@@ -1633,11 +1648,31 @@ parecen:**
         ambiental por defecto, que puede variar) — esto no le quita la
         función de pull-to-refresh a quien sí arrastra de verdad en
         móvil/touch, solo evita el rebote elástico que dispara el hueco
-        sin que nadie esté jalando. **No se pudo confirmar en vivo**: el
-        navegador integrado de esta sesión no logra completar un login
-        real dentro de la app (limitación de entorno ya documentada, no
-        un bug de SteamMatch) — hace falta que alguien lo revise a ojo
-        haciendo scroll en Inicio.
+        sin que nadie esté jalando. **El usuario lo probó y el hueco
+        seguía ahí** — describió que se veía "como si la parte del centro
+        estuviera separada del resto". Eso apuntó a otra causa: se
+        confirmó por JS (`document.querySelectorAll('canvas').length ===
+        0`, con `<flutter-view>` presente) que esta build usa el
+        **renderer HTML de Flutter Web** (no CanvasKit) — el que dibuja
+        cada widget como DOM real y es más propenso a "costuras" de
+        composición con `Transform`/`Opacity` dentro de un scroll.
+        `_HeroEntrada` (la animación de entrada de la tarjeta de
+        bienvenida, agregada en la ronda de animaciones) envolvía el
+        child en `Opacity` + dos `Transform` **para siempre**, incluso
+        después de terminar la animación de una sola vez (en t=1 son un
+        no-op matemáticamente, pero seguían creando una capa de
+        composición aparte). Esa capa separada puede desincronizarse del
+        resto del scroll — encaja con "la parte del centro separada del
+        resto". Arreglado: en cuanto `t >= 1.0`, `_HeroEntrada` devuelve
+        el child SIN envolver, así la tarjeta vuelve a ser un nodo normal
+        del árbol una vez terminada la animación (99% del tiempo que
+        alguien hace scroll en Inicio). **Tampoco se pudo confirmar en
+        vivo esta segunda vez**: se logró loguear con la cuenta real en
+        el navegador integrado (a diferencia del intento anterior) y se
+        hizo scroll repetido con rueda sintética sin lograr reproducir el
+        hueco, pero un scroll de rueda simulado puede no replicar el
+        gesto exacto de trackpad/mouse real que sí lo dispara — hace
+        falta que el usuario lo confirme de nuevo en su navegador real.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
@@ -1709,13 +1744,15 @@ real.
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-6. **Confirmar a ojo la mitigación del bug de scroll en Inicio**
-   (`ClampingScrollPhysics` explícito, ver Nivel 4 arriba) — no se pudo
-   verificar en vivo por la limitación conocida del navegador integrado
-   de esta sesión con el login. Si el hueco sigue apareciendo, revisar
-   si el `RefreshIndicator` en sí (no solo la física) necesita
-   deshabilitarse en escritorio, o si el origen es otro (ej.
-   `_HeroEntrada` con `Transform.scale`/`Transform.translate`).
+6. **Confirmar a ojo el segundo intento del bug de scroll en Inicio**
+   (quitar la capa `Opacity`/`Transform` persistente de `_HeroEntrada`
+   una vez termina su animación, ver Nivel 4 arriba) — el primer intento
+   (`ClampingScrollPhysics`) NO lo arregló, según el propio usuario. Si
+   este segundo tampoco alcanza, el siguiente sospechoso a revisar es si
+   `RefreshIndicator` necesita deshabilitarse del todo en escritorio, o
+   probar forzando el renderer CanvasKit (`flutter build web
+   --web-renderer canvaskit`) para descartar que sea un problema
+   específico del renderer HTML.
 7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
    usuario duda del valor — bajo prioridad real).
 8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,
