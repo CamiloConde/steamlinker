@@ -1728,6 +1728,46 @@ parecen:**
     donde tampoco se pudo reproducir ahí y el usuario sí lo vio en su
     navegador real, así que **sigue sin confirmación real** hasta que el
     usuario lo pruebe.
+- [x] **Cuarto intento del bug de scroll en Inicio, con más pistas del
+      usuario (Chrome + trackpad, parece exclusivo de Inicio).**
+      `_HeroEntrada` se reescribió de `TweenAnimationBuilder` a un
+      `StatefulWidget` con su propio `AnimationController`: el intento
+      anterior comparaba el objeto `Tween` por identidad, y como
+      `_HeroEntrada.build()` creaba un `Tween(begin:0,end:1)` nuevo en
+      cada rebuild del padre (Home se reconstruye seguido, cada vez que
+      Matches/Publicaciones/Perfil notifican), eso podía disparar un
+      `didUpdateWidget` interno de forma sutil incluso después de que la
+      animación ya había terminado. Ahora corre una sola vez en
+      `initState` y, tras terminar, el `build()` nunca vuelve a crear
+      `Opacity`/`Transform` sin importar cuántas veces se reconstruya el
+      padre. En paralelo, `RefreshIndicator` de Inicio ahora usa
+      `notificationPredicate: (n) => !esEscritorio && ...` en vez de
+      quitarlo del árbol — queda montado pero totalmente inerte en
+      escritorio (jalar para refrescar no es un gesto real con
+      mouse/trackpad, y el refrescar ya vive en la barra global). **Sigue
+      sin poder reproducirse en el navegador integrado de Claude** —
+      van 4 intentos sobre el mismo síntoma sin verificación visual
+      directa; solo el usuario lo ve en su Chrome real.
+- [x] **"Apoya el proyecto" ya no se duplica en Inicio (escritorio)** —
+      ahora que vive siempre visible en el sidebar, repetirla en Inicio
+      sería la misma redundancia que se le quitó a "Conecta con otros
+      gamers". Sigue apareciendo en Inicio solo en móvil (`!esEscritorio`),
+      donde no hay sidebar.
+- [x] **"TU ESTADO" (Inicio) renombrada a "TU ESTADO EN STEAMMATCH"** — el
+      usuario señaló que el estado ("Sin familia"/"Buscando
+      familia"/"En una familia") se calcula 100% a partir de tus
+      publicaciones/matches en la app (`calcularEstadoFamilia`, ver
+      `estado_familia_helper.dart`), sin ninguna relación con si ya
+      tienes una familia real de Steam Family Sharing por fuera —
+      confirmado por el propio usuario probando con una cuenta que ya
+      tiene familia real en Steam pero mostraba un estado distinto
+      basado solo en publicaciones de prueba. El nombre "TU ESTADO" a
+      secas se prestaba a leerse como un hecho objetivo de su cuenta de
+      Steam; ahora deja explícito que es tu progreso usando SteamMatch
+      para armar/encontrar familia, no un reflejo de tu cuenta real. Solo
+      se tocó el label en Inicio — el stat "FAMILIA" del grid de Perfil
+      se dejó igual por ahora (es un valor corto, no una afirmación
+      completa, menos propenso a la misma confusión).
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)

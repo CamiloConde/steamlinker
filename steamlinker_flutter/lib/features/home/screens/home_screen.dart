@@ -150,6 +150,14 @@ class _HomeScreenState extends State<HomeScreen> {
         color: SteamColors.blue,
         backgroundColor: SteamColors.bgDeep,
         onRefresh: _cargar,
+        // En escritorio, "jalar para refrescar" no es un gesto real (no
+        // hay dedo arrastrando, solo rueda/trackpad) y el refrescar ya
+        // vive en la barra global -- notificationPredicate en falso deja
+        // el widget montado pero completamente inerte a cualquier
+        // notificación de scroll, sin tocar el resto del árbol. Otro
+        // sospechoso descartado del hueco de scroll reportado en Inicio.
+        notificationPredicate: (n) =>
+            !esEscritorio && defaultScrollNotificationPredicate(n),
         child: DesktopBodyWidth(
           maxWidth: 760,
           child: SingleChildScrollView(
@@ -362,8 +370,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
 
-                const SizedBox(height: 24),
-                const ApoyarProyectoCard(),
+                // En escritorio "Apoya el proyecto" ya vive siempre visible
+                // en el sidebar (ver ResponsiveShell) -- repetirla aquí
+                // sería la misma redundancia que se le quitó a "Conecta
+                // con otros gamers". En móvil no hay sidebar, así que
+                // sigue haciendo falta acá.
+                if (!esEscritorio) ...[
+                  const SizedBox(height: 24),
+                  const ApoyarProyectoCard(),
+                ],
 
                 const SizedBox(height: 28),
                 const _FooterInicio(),
@@ -430,24 +445,57 @@ class _FooterInicio extends StatelessWidget {
 /// Nada de bucles infinitos ni movimiento constante — eso cansa la vista
 /// en una pantalla que se revisita todo el tiempo.
 ///
-/// Importante: una vez que termina (t==1), se devuelve el child SIN
-/// envolver en Opacity/Transform. Dejar esos widgets puestos para siempre
-/// (aunque sean un no-op en t=1) mantiene una capa de composición aparte
-/// en el renderer HTML de Flutter Web, y esa capa puede desincronizarse
-/// del resto del scroll -- el hueco/"separación" reportado en Inicio al
-/// hacer scroll era justo esto. Ver HANDOFF.md.
-class _HeroEntrada extends StatelessWidget {
+/// Cuarto intento del hueco de scroll reportado en Inicio (ver HANDOFF.md):
+/// el intento anterior usaba TweenAnimationBuilder chequeando t>=1 dentro
+/// del builder, pero TweenAnimationBuilder compara el objeto Tween por
+/// identidad -- como _HeroEntrada.build() creaba un Tween(begin:0,end:1)
+/// NUEVO en cada rebuild del padre (Home se reconstruye seguido: cada vez
+/// que Matches/Publicaciones/Perfil notifican), eso podía disparar un
+/// didUpdateWidget interno de forma sutil. Ahora es un StatefulWidget con
+/// su propio AnimationController: la animación corre UNA sola vez en
+/// initState, y una vez termina (_terminada = true) el build ya no vuelve
+/// a crear Opacity/Transform nunca más, sin importar cuántas veces se
+/// reconstruya el padre.
+class _HeroEntrada extends StatefulWidget {
   final Widget child;
   const _HeroEntrada({required this.child});
 
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
+  State<_HeroEntrada> createState() => _HeroEntradaState();
+}
+
+class _HeroEntradaState extends State<_HeroEntrada>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _t;
+  bool _terminada = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
       duration: const Duration(milliseconds: 480),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) {
-        if (t >= 1.0) return child!;
+    );
+    _t = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _controller.forward().whenComplete(() {
+      if (mounted) setState(() => _terminada = true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_terminada) return widget.child;
+    return AnimatedBuilder(
+      animation: _t,
+      builder: (context, child) {
+        final t = _t.value;
         return Opacity(
           opacity: t,
           child: Transform.translate(
@@ -456,7 +504,7 @@ class _HeroEntrada extends StatelessWidget {
           ),
         );
       },
-      child: child,
+      child: widget.child,
     );
   }
 }
@@ -501,7 +549,12 @@ class _TarjetaEstado extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _Titulo('TU ESTADO'),
+          // "STEAMMATCH" en el título no es relleno: este estado sale de
+          // tus publicaciones/matches en la app, no de si ya tienes una
+          // familia de Steam de verdad por fuera -- sin esa aclaración se
+          // presta a confusión (el usuario lo notó probando con una
+          // cuenta que ya tenía familia real en Steam). Ver HANDOFF.md.
+          const _Titulo('TU ESTADO EN STEAMMATCH'),
           const SizedBox(height: 6),
           Text(
             estado,
