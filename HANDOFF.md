@@ -2060,6 +2060,32 @@ real.
       frontend). Nada de lo que sigue tiene sentido real sin esto
       primero. Esto es una decisión del usuario (presupuesto, proveedor),
       no algo que se resuelva escribiendo código.
+      **⏰ PENDIENTE EXPLÍCITO, recordar al usuario**: el usuario decidió
+      hacerlo "cuando ya sea necesario, puede ser poco antes de tener la
+      1.0" — no antes. Si se retoma esta sesión o una futura y la 1.0 se
+      empieza a ver cerca, sacar el tema.
+      **Mi recomendación de hosting cuando llegue el momento** (el
+      despliegue anterior en Render, `steamlinker.onrender.com`, era
+      solo para la presentación de la universidad, no pensado para
+      quedarse — por eso está muerto hoy):
+      - **Backend (Node) + base de datos**: **Railway** en vez de volver
+        a Render. Render free tier tiene "cold starts" (la primera
+        petición después de ~15 min inactivo tarda 30-60s en responder)
+        — aceptable para una demo, no para un 1.0 real. Railway no
+        duerme la app así, tiene mejor experiencia de despliegue (conectas
+        el repo y ya), y para el tráfico bajo de un proyecto así el
+        costo con el crédito mensual que da debería ser mínimo. Ojo
+        aparte: el Postgres gratis de Render se borra a los 90 días si
+        no se pasa a un plan pago — otra razón para no volver a ese setup
+        tal cual estaba.
+      - **Frontend** (el build de `flutter build web`): Netlify o Vercel,
+        cualquiera de los dos — capa gratis de sobra para este tamaño de
+        proyecto, ambos con despliegue automático conectando el repo de
+        GitHub.
+      - **Conectar el dominio**: una vez comprado, la raíz
+        (`steammatch.com`) apunta al frontend (Netlify/Vercel) y un
+        subdominio (`api.steammatch.com`) al backend (Railway) — cada
+        proveedor da sus propias instrucciones DNS exactas al momento.
     - **Tier 1 — se puede hacer YA, no depende del dominio, barato**:
       metatítulos y descripciones (`web/index.html`, ya tiene algunos
       básicos del splash/PWA — falta revisar que la descripción sea
