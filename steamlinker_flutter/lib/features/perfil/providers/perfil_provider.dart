@@ -173,6 +173,20 @@ class PerfilProvider extends ChangeNotifier {
     }
   }
 
+  /// Pide al backend la URL de login de Steam (OpenID). El backend guarda
+  /// un "state" de un solo uso atado a este usuario y lo devuelve embebido
+  /// en la URL — nada que hacer acá salvo navegar a ella.
+  Future<String?> iniciarLoginSteam() async {
+    try {
+      final respuesta = await ApiClient.dio.get('/perfil/steam/openid/iniciar');
+      return respuesta.data['url'] as String?;
+    } on DioException catch (e) {
+      _error = ApiClient.errorMessage(e, fallback: 'No se pudo iniciar sesión con Steam');
+      notifyListeners();
+      return null;
+    }
+  }
+
   Future<bool> vincularSteam(String steamId) async {
     try {
       await ApiClient.dio.post('/perfil/steam/vincular', data: {

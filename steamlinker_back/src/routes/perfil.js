@@ -2,11 +2,133 @@
 // Permite editar perfil, agregar juegos y consultar datos del usuario
 
 const express = require('express');
+const crypto = require('crypto');
+const axios = require('axios');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const steamService = require('../services/steamService');
 
 const router = express.Router();
+
+// ── Login con Steam (OpenID 2.0) ────────────────────────────────────────
+// Reemplaza pegar el SteamID/URL a mano por el flujo real "Iniciar sesión
+// con Steam" que usan otras webs — pedido explícito del usuario (ver
+// HANDOFF.md). Steam no ofrece OAuth2/OIDC para esto, solo OpenID 2.0.
+//
+// Flujo: el usuario YA está logueado en SteamMatch (verificarToken) y pide
+// vincular su Steam. 1) /steam/openid/iniciar genera un "state" de un solo
+// uso atado a su id_usu y arma la URL de login de Steam. 2) el navegador
+// navega a Steam, el usuario inicia sesión ahí. 3) Steam redirige de
+// vuelta a /steam/openid/callback con la respuesta firmada. 4) el backend
+// SIEMPRE reverifica esa respuesta reenviándola a Steam con
+// openid.mode=check_authentication antes de confiar en ella — nunca se
+// confía en el claimed_id sin este paso, es la parte que de verdad
+// importa de OpenID.
+const STEAM_OPENID_ENDPOINT = 'https://steamcommunity.com/openid/login';
+const steamOpenIdStates = new Map(); // state -> { id_usu, expires }
+const STATE_TTL_MS = 5 * 60 * 1000;
+
+function limpiarStatesExpirados() {
+    const ahora = Date.now();
+    for (const [key, val] of steamOpenIdStates) {
+        if (val.expires < ahora) steamOpenIdStates.delete(key);
+    }
+}
+
+function appUrlBase() {
+    return (process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/$/, '');
+}
+
+function frontendUrlBase() {
+    return (process.env.FRONTEND_URL || 'http://localhost:8080').replace(/\/$/, '');
+}
+
+// GET /perfil/steam/openid/iniciar
+router.get('/steam/openid/iniciar', verificarToken, (req, res) => {
+    limpiarStatesExpirados();
+    const state = crypto.randomBytes(24).toString('hex');
+    steamOpenIdStates.set(state, { id_usu: req.usuario.id, expires: Date.now() + STATE_TTL_MS });
+
+    const base = appUrlBase();
+    const returnTo = `${base}/perfil/steam/openid/callback?state=${state}`;
+
+    const params = new URLSearchParams({
+        'openid.ns': 'http://specs.openid.net/auth/2.0',
+        'openid.mode': 'checkid_setup',
+        'openid.return_to': returnTo,
+        'openid.realm': base,
+        'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select',
+        'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
+    });
+
+    res.json({ url: `${STEAM_OPENID_ENDPOINT}?${params.toString()}` });
+});
+
+// GET /perfil/steam/openid/callback
+// Steam redirige aquí — nunca lo llama el frontend directamente.
+router.get('/steam/openid/callback', async (req, res) => {
+    const frontend = frontendUrlBase();
+    const state = typeof req.query.state === 'string' ? req.query.state : null;
+    const entry = state ? steamOpenIdStates.get(state) : null;
+    if (state) steamOpenIdStates.delete(state); // un solo uso, se borre o no sea válido
+
+    if (!entry || entry.expires < Date.now()) {
+        return res.redirect(`${frontend}/#/home?steam=error&motivo=sesion_expirada`);
+    }
+
+    if (req.query['openid.mode'] !== 'id_res') {
+        // El usuario canceló el login en Steam, o algo salió mal antes de firmar.
+        return res.redirect(`${frontend}/#/home?steam=error&motivo=cancelado`);
+    }
+
+    // op_endpoint debe ser el propio Steam — defensa extra contra una
+    // respuesta que diga venir de otro proveedor.
+    if (req.query['openid.op_endpoint'] !== STEAM_OPENID_ENDPOINT) {
+        return res.redirect(`${frontend}/#/home?steam=error&motivo=proveedor_invalido`);
+    }
+
+    try {
+        const verifyParams = new URLSearchParams();
+        for (const [key, value] of Object.entries(req.query)) {
+            if (key.startsWith('openid.') && typeof value === 'string') {
+                verifyParams.append(key, value);
+            }
+        }
+        verifyParams.set('openid.mode', 'check_authentication');
+
+        const { data: verifyBody } = await axios.post(STEAM_OPENID_ENDPOINT, verifyParams.toString(), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
+
+        if (!/is_valid\s*:\s*true/.test(verifyBody)) {
+            return res.redirect(`${frontend}/#/home?steam=error&motivo=firma_invalida`);
+        }
+
+        const claimedId = typeof req.query['openid.claimed_id'] === 'string' ? req.query['openid.claimed_id'] : '';
+        const match = claimedId.match(/^https:\/\/steamcommunity\.com\/openid\/id\/(\d{17})$/);
+        if (!match) {
+            return res.redirect(`${frontend}/#/home?steam=error&motivo=id_invalido`);
+        }
+        const steamid64 = match[1];
+
+        const perfilSteam = await steamService.getUserProfile(steamid64);
+
+        await pool.query(
+            `INSERT INTO perfiles_steam (id_usu, steam_id, username_steperfil, avatar_url, perfil_url)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (id_usu) DO UPDATE SET
+               steam_id = EXCLUDED.steam_id,
+               username_steperfil = EXCLUDED.username_steperfil,
+               avatar_url = EXCLUDED.avatar_url,
+               perfil_url = EXCLUDED.perfil_url`,
+            [entry.id_usu, perfilSteam.steamid, perfilSteam.username, perfilSteam.avatar, perfilSteam.profileUrl]
+        );
+
+        return res.redirect(`${frontend}/#/home?steam=ok`);
+    } catch (err) {
+        return res.redirect(`${frontend}/#/home?steam=error&motivo=error_servidor`);
+    }
+});
 
 // PUT /perfil/editar
 // Edita los datos del perfil del usuario logueado

@@ -1165,7 +1165,7 @@ mochila de trabajo pendiente para ir sacando por partes, priorizada.
   el usuario prefiere el flujo tipo OAuth que usan otras webs. Steam ofrece
   esto gratis (OpenID 2.0, sin necesidad de una app registrada como en
   Google/Discord) — es totalmente viable y bastante más cómodo que pegar una
-  URL. Se agrega como ítem concreto del roadmap (ver "Cuenta y login" abajo).
+  URL. **Hecho** en una sesión posterior — ver Nivel 4 más abajo.
 - *Notificaciones "interesantes"*: ver el hallazgo de la auditoría arriba —
   existe, funciona, pero no tiene un propósito claro todavía.
 
@@ -1486,9 +1486,47 @@ parecen:**
 
 **Nivel 4 — funciones grandes, evaluar solo con tracción real de usuarios:**
 - [ ] Login con Google (opcional, ya lo marcó el usuario como no urgente)
-- [ ] Login con Steam vía OpenID (ver opinión arriba — más barato que Google
-      y encaja mejor con la identidad del producto, así que si se hace uno
-      de los dos primero, que sea este)
+- [x] **Login con Steam vía OpenID — pedido explícito del usuario, hecho.**
+      Reemplaza pegar el SteamID/URL a mano por el flujo real "Iniciar
+      sesión con Steam" (Steam no ofrece OAuth2/OIDC para esto, solo
+      OpenID 2.0). Sigue vinculando a una cuenta de SteamMatch ya
+      existente (el usuario debe estar logueado en la app primero) — no es
+      un reemplazo del login por correo/contraseña, es solo un mejor
+      camino para el mismo paso de vinculación que ya existía.
+      **Backend** (`perfil.js`): `GET /steam/openid/iniciar` (con sesión)
+      genera un `state` de un solo uso atado al `id_usu`, atado con TTL de
+      5 minutos en un Map en memoria (no hace falta Redis para un flujo
+      interactivo de este tamaño), y arma la URL real de Steam.
+      `GET /steam/openid/callback` es adonde Steam redirige — **nunca
+      confía en la identidad reclamada sin reverificarla**: reenvía todos
+      los `openid.*` a Steam con `openid.mode=check_authentication` antes
+      de guardar nada (la parte que de verdad importa de OpenID 2.0), más
+      chequeo de que `openid.op_endpoint` sea el propio Steam (defensa
+      contra mix-up con otro proveedor) y que el `claimed_id` tenga el
+      formato exacto esperado. Nueva variable `FRONTEND_URL` en
+      `.env.example` (adónde volver después del login).
+      Cubierto por 6 tests nuevos (`tests/perfil.steamOpenId.test.js`):
+      exige sesión, arma bien la URL, rechaza state ausente/inexistente/
+      ya usado, rechaza `op_endpoint` falso — todo lo que no requiere red
+      real a Steam. El paso de `check_authentication` en sí (la
+      verificación de firma) no tiene test automático porque requeriría
+      mockear la red a steamcommunity.com y no hay librería de mocking en
+      este proyecto — **sí se verificó a mano**: se pidió la URL real al
+      endpoint corriendo contra el backend de desarrollo y se abrió en el
+      navegador — Steam la aceptó y mostró su pantalla de login real, sin
+      errores de parámetros (no se completó el login: no hay credenciales
+      de Steam disponibles ni se deben escribir contraseñas reales).
+      **Frontend**: en Perfil, "Iniciar sesión con Steam" es ahora el
+      botón principal; pegar el SteamID/URL a mano sigue disponible como
+      alternativa colapsada ("¿No funciona? Vincula pegando tu SteamID o
+      URL") por si el flujo OpenID falla — no se eliminó, se degradó a
+      respaldo. `ResponsiveShell` detecta `?steam=ok|error` al volver de
+      Steam (el backend redirige ahí) y muestra el resultado con un toast,
+      luego limpia la URL para no repetir el aviso si se recarga la
+      página a mano.
+      **Sin verificar de punta a punta con un login real** (ver arriba
+      por qué) — todo lo demás sí: `flutter analyze`/`flutter test`
+      limpios, backend 27/27, build de producción exitoso.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
@@ -1560,7 +1598,16 @@ real.
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-6. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
+6. **Verificar de punta a punta el login con Steam con una cuenta real**
+   — todo lo demás está probado (tests automáticos + la URL real
+   confirmada contra Steam), pero nadie completó el login de verdad
+   todavía. Cuando se pruebe: confirmar que el toast de éxito aparece, que
+   `perfil['steam']` queda con los datos correctos, y que "Importar
+   biblioteca" funciona después.
+7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
+   usuario duda del valor — bajo prioridad real).
+8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,
+   rediseño del panel admin, pagos locales), en ese orden.
 
 ## 12. Cómo retomar
 

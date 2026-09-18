@@ -5,11 +5,13 @@
 // codebase, mismas pantallas.
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/steam_toast.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../amistad/screens/amistad_screen.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -37,6 +39,7 @@ class ResponsiveShell extends StatefulWidget {
 class _ResponsiveShellState extends State<ResponsiveShell> {
   int _index = 0;
   bool _initDone = false;
+  bool _steamCallbackChecked = false;
   String _busquedaDescubrir = '';
 
   List<Widget> get _pages => [
@@ -67,6 +70,46 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         if (id != null) context.read<PerfilProvider>().cargarPerfil(id);
       });
     }
+    if (!_steamCallbackChecked) {
+      _steamCallbackChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _procesarResultadoSteam();
+      });
+    }
+  }
+
+  /// Al volver del login con Steam (OpenID), el backend redirige acá con
+  /// ?steam=ok o ?steam=error&motivo=... en la URL. Se muestra el
+  /// resultado, se refresca el perfil si vinculó, y se limpia la URL para
+  /// no repetir el aviso si la página se recarga a mano.
+  void _procesarResultadoSteam() {
+    final params = GoRouterState.of(context).uri.queryParameters;
+    final steam = params['steam'];
+    if (steam == null) return;
+
+    if (steam == 'ok') {
+      showSteamToast(context, 'Cuenta de Steam vinculada correctamente', SteamColors.green);
+      final auth = context.read<AuthProvider>();
+      final id = auth.usuario?['id'] as int?;
+      if (id != null) context.read<PerfilProvider>().cargarPerfil(id);
+    } else if (steam == 'error') {
+      const mensajes = {
+        'sesion_expirada': 'El enlace de Steam expiró. Inténtalo de nuevo.',
+        'cancelado': 'Inicio de sesión con Steam cancelado.',
+        'proveedor_invalido': 'Respuesta inesperada de Steam. Inténtalo de nuevo.',
+        'firma_invalida': 'No se pudo verificar tu sesión de Steam. Inténtalo de nuevo.',
+        'id_invalido': 'No se pudo identificar tu cuenta de Steam.',
+        'error_servidor': 'Ocurrió un error al vincular tu cuenta de Steam.',
+      };
+      final motivo = params['motivo'];
+      showSteamToast(
+        context,
+        mensajes[motivo] ?? 'No se pudo vincular tu cuenta de Steam.',
+        SteamColors.red,
+      );
+    }
+
+    context.go('/home');
   }
 
   void _onSelect(int i) {

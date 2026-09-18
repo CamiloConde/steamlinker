@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
@@ -34,6 +35,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   bool _vinculandoSteam = false;
   bool _importandoSteam = false;
   bool _desvinculandoSteam = false;
+  bool _iniciandoSteamLogin = false;
+  bool _mostrarVinculacionManual = false;
   String? _steamError;
 
   @override
@@ -105,6 +108,34 @@ class _PerfilScreenState extends State<PerfilScreen> {
         _steamError = _perfilProv.error;
       });
     }
+  }
+
+  Future<void> _iniciarLoginSteam() async {
+    setState(() {
+      _iniciandoSteamLogin = true;
+      _steamError = null;
+    });
+
+    final url = await _perfilProv.iniciarLoginSteam();
+
+    if (!mounted) return;
+    if (url == null) {
+      final messenger = ScaffoldMessenger.of(context);
+      setState(() => _iniciandoSteamLogin = false);
+      showSteamToastWithMessenger(
+        messenger,
+        _perfilProv.error ?? 'No se pudo iniciar sesión con Steam',
+        Colors.red,
+      );
+      return;
+    }
+
+    // Navega la pestaña actual a Steam (no una nueva) — Steam redirige de
+    // vuelta a la app cuando el usuario termina, así que perder el estado
+    // de esta pantalla no importa: el toast de resultado lo muestra
+    // ResponsiveShell al volver, leyendo ?steam=ok/error de la URL.
+    await launchUrl(Uri.parse(url), webOnlyWindowName: '_self');
+    if (mounted) setState(() => _iniciandoSteamLogin = false);
   }
 
   Future<void> _importarBibliotecaSteam() async {
@@ -579,19 +610,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                             ),
                           ),
                         ] else ...[
-                          TextField(
-                            controller: _steamController,
-                            style: const TextStyle(color: SteamColors.light),
-                            decoration: InputDecoration(
-                              labelText: 'SteamID o URL de Steam',
-                              hintText:
-                                  'steamcommunity.com/id/usuario o steamcommunity.com/profiles/765... ',
-                              filled: true,
-                              fillColor: SteamColors.bgInput,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          if (_steamError != null)
+                          if (_steamError != null) ...[
                             Text(
                               _steamError!,
                               style: const TextStyle(
@@ -599,23 +618,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                 fontSize: 12,
                               ),
                             ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: SteamButtonPrimary(
-                                  label: _vinculandoSteam
-                                      ? 'Vinculando...'
-                                      : 'Vincular Steam',
-                                  icon: Icons.link,
-                                  onTap: _vinculandoSteam
-                                      ? null
-                                      : (ctx) => _vincularSteamCuenta(),
-                                ),
-                              ),
-                            ],
+                            const SizedBox(height: 10),
+                          ],
+                          SteamButtonPrimary(
+                            label: _iniciandoSteamLogin
+                                ? 'Conectando con Steam...'
+                                : 'Iniciar sesión con Steam',
+                            icon: Icons.login,
+                            onTap: _iniciandoSteamLogin
+                                ? null
+                                : (ctx) => _iniciarLoginSteam(),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           const Text(
                             'Tu perfil Steam debe ser público para que podamos importar tu biblioteca. Si tu perfil es privado, solo podrás vincular la cuenta pero no importar juegos.',
                             style: TextStyle(
@@ -623,6 +637,43 @@ class _PerfilScreenState extends State<PerfilScreen> {
                               fontSize: 12,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          Center(
+                            child: TextButton(
+                              onPressed: () => setState(
+                                () => _mostrarVinculacionManual = !_mostrarVinculacionManual,
+                              ),
+                              child: Text(
+                                _mostrarVinculacionManual
+                                    ? 'Ocultar vinculación manual'
+                                    : '¿No funciona? Vincula pegando tu SteamID o URL',
+                                style: const TextStyle(fontSize: 12, color: SteamColors.muted),
+                              ),
+                            ),
+                          ),
+                          if (_mostrarVinculacionManual) ...[
+                            const SizedBox(height: 4),
+                            TextField(
+                              controller: _steamController,
+                              style: const TextStyle(color: SteamColors.light),
+                              decoration: InputDecoration(
+                                labelText: 'SteamID o URL de Steam',
+                                hintText:
+                                    'steamcommunity.com/id/usuario o steamcommunity.com/profiles/765... ',
+                                filled: true,
+                                fillColor: SteamColors.bgInput,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            SteamButtonOutline(
+                              label: _vinculandoSteam
+                                  ? 'Vinculando...'
+                                  : 'Vincular manualmente',
+                              onTap: _vinculandoSteam
+                                  ? null
+                                  : () => _vincularSteamCuenta(),
+                            ),
+                          ],
                         ],
                       ],
                     ),
