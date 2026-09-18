@@ -307,14 +307,20 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     final base = _baseFiltrada(perfilProv, miId);
     final lista = _listaFiltrada(base);
 
+    // Si se llegó aquí pusheado encima (no como pestaña de
+    // ResponsiveShell), hace falta la barra con flecha de volver aunque
+    // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
+    final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       // En escritorio la barra global de ResponsiveShell ya trae el
       // refrescar único; "Mis solicitudes" se movió dentro del cuerpo de
       // escritorio (ver _CuerpoEscritorio) en vez de flotar solo en una
       // barra propia sin título. El filtro (tune) ya estaba oculto en
-      // escritorio de antes -- el panel lateral lo cubre.
-      appBar: esEscritorio
+      // escritorio de antes -- el panel lateral lo cubre. Se elimina del
+      // todo solo cuando esta pantalla es una pestaña de verdad.
+      appBar: (esEscritorio && !puedeVolver)
           ? null
           : SteamAppBar(
               title: 'DESCUBRIR',

@@ -53,14 +53,23 @@ class _AmistadScreenState extends State<AmistadScreen> {
     final prov = context.watch<AmistadProvider>();
     final esEscritorio = MediaQuery.of(context).size.width >= 768;
 
+    // Si esta pantalla se llegó pusheándola encima (no como pestaña del
+    // IndexedStack de ResponsiveShell -- ej. desde un enlace en Avisos),
+    // sí hace falta la barra con flecha de volver aunque sea escritorio,
+    // porque ahí no hay forma de volver. Bug real encontrado por el
+    // usuario: "Ver todos" desde una publicación abierta en Inicio lo
+    // dejaba sin poder volver. Ver HANDOFF.md.
+    final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       // En escritorio la barra global de ResponsiveShell ya trae un botón
       // de refrescar único (ver _TopBar) -- repetirlo aquí en una barra
       // propia sin título (por el "fundirConFondo" de SteamAppBar) dejaba
-      // un solo ícono flotando en ~57px vacíos. Se elimina del todo acá;
-      // en móvil (sin barra global) sigue haciendo falta.
-      appBar: esEscritorio
+      // un solo ícono flotando en ~57px vacíos. Se elimina del todo acá
+      // solo cuando esta pantalla es una pestaña de verdad (no se puede
+      // volver); en móvil (sin barra global) sigue haciendo falta.
+      appBar: (esEscritorio && !puedeVolver)
           ? null
           : SteamAppBar(
               title: 'AMIGOS',

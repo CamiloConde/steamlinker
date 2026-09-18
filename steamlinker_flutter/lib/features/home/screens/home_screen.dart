@@ -128,13 +128,20 @@ class _HomeScreenState extends State<HomeScreen> {
     final nadaPendiente =
         pendientes.isEmpty && misPublicaciones.isEmpty && steamVinculado;
 
+    // Si se llegó aquí pusheado encima (no como pestaña de
+    // ResponsiveShell), hace falta la barra con flecha de volver aunque
+    // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
+    final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
+
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       // En escritorio la barra global de ResponsiveShell ya trae perfil/
       // cerrar sesión/refrescar -- la barra propia de esta pantalla no
       // tenía título visible ahí (fundirConFondo) ni acciones (siempre
       // null), así que solo dejaba ~57px vacíos sin ningún propósito.
-      appBar: esEscritorio
+      // Se elimina del todo solo cuando esta pantalla es una pestaña de
+      // verdad (no se puede volver).
+      appBar: (esEscritorio && !puedeVolver)
           ? null
           : SteamAppBar(
               title: 'INICIO',
@@ -333,11 +340,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         onCerrar: () async {
                           await publicacionesProv.cerrar(p['id_publi'] as int);
                         },
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const PublicacionesScreen(),
-                          ),
-                        ),
+                        // Antes esto siempre hacía un push real del
+                        // Navigator, sin pasar por _ir() -- inofensivo
+                        // mientras PublicacionesScreen tenía su propio
+                        // AppBar con flecha de volver siempre. Ahora que
+                        // esa pantalla no tiene AppBar en escritorio
+                        // (barra global la reemplaza), un push directo
+                        // dejaba al usuario sin forma de volver. _ir()
+                        // ya resuelve esto: en escritorio cambia de
+                        // pestaña (sin pushear nada encima), en móvil
+                        // sigue pusheando como antes.
+                        onTap: () =>
+                            _ir(2, const PublicacionesScreen()),
                       ),
                     ),
 

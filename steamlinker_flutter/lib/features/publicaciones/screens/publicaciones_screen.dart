@@ -302,12 +302,40 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
           .where((p) => _tabDe(p['tipo_publi'] as String?) == _tabActivo)
           .toList();
 
+      // Si se llegó aquí pusheado encima (no como pestaña de
+      // ResponsiveShell), hace falta la barra con flecha de volver aunque
+      // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
+      final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
+
       return Scaffold(
         backgroundColor: SteamColors.bgDeep,
         // En escritorio la barra global de ResponsiveShell ya trae el
         // refrescar único; el filtro se movió a la fila de pestañas de
         // abajo (_ConmutadorTabs.trailing) en vez de flotar solo en una
-        // barra propia sin título.
+        // barra propia sin título. Solo se omite del todo cuando esta
+        // pantalla es una pestaña de verdad (no se puede volver).
+        appBar: !puedeVolver
+            ? null
+            : SteamAppBar(
+                title: 'PUBLICACIONES',
+                actions: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.tune_rounded,
+                      color: publicacionesProv.tieneFiltrosActivos
+                          ? SteamColors.blue
+                          : SteamColors.muted,
+                    ),
+                    tooltip: 'Filtros',
+                    onPressed: () => _abrirFiltros(ocultarTipo: true),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: SteamColors.blue),
+                    tooltip: 'Actualizar',
+                    onPressed: _recargar,
+                  ),
+                ],
+              ),
         body: DesktopBodyWidth(
           maxWidth: 760,
           child: Column(

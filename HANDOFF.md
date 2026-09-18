@@ -1768,6 +1768,27 @@ parecen:**
       se tocó el label en Inicio — el stat "FAMILIA" del grid de Perfil
       se dejó igual por ahora (es un valor corto, no una afirmación
       completa, menos propenso a la misma confusión).
+- [x] **Bug real de regresión encontrado por el usuario: "Ver todos" de
+      una publicación abierta en Inicio lo dejaba sin poder volver.**
+      Causa: `_FilaPublicacionPropia.onTap` (fila de "Tus publicaciones
+      abiertas" en Inicio) siempre hizo un `Navigator.push` directo hacia
+      `PublicacionesScreen`, sin pasar por `_ir()` (el helper que en
+      escritorio cambia de pestaña en vez de pushear). Mientras
+      `PublicacionesScreen` tenía su propio `SteamAppBar` con flecha de
+      volver siempre, esto era inofensivo; al quitarle el AppBar en
+      escritorio (rediseño de header, arriba) un push directo dejaba al
+      usuario sin ninguna forma de volver. Arreglado en dos capas:
+  - `home_screen.dart`: ese `onTap` ahora usa `_ir(2, const
+    PublicacionesScreen())`, igual que el resto de los botones de Inicio.
+  - Más importante — **las 4 pantallas (Home, Descubrir, Publicaciones,
+    Amigos) ahora chequean `Navigator.of(context, rootNavigator:
+    true).canPop()`** antes de omitir el AppBar en escritorio: si de
+    verdad se llegó pusheando encima (desde cualquier otro lugar que no
+    pasé a revisar uno por uno, ej. `pushAppScreen(context, const
+    AmistadScreen())` en `notifications_screen.dart`), el AppBar con
+    flecha de volver se muestra igual aunque sea escritorio. Solo se
+    omite del todo cuando la pantalla es una pestaña real del
+    `IndexedStack` (no se puede volver, porque no hay a dónde).
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
