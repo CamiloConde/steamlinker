@@ -29,11 +29,10 @@ class ApoyarProyectoScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'SteamMatch es gratis y un proyecto independiente, hecho '
-                'por una sola persona. Si te sirve, cualquier apoyo ayuda '
-                'a seguir manteniéndolo y mejorándolo -- nada es '
-                'obligatorio, y nunca vas a necesitar pagar para usar la '
-                'app.',
+                'SteamMatch es gratis, y así se va a quedar. Es un '
+                'proyecto independiente -- si te sirve y quieres darnos '
+                'una mano, se agradece un montón, pero nunca es '
+                'obligatorio ni vas a necesitar pagar nada para usarlo.',
                 style: TextStyle(
                   color: SteamColors.textSec,
                   fontSize: 13.5,

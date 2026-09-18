@@ -1905,6 +1905,31 @@ parecen:**
       registrar una llave alfanumérica que no expone cédula/celular/
       correo — el usuario prefirió expresamente esta opción por ser más
       simple y más privada que mostrar varios identificadores en crudo.
+- [x] **Tono más "chill" en las descripciones de SteamMatch, y se quita
+      "hecho por una sola persona"** — pedido explícito del usuario.
+      Aunque es cierto técnicamente, prefirió no decirlo; "independiente"
+      alcanza. Tocado en `ApoyarProyectoScreen`, `ApoyarProyectoCard` y el
+      footer de Inicio (`_FooterInicio`).
+- [x] **Bug real encontrado revisando el default del panel de admin: el
+      panel forzaba la URL muerta de Render en cada carga, pisando
+      cualquier configuración guardada.** El usuario dijo "haz lo que
+      tengas que hacer" con el `https://steamlinker.onrender.com`
+      encontrado la ronda anterior — se probó con `curl` (conexión TLS
+      exitosa, pero **90 segundos sin ninguna respuesta HTTP**, mucho más
+      que un cold-start típico de la capa gratis de Render) y se concluye
+      que no es un despliegue funcional hoy. Se encontró además que
+      `public/admin/index.html` no solo tenía ese default -- había una
+      línea que **sobreescribía `localStorage.sl_base_url` con esa URL
+      muerta en cada carga de página**, sin importar qué hubiera
+      configurado antes. Corregido: el default ahora es
+      `http://localhost:3000` (donde de verdad corre el backend hoy) y la
+      línea que forzaba la URL muerta ahora solo rellena el campo con lo
+      que ya esté activo, respetando `localStorage`.
+- [x] **Formulario de feedback/sugerencias, más visible — pedido
+      explícito.** Antes solo existía escondido en Configuración → Ayuda
+      y legal → Contacto y sugerencias. Nueva tarjeta `_FeedbackCard` en
+      Inicio (visible en móvil y escritorio, justo debajo de "Tus
+      publicaciones abiertas"), con un botón directo a `ContactoScreen`.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)

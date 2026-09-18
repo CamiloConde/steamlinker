@@ -792,7 +792,12 @@ select.filter-sel:focus{border-color:var(--border2);}
 // ══════════════════════════════════════════════════════════
 //  CONFIGURACIÓN — ajusta aquí tus endpoints reales
 // ══════════════════════════════════════════════════════════
-let BASE_URL = localStorage.getItem('sl_base_url') || 'https://steamlinker.onrender.com';
+// El default apuntaba a un despliegue real de Render (steamlinker.onrender.com)
+// que ya no responde (probado con curl, 90s de espera, sin respuesta -- no es
+// solo un "cold start" de la capa gratis). Hoy el backend solo corre local,
+// así que el default correcto es localhost -- cuando haya un dominio real de
+// verdad, este valor debe volver a apuntar ahí.
+let BASE_URL = localStorage.getItem('sl_base_url') || 'http://localhost:3000';
 let ROUTE_PREFIX = localStorage.getItem('sl_prefix') || '/api/admin';
 
 const ENDPOINTS = {
@@ -894,8 +899,11 @@ function closeModal() { document.getElementById('confirm-modal').classList.remov
 // ══════════════════════════════════════════════════════════
 //  LOGIN / LOGOUT
 // ══════════════════════════════════════════════════════════
-document.getElementById('login-url').value = 'https://steamlinker.onrender.com';
-localStorage.setItem('sl_base_url', 'https://steamlinker.onrender.com');
+// Antes esto forzaba la URL muerta de Render en cada carga, pisando
+// tanto el default de arriba como cualquier valor que el usuario hubiera
+// guardado -- ahora solo rellena el campo con lo que ya está activo
+// (BASE_URL, que ya respeta localStorage o cae a localhost).
+document.getElementById('login-url').value = BASE_URL;
 
 document.getElementById('login-pass').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();

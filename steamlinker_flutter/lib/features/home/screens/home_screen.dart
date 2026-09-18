@@ -11,6 +11,7 @@ import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../contacto/screens/contacto_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../perfil/providers/perfil_provider.dart';
 import '../../perfil/screens/perfil_screen.dart';
@@ -387,6 +388,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
 
+                // Antes el formulario de feedback solo existía escondido en
+                // Configuración → Ayuda y legal -- el usuario pidió que
+                // fuera más visible para animar a la gente a comentar.
+                // Esta sí se queda en ambos layouts (a diferencia de "Apoya
+                // el proyecto"): no vive en ningún otro lado del sidebar.
+                const SizedBox(height: 24),
+                const _FeedbackCard(),
+
                 // En escritorio "Apoya el proyecto" ya vive siempre visible
                 // en el sidebar (ver ResponsiveShell) -- repetirla aquí
                 // sería la misma redundancia que se le quitó a "Conecta
@@ -436,10 +445,9 @@ class _FooterInicio extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Conectamos gamers para formar familias de Steam y encontrar '
-            'compañeros de juego, a partir de tu biblioteca verificada. '
-            'Gratis y un proyecto independiente, no un servicio oficial '
-            'de Steam.',
+            'Conectamos gamers para armar familias de Steam y encontrar '
+            'con quién jugar, a partir de tu biblioteca verificada. '
+            'Gratis e independiente -- sin relación oficial con Steam.',
             style: TextStyle(
               color: SteamColors.muted,
               fontSize: 12,
@@ -699,6 +707,60 @@ class _TarjetaBibliotecaVacia extends StatelessWidget {
                 child: const Text('Ir a Perfil'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Antes el formulario de feedback solo existía escondido en
+/// Configuración → Ayuda y legal → Contacto y sugerencias -- casi nadie
+/// lo encontraba. El usuario pidió que fuera más visible para animar a
+/// la gente a comentar. Ver HANDOFF.md.
+class _FeedbackCard extends StatelessWidget {
+  const _FeedbackCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SteamColors.bgCard,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.teal),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.chat_bubble_outline_rounded, color: SteamColors.teal, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '¿Se te ocurre algo o encontraste un problema?',
+                  style: TextStyle(color: SteamColors.light, fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Cuéntanos, nos ayuda un montón a mejorar SteamMatch.',
+                  style: TextStyle(color: SteamColors.textSec, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ContactoScreen()),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SteamColors.teal,
+              side: const BorderSide(color: SteamColors.teal),
+            ),
+            child: const Text('Escribirnos'),
           ),
         ],
       ),
