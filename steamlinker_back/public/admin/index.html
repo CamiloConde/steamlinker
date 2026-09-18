@@ -333,6 +333,11 @@ select.filter-sel:focus{border-color:var(--border2);}
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H8l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5v-5z" stroke="currentColor" stroke-width="1.3"/></svg>
         Chats
       </button>
+      <button class="nav-item" onclick="nav('mensajes')">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v7A1.5 1.5 0 0 1 12.5 13h-9A1.5 1.5 0 0 1 2 11.5v-7z" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 4.5l5.5 4 5.5-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mensajes
+        <span class="badge" id="badge-mensajes" style="display:none"></span>
+      </button>
     </div>
 
     <div class="nav-group">
@@ -645,6 +650,55 @@ select.filter-sel:focus{border-color:var(--border2);}
         </div>
       </div>
 
+      <!-- ═══ MENSAJES DE CONTACTO ═══ -->
+      <div class="section" id="sec-mensajes">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Mensajes de Contacto</span>
+            <div class="card-actions">
+              <button class="btn btn-blue btn-sm" onclick="loadMensajesContacto()">
+                <svg viewBox="0 0 16 16" fill="none"><path d="M13 8A5 5 0 1 1 3.2 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M3 3l.2 2.5L5.7 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Actualizar
+              </button>
+            </div>
+          </div>
+          <div style="padding:10px 16px 0;">
+            <div class="filters-bar">
+              <div class="search-wrap">
+                <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="currentColor" stroke-width="1.3"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                <input type="text" id="mensajes-search" placeholder="Buscar por nombre, correo o mensaje…" oninput="filterMensajesContacto()">
+              </div>
+              <select class="filter-sel" id="mensajes-tipo" onchange="filterMensajesContacto()">
+                <option value="">Todos los tipos</option>
+                <option value="sugerencia">Sugerencia</option>
+                <option value="queja">Queja</option>
+                <option value="error">Error</option>
+                <option value="otro">Otro</option>
+              </select>
+              <select class="filter-sel" id="mensajes-estado" onchange="filterMensajesContacto()">
+                <option value="">Todos</option>
+                <option value="no-leidos">No leídos</option>
+                <option value="leidos">Leídos</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Nombre</th><th>Correo</th><th>Tipo</th><th>Mensaje</th><th>Fecha</th><th>Acciones</th>
+              </tr></thead>
+              <tbody id="mensajes-tbody"><tr><td colspan="6"><div class="loader"><div class="spinner"></div><p>Cargando mensajes…</p></div></td></tr></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <span class="pag-info" id="mensajes-info"></span>
+            <button class="pag-btn" id="mensajes-prev" onclick="mensajesPag(-1)">← Prev</button>
+            <span id="mensajes-page-btns"></span>
+            <button class="pag-btn" id="mensajes-next" onclick="mensajesPag(1)">Sig →</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ═══ CONFIGURACIÓN ═══ -->
       <div class="section" id="sec-configuracion">
         <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;">
@@ -754,6 +808,8 @@ const ENDPOINTS = {
   reporte:       (id) => `${BASE_URL}${ROUTE_PREFIX}/reportes/${id}`,
   contenido:     () => `${BASE_URL}${ROUTE_PREFIX}/contenido`,
   contenidoItem:(id) => `${BASE_URL}${ROUTE_PREFIX}/contenido/${id}`,
+  mensajesContacto:     () => `${BASE_URL}${ROUTE_PREFIX}/mensajes-contacto`,
+  mensajeContactoItem: (id) => `${BASE_URL}${ROUTE_PREFIX}/mensajes-contacto/${id}`,
 };
 
 // ══════════════════════════════════════════════════════════
@@ -763,9 +819,9 @@ let token = localStorage.getItem('sl_token') || null;
 let adminUser = JSON.parse(localStorage.getItem('sl_admin') || 'null');
 
 // datos cacheados
-let data = { usuarios:[], familias:[], solicitudes:[], reportes:[], contenido:[] };
-let filtered = { usuarios:[], familias:[], solicitudes:[], reportes:[], contenido:[] };
-let pages = { usuarios:1, familias:1, solicitudes:1, reportes:1, contenido:1 };
+let data = { usuarios:[], familias:[], solicitudes:[], reportes:[], contenido:[], mensajes:[] };
+let filtered = { usuarios:[], familias:[], solicitudes:[], reportes:[], contenido:[], mensajes:[] };
+let pages = { usuarios:1, familias:1, solicitudes:1, reportes:1, contenido:1, mensajes:1 };
 const PER_PAGE = 15;
 
 // ══════════════════════════════════════════════════════════
@@ -872,6 +928,7 @@ const sectionTitles = {
   contenido:     ['Contenido', '· moderación'],
   configuracion: ['Configuración', '· conexión y endpoints'],
   chats: ['Chats', '· conversaciones'],
+  mensajes: ['Mensajes', '· formulario de contacto'],
 };
 
 function nav(section) {
@@ -893,6 +950,7 @@ function nav(section) {
   if (section === 'reportes') loadReportes();
   if (section === 'contenido') loadContenido();
   if (section === 'chats') loadChats();
+  if (section === 'mensajes') loadMensajesContacto();
   if (section === 'configuracion') loadConfig();
 }
 

@@ -556,5 +556,103 @@
     sectionTitles.chats = ['Chats', '· conversaciones'];
   }
 
+  // ══════════════════════════════════════════════════════════
+  //  MENSAJES DE CONTACTO
+  // ══════════════════════════════════════════════════════════
+  const TIPO_MENSAJE_LABEL = {
+    sugerencia: 'Sugerencia',
+    queja: 'Queja',
+    error: 'Error',
+    otro: 'Otro',
+  };
+
+  window.loadMensajesContacto = async function loadMensajesContacto() {
+    const tbody = document.getElementById('mensajes-tbody');
+    if (!tbody) return;
+    tbody.innerHTML =
+      '<tr><td colspan="6"><div class="loader"><div class="spinner"></div><p>Cargando…</p></div></td></tr>';
+    try {
+      const res = await api('GET', ENDPOINTS.mensajesContacto());
+      data.mensajes = Array.isArray(res) ? res : [];
+      const noLeidos = data.mensajes.filter((m) => !m.leido_mensajecontacto).length;
+      const badge = document.getElementById('badge-mensajes');
+      if (badge) {
+        if (noLeidos > 0) {
+          badge.style.display = '';
+          badge.textContent = noLeidos;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+      filterMensajesContacto();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p>' + esc(e.message) + '</p></div></td></tr>';
+    }
+  };
+
+  window.filterMensajesContacto = function filterMensajesContacto() {
+    const q = (document.getElementById('mensajes-search')?.value || '').toLowerCase();
+    const tipo = document.getElementById('mensajes-tipo')?.value || '';
+    const estado = document.getElementById('mensajes-estado')?.value || '';
+    filtered.mensajes = data.mensajes.filter((m) => {
+      const nombre = (m.nombre_mensajecontacto || '').toLowerCase();
+      const email = (m.email_mensajecontacto || '').toLowerCase();
+      const cuerpo = (m.cuerpo_mensajecontacto || '').toLowerCase();
+      const matchQ = !q || nombre.includes(q) || email.includes(q) || cuerpo.includes(q);
+      const matchTipo = !tipo || m.tipo_mensajecontacto === tipo;
+      let matchEstado = true;
+      if (estado === 'no-leidos') matchEstado = !m.leido_mensajecontacto;
+      if (estado === 'leidos') matchEstado = !!m.leido_mensajecontacto;
+      return matchQ && matchTipo && matchEstado;
+    });
+    pages.mensajes = 1;
+    renderMensajesContacto();
+  };
+
+  window.renderMensajesContacto = function renderMensajesContacto() {
+    const tbody = document.getElementById('mensajes-tbody');
+    if (!tbody) return;
+    const items = renderPagination('mensajes', 'mensajes', renderMensajesContacto);
+    if (!items.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p>No se encontraron mensajes</p></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = items
+      .map((m) => {
+        const id = m.id_mensajecontacto;
+        const leido = m.leido_mensajecontacto === true;
+        const tipoLabel = TIPO_MENSAJE_LABEL[m.tipo_mensajecontacto] || m.tipo_mensajecontacto || '—';
+        const accion = leido
+          ? `<button class="btn btn-ghost btn-sm" onclick="marcarLeidoMensaje(${id},false)">Marcar no leído</button>`
+          : `<button class="btn btn-green btn-sm" onclick="marcarLeidoMensaje(${id},true)">Marcar leído</button>`;
+        return (
+          '<tr' + (leido ? '' : ' style="background:rgba(59,130,246,0.06);"') + '>' +
+          '<td>' + esc(m.nombre_mensajecontacto || '—') + '</td>' +
+          '<td class="mono">' + esc(m.email_mensajecontacto || '—') + '</td>' +
+          '<td>' + statusBadge(tipoLabel) + '</td>' +
+          '<td style="max-width:280px;">' + esc(truncate(m.cuerpo_mensajecontacto || '', 90)) + '</td>' +
+          '<td class="mono">' + fmtDateTime(m.creadoen_mensajecontacto) + '</td>' +
+          '<td>' + accion + '</td>' +
+          '</tr>'
+        );
+      })
+      .join('');
+  };
+
+  window.mensajesPag = (d) => {
+    pages.mensajes = Math.max(1, pages.mensajes + d);
+    renderMensajesContacto();
+  };
+
+  window.marcarLeidoMensaje = async function marcarLeidoMensaje(id, leido) {
+    try {
+      await api('PUT', ENDPOINTS.mensajeContactoItem(id), { leido });
+      toast(leido ? 'Marcado como leído' : 'Marcado como no leído', 'ok');
+      loadMensajesContacto();
+    } catch (e) {
+      toast(e.message, 'err');
+    }
+  };
+
   console.info('[Steamlinker Admin] Panel conectado al backend (extendido).');
 })();

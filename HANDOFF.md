@@ -1314,12 +1314,23 @@ parecen:**
       "Legal", ahora agrupa también el contacto). Precarga nombre/correo
       si hay sesión iniciada, usa `showSteamToast` para confirmar envío o
       mostrar errores — consistente con el resto de la app.
-      **Sin UI de admin todavía**: se agregó `GET`/`PUT
-      /api/admin/mensajes-contacto` (mismo patrón que `/reportes`) para
-      que los mensajes no queden atrapados solo en la base de datos
-      mientras se construye esa pantalla — construir la vista real en el
-      panel es trabajo pendiente, no bloqueante (el admin puede consultar
-      la tabla directamente mientras tanto).
+      **UI de admin agregada en la misma sesión** (además del endpoint
+      `GET`/`PUT /api/admin/mensajes-contacto`, mismo patrón que
+      `/reportes`): sección nueva "Mensajes" en el panel
+      (`public/admin/index.html` + `admin-panel.js`), con búsqueda,
+      filtro por tipo/leído, badge de no leídos en el sidebar y acción
+      "Marcar leído"/"Marcar no leído". Verificado en vivo contra el
+      backend real (cuenta admin de prueba temporal, creada y borrada
+      dentro de la sesión): se mandaron 2 mensajes reales por
+      `POST /contacto`, aparecieron en la tabla con el badge de tipo
+      correcto y el resaltado de no leído.
+      **Nota de esa verificación, no un bug de la app**: al probar con
+      `curl` desde esta sesión de Bash, las tildes llegaban corruptas
+      (mojibake, "Ser�a" en vez de "Sería") — se confirmó con un
+      `fetch()` limpio desde el propio navegador que el backend, Postgres
+      y la respuesta JSON manejan UTF-8 sin problema (canción/país/botón
+      se guardaron perfectos); la corrupción era de la terminal de esta
+      sesión al escribir el comando `curl`, no del código.
 - [x] **Mensajes de error y de éxito consistentes — unificados.** Se
       encontró un bug real al auditar: `showSteamToast` siempre mostraba
       un ícono de palomita verde (✓) sin importar el color pasado — un
@@ -1457,16 +1468,12 @@ real.
    tabla de sesiones, cambio de esquema más grande) y revisar a fondo
    `npm audit` (vulnerabilidad moderada conocida en `qs`, dependencia
    transitiva de `express`).
-4. **Vista de admin para `mensajes_contacto`** — el endpoint
-   (`GET`/`PUT /api/admin/mensajes-contacto`) ya existe y sigue el mismo
-   patrón que `/reportes`, solo falta la pantalla en
-   `steamlinker_back/public/admin/` (tabla + acción "marcar leído", copiar
-   casi entero de `renderReportes`/`loadReportes` en `admin-panel.js`).
-5. Nivel 2 avanzó bastante esta sesión (loading screen, botón volver
-   arriba, mensajes de error/éxito unificados, formulario de contacto).
-   Queda: optimización de velocidad (medir con Lighthouse una vez
-   desplegado, no antes).
-6. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
+4. Nivel 2 queda prácticamente cerrado esta sesión (loading screen, botón
+   volver arriba, mensajes de error/éxito unificados, formulario de
+   contacto, **y ahora también su vista de admin**). Solo falta:
+   optimización de velocidad (medir con Lighthouse una vez desplegado, no
+   antes).
+5. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar
 
