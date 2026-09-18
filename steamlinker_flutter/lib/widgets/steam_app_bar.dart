@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../theme/colors.dart';
 import '../theme/radii.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/perfil/providers/perfil_provider.dart';
 
 class SteamAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -149,11 +150,15 @@ class _LogoLeading extends StatelessWidget {
 class _UserActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
+    return Consumer2<AuthProvider, PerfilProvider>(
+      builder: (context, auth, perfilProv, _) {
         final usuario = auth.usuario;
         final username = usuario?['username'] as String? ?? 'Usuario';
         final inicial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
+        // Mismo ajuste que el badge de escritorio: si ya hay Steam
+        // vinculado, usar la foto real en vez de la inicial genérica.
+        final avatarSteam = perfilProv.perfil?['steam']?['avatar_url'] as String?;
+        final tieneAvatarSteam = avatarSteam != null && avatarSteam.isNotEmpty;
 
         return Padding(
           padding: const EdgeInsets.only(right: 4),
@@ -162,23 +167,30 @@ class _UserActions extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(SteamRadii.sm),
-              gradient: const LinearGradient(
-                colors: [SteamColors.blue, SteamColors.teal],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: tieneAvatarSteam
+                  ? null
+                  : const LinearGradient(
+                      colors: [SteamColors.blue, SteamColors.teal],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
               border: Border.all(color: SteamColors.blue, width: 1.5),
+              image: tieneAvatarSteam
+                  ? DecorationImage(image: NetworkImage(avatarSteam), fit: BoxFit.cover)
+                  : null,
             ),
-            child: Center(
-              child: Text(
-                inicial,
-                style: const TextStyle(
-                  color: SteamColors.light,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
+            child: tieneAvatarSteam
+                ? null
+                : Center(
+                    child: Text(
+                      inicial,
+                      style: const TextStyle(
+                        color: SteamColors.light,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
           ),
         );
       },

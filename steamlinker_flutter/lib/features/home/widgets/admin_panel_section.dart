@@ -13,9 +13,16 @@ class AdminPanelSection extends StatelessWidget {
   Future<void> _abrirPanel(BuildContext context) async {
     final uri = Uri.parse(AppConfig.adminPanelUrl);
     try {
+      // Antes abría una pestaña nueva (LaunchMode.externalApplication sin
+      // webOnlyWindowName, que en web abre '_blank' por defecto) — un
+      // bloqueador de ventanas emergentes podía dejarla sin abrir del todo
+      // sin que launchUrl lo reportara como error. Navegar la misma
+      // pestaña evita ese riesgo por completo (mismo patrón que Ko-fi y el
+      // login con Steam).
       final ok = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
+        webOnlyWindowName: '_self',
       );
       if (!context.mounted) return;
       if (!ok) {

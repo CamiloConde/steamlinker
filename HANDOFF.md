@@ -1524,9 +1524,57 @@ parecen:**
       Steam (el backend redirige ahí) y muestra el resultado con un toast,
       luego limpia la URL para no repetir el aviso si se recarga la
       página a mano.
-      **Sin verificar de punta a punta con un login real** (ver arriba
-      por qué) — todo lo demás sí: `flutter analyze`/`flutter test`
-      limpios, backend 27/27, build de producción exitoso.
+      **El usuario probó el login real con su propia cuenta de Steam en la
+      sesión siguiente y funcionó** — se le creó una cuenta admin
+      (`camilandre0510@gmail.com`) para poder probar login + panel admin a
+      la vez. De esa prueba real salieron 5 ajustes:
+  - [x] **Importación automática de la biblioteca al vincular** — antes
+        había que darle a "Importar biblioteca" como paso manual aparte
+        justo después de vincular, lo cual se sentía redundante. Ahora
+        `GET /steam/openid/callback` importa la biblioteca de una vez
+        (se extrajo `importarBibliotecaSteam()` como función compartida
+        con `POST /steam/importar`, que sigue existiendo para
+        reimportar más tarde). Si el perfil es privado, la vinculación
+        igual queda guardada — se avisa con un toast distinto en vez de
+        tratarlo como error del login.
+  - [x] **"Ver todos →" en el sidebar ahora desplaza hasta la sección de
+        Juegos** en vez de aterrizar arriba de Perfil obligando a bajar
+        a mano. `PerfilScrollSignal` (`perfil_scroll_signal.dart`): como
+        Perfil vive dentro de un `IndexedStack` que no se reconstruye al
+        cambiar de pestaña, hace falta una señal aparte (no alcanza con
+        pasarle un parámetro nuevo al widget) — un `ChangeNotifier`
+        simple al que Perfil se suscribe una vez en `initState` y usa
+        `Scrollable.ensureVisible` sobre un `GlobalKey` en la tarjeta de
+        Juegos.
+  - [x] **El avatar de la esquina superior derecha no mostraba la foto de
+        Steam ya vinculada** — solo mostraba la inicial genérica, aunque
+        la propia pantalla de Perfil sí mostraba la foto real. Arreglado
+        en `_UserBadge` (sidebar de escritorio) y `_UserActions`
+        (`SteamAppBar`, móvil): si hay `perfil['steam']['avatar_url']`,
+        se usa esa foto; si no, sigue el círculo con inicial de siempre.
+  - [x] **El panel de administración "no abría"** — causa real
+        encontrada: `AdminPanelSection._abrirPanel` usaba
+        `LaunchMode.externalApplication` sin `webOnlyWindowName`, que en
+        Flutter Web abre una pestaña nueva (`_blank`) — un bloqueador de
+        ventanas emergentes puede dejarla sin abrir del todo sin que
+        `launchUrl` lo reporte como error. Arreglado navegando la misma
+        pestaña (`webOnlyWindowName: '_self'`), mismo patrón ya usado
+        para Ko-fi y el propio login de Steam.
+  - [x] Botones "Configuración"/"Salir" del header de Perfil, más
+        compactos (`compact: true` en el primero, padding reducido en el
+        segundo) — el usuario los sentía "muy grandes, muy ocupados".
+  - **Pedido, no hecho — necesita más investigación antes de construirlo**:
+        distinguir juegos propios vs. compartidos por Family Sharing,
+        como hace SteamDB. Mi lectura honesta: la API pública de Steam
+        (`GetOwnedGames`) no expone esa distinción para cuentas de
+        terceros — devuelve todo a lo que la cuenta tiene acceso, sin
+        decir si es propio o prestado. SteamDB probablemente lo infiere
+        con señales que no están disponibles vía API key simple (datos
+        cruzados entre cuentas a lo largo del tiempo, o acceso a la
+        sesión propia del usuario). No se descarta, pero antes de
+        construir nada hace falta confirmar si existe algún endpoint o
+        método real que lo permita — no vale la pena prometerlo sin esa
+        confirmación.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
@@ -1598,12 +1646,11 @@ real.
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-6. **Verificar de punta a punta el login con Steam con una cuenta real**
-   — todo lo demás está probado (tests automáticos + la URL real
-   confirmada contra Steam), pero nadie completó el login de verdad
-   todavía. Cuando se pruebe: confirmar que el toast de éxito aparece, que
-   `perfil['steam']` queda con los datos correctos, y que "Importar
-   biblioteca" funciona después.
+6. **Investigar si existe alguna forma real de distinguir juegos propios de
+   compartidos por Family Sharing** (pedido explícito, ver Nivel 4 arriba)
+   antes de prometer construirlo — mi lectura inicial es que la API
+   pública de Steam no lo expone, pero vale la pena confirmar antes de
+   descartarlo del todo.
 7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
    usuario duda del valor — bajo prioridad real).
 8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,

@@ -124,7 +124,18 @@ router.get('/steam/openid/callback', async (req, res) => {
             [entry.id_usu, perfilSteam.steamid, perfilSteam.username, perfilSteam.avatar, perfilSteam.profileUrl]
         );
 
-        return res.redirect(`${frontend}/#/home?steam=ok`);
+        // Importa la biblioteca de una vez — pedido explícito del usuario
+        // para no obligar a un segundo clic manual en "Importar biblioteca"
+        // justo después de vincular. Si el perfil es privado (o cualquier
+        // otra falla de Steam), la vinculación ya quedó guardada de todos
+        // modos: se redirige avisando que falta importar a mano, no se
+        // trata como un error del login.
+        try {
+            await importarBibliotecaSteam(entry.id_usu, steamid64);
+            return res.redirect(`${frontend}/#/home?steam=ok&biblioteca=importada`);
+        } catch {
+            return res.redirect(`${frontend}/#/home?steam=ok&biblioteca=pendiente`);
+        }
     } catch (err) {
         return res.redirect(`${frontend}/#/home?steam=error&motivo=error_servidor`);
     }
@@ -463,6 +474,35 @@ router.post('/steam/vincular', verificarToken, async (req, res) => {
     }
 });
 
+// Reutilizada por POST /steam/importar y por el callback de login con
+// Steam (que importa automaticamente apenas vincula, ver mas abajo).
+async function importarBibliotecaSteam(idUsu, steamid) {
+    const ownedGames = await steamService.getOwnedGames(steamid);
+
+    const imported = [];
+    for (const juego of ownedGames) {
+        await pool.query(
+            `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (appid) DO NOTHING`,
+            [juego.appid, juego.name, juego.headerImg, juego.capsuleImg]
+        );
+
+        const result = await pool.query(
+            `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (id_usu, appid) DO UPDATE
+             SET horas_usujg = EXCLUDED.horas_usujg
+             RETURNING *`,
+            [idUsu, juego.appid, juego.hoursPlayed, false]
+        );
+
+        imported.push(result.rows[0]);
+    }
+
+    return imported;
+}
+
 // POST /perfil/steam/importar
 // Importa la biblioteca Steam vinculada al perfil del usuario
 router.post('/steam/importar', verificarToken, async (req, res) => {
@@ -476,29 +516,7 @@ router.post('/steam/importar', verificarToken, async (req, res) => {
             return res.status(400).json({ error: 'No hay cuenta Steam vinculada' });
         }
 
-        const steamid = steamRow.rows[0].steam_id;
-        const ownedGames = await steamService.getOwnedGames(steamid);
-
-        const imported = [];
-        for (const juego of ownedGames) {
-            await pool.query(
-                `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
-                 VALUES ($1, $2, $3, $4)
-                 ON CONFLICT (appid) DO NOTHING`,
-                [juego.appid, juego.name, juego.headerImg, juego.capsuleImg]
-            );
-
-            const result = await pool.query(
-                `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg)
-                 VALUES ($1, $2, $3, $4)
-                 ON CONFLICT (id_usu, appid) DO UPDATE
-                 SET horas_usujg = EXCLUDED.horas_usujg
-                 RETURNING *`,
-                [req.usuario.id, juego.appid, juego.hoursPlayed, false]
-            );
-
-            imported.push(result.rows[0]);
-        }
+        const imported = await importarBibliotecaSteam(req.usuario.id, steamRow.rows[0].steam_id);
 
         res.json({ mensaje: `Importados ${imported.length} juegos`, total: imported.length });
     } catch (err) {

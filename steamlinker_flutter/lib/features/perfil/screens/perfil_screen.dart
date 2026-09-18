@@ -19,6 +19,7 @@ import '../../home/widgets/admin_panel_section.dart';
 import '../../busqueda/screens/busqueda_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../publicaciones/providers/publicaciones_provider.dart';
+import '../perfil_scroll_signal.dart';
 import '../providers/perfil_provider.dart';
 
 class PerfilScreen extends StatefulWidget {
@@ -32,12 +33,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
   bool _inicializado = false;
   late PerfilProvider _perfilProv;
   final TextEditingController _steamController = TextEditingController();
+  final _juegosKey = GlobalKey();
   bool _vinculandoSteam = false;
   bool _importandoSteam = false;
   bool _desvinculandoSteam = false;
   bool _iniciandoSteamLogin = false;
   bool _mostrarVinculacionManual = false;
   String? _steamError;
+
+  @override
+  void initState() {
+    super.initState();
+    perfilScrollSignal.addListener(_scrollAJuegos);
+  }
 
   @override
   void didChangeDependencies() {
@@ -53,8 +61,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   void dispose() {
+    perfilScrollSignal.removeListener(_scrollAJuegos);
     _steamController.dispose();
     super.dispose();
+  }
+
+  void _scrollAJuegos() {
+    final ctx = _juegosKey.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+      alignment: 0.05,
+    );
   }
 
   Future<void> _cargarPerfil() async {
@@ -710,6 +730,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   ),
                   const SizedBox(height: 16),
                   SteamCard(
+                    key: _juegosKey,
                     icon: Icons.videogame_asset_outlined,
                     title: 'Juegos (${perfilProv.juegos.length})',
                     child: Column(
@@ -908,6 +929,8 @@ class _PerfilHeader extends StatelessWidget {
                     Expanded(
                       child: SteamButtonOutline(
                         label: 'Configuración',
+                        icon: Icons.settings_outlined,
+                        compact: true,
                         onTap: onConfiguracion,
                       ),
                     ),
@@ -915,12 +938,13 @@ class _PerfilHeader extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: onSalir,
-                        icon: const Icon(Icons.logout, size: 16),
-                        label: const Text('Salir'),
+                        icon: const Icon(Icons.logout, size: 15),
+                        label: const Text('Salir', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: SteamColors.red,
                           side: const BorderSide(color: SteamColors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 11),
+                          minimumSize: const Size(72, 36),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         ),
                       ),
                     ),

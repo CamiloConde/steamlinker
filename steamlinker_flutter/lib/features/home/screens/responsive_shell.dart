@@ -21,6 +21,7 @@ import '../../chat/widgets/floating_chat.dart';
 import '../../descubrir/screens/descubrir_gamers_screen.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../notifications/screens/notifications_screen.dart';
+import '../../perfil/perfil_scroll_signal.dart';
 import '../../perfil/providers/perfil_provider.dart';
 import '../../perfil/screens/perfil_screen.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
@@ -88,7 +89,15 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     if (steam == null) return;
 
     if (steam == 'ok') {
-      showSteamToast(context, 'Cuenta de Steam vinculada correctamente', SteamColors.green);
+      final bibliotecaImportada = params['biblioteca'] == 'importada';
+      showSteamToast(
+        context,
+        bibliotecaImportada
+            ? 'Cuenta de Steam vinculada y biblioteca importada'
+            : 'Cuenta de Steam vinculada. Tu perfil de Steam debe ser público '
+                'para importar la biblioteca automáticamente — hazlo a mano desde Perfil.',
+        SteamColors.green,
+      );
       final auth = context.read<AuthProvider>();
       final id = auth.usuario?['id'] as int?;
       if (id != null) context.read<PerfilProvider>().cargarPerfil(id);
@@ -288,7 +297,14 @@ class _SideNav extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(left: 18, top: 4),
               child: TextButton(
-                onPressed: () => onSelect(7),
+                onPressed: () {
+                  onSelect(7);
+                  // Perfil ya está montado dentro del IndexedStack (no se
+                  // reconstruye al cambiar de pestaña), así que el
+                  // listener alcanza a desplazarse aunque ya estuviera
+                  // visible antes de este clic.
+                  perfilScrollSignal.pedirScrollAJuegos();
+                },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
@@ -582,10 +598,15 @@ class _UserBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
+    return Consumer2<AuthProvider, PerfilProvider>(
+      builder: (context, auth, perfilProv, _) {
         final username = auth.usuario?['username'] ?? 'Usuario';
         final inicial = username.isNotEmpty ? username[0].toUpperCase() : 'U';
+        // Antes este badge siempre mostraba la inicial genérica, incluso
+        // con Steam ya vinculado y una foto real disponible en el perfil —
+        // inconsistente con la propia pantalla de Perfil, que sí la usa.
+        final avatarSteam = perfilProv.perfil?['steam']?['avatar_url'] as String?;
+        final tieneAvatarSteam = avatarSteam != null && avatarSteam.isNotEmpty;
 
         return InkWell(
           onTap: onTap,
@@ -599,19 +620,26 @@ class _UserBadge extends StatelessWidget {
                   height: 28,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(SteamRadii.avatar),
-                    gradient: const LinearGradient(
-                      colors: [SteamColors.blue, SteamColors.teal],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: tieneAvatarSteam
+                        ? null
+                        : const LinearGradient(
+                            colors: [SteamColors.blue, SteamColors.teal],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
                     border: Border.all(color: SteamColors.blue, width: 1.5),
+                    image: tieneAvatarSteam
+                        ? DecorationImage(image: NetworkImage(avatarSteam), fit: BoxFit.cover)
+                        : null,
                   ),
-                  child: Center(
-                    child: Text(
-                      inicial,
-                      style: const TextStyle(color: SteamColors.light, fontSize: 11, fontWeight: FontWeight.w800),
-                    ),
-                  ),
+                  child: tieneAvatarSteam
+                      ? null
+                      : Center(
+                          child: Text(
+                            inicial,
+                            style: const TextStyle(color: SteamColors.light, fontSize: 11, fontWeight: FontWeight.w800),
+                          ),
+                        ),
                 ),
                 const SizedBox(width: 8),
                 ConstrainedBox(
