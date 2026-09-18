@@ -453,7 +453,8 @@ class _ApoyarProyectoSidebar extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'SteamMatch es independiente. Ayúdanos a seguir mejorándolo.',
+            'SteamMatch es gratis e independiente. Ayúdanos a seguir '
+            'mejorándolo.',
             style: TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
           ),
           const SizedBox(height: 10),

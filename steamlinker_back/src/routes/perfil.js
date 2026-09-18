@@ -332,7 +332,7 @@ router.get('/comparar/:id', verificarToken, async (req, res) => {
 
         if (!otroMuestraBiblioteca) {
             return res.status(403).json({
-                error: 'Este usuario ocultó su biblioteca en Steamlinker.',
+                error: 'Este usuario ocultó su biblioteca en SteamMatch.',
             });
         }
 

@@ -438,7 +438,8 @@ class _FooterInicio extends StatelessWidget {
           const Text(
             'Conectamos gamers para formar familias de Steam y encontrar '
             'compañeros de juego, a partir de tu biblioteca verificada. '
-            'Un proyecto independiente, no un servicio oficial de Steam.',
+            'Gratis y un proyecto independiente, no un servicio oficial '
+            'de Steam.',
             style: TextStyle(
               color: SteamColors.muted,
               fontSize: 12,

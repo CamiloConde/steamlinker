@@ -20,8 +20,8 @@ class ApoyarProyectoCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'SteamMatch es un proyecto independiente. Si te sirve, puedes '
-            'ayudarnos a seguir mejorándolo.',
+            'SteamMatch es gratis y un proyecto independiente. Si te '
+            'sirve, puedes ayudarnos a seguir mejorándolo.',
             style: TextStyle(color: SteamColors.textSec, fontSize: 12.5, height: 1.4),
           ),
           const SizedBox(height: 12),

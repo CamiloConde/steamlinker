@@ -1926,6 +1926,83 @@ real.
 8. Roadmap Nivel 4 restante: login con Google, rediseño visual del panel
    de administración. **Pagos locales (Nequi/Bancolombia) ya no está acá
    — se implementó esta ronda vía llave Bre-B**, ver arriba.
+9. **Renombrar Steamlinker → SteamMatch en el repo — pedido por el
+   usuario, evaluado: NO es una tarea grande como se temía, se divide en
+   3 categorías con prioridad muy distinta.**
+   - [x] **Ya arreglado esta ronda (strings reales visibles al
+     usuario)**: el error `'Este usuario ocultó su biblioteca en
+     Steamlinker.'` en `perfil.js` (lo devuelve la API y se muestra tal
+     cual en la UI), el `<title>` del panel de admin, y el placeholder
+     del campo de email del login de admin.
+   - **Bajo esfuerzo, cosmético, sin apuro** (nombres de clases/logs que
+     nadie fuera del código ve): `SteamlinkerApp`/`_SteamlinkerAppState`
+     en `main.dart`, comentarios y `console.log`/`debugPrint` con
+     "Steamlinker" en `main.dart`/`index.js`/varias rutas del backend,
+     el nombre del archivo CSV que descarga el admin
+     (`steamlinker-usuarios.csv`). Se puede hacer en una pasada rápida
+     cuando haya tiempo — no urge porque nadie fuera del código los ve.
+   - **NO recomiendo tocar, mi criterio**: el nombre de las carpetas
+     (`steamlinker_back`/`steamlinker_flutter`), el `name` en
+     `pubspec.yaml`/`package.json` (solo 2 archivos de test usan
+     `package:steamlinker_flutter/...`, así que técnicamente es barato,
+     pero renombrar el paquete Dart activo mueve el nombre por el que
+     Flutter identifica el proyecto), el nombre de la base de datos
+     (`steamlinker`/`steamlinker_test`) y el nombre del repo en GitHub.
+     Ninguno de estos lo ve un usuario final — son identificadores
+     internos de infraestructura, y cambiarlos tiene costo real (romper
+     rutas de desarrollo local, `.env` existentes, posibles scripts de
+     despliegue) sin ningún beneficio de marca a cambio. Un producto
+     real puede perfectamente tener un nombre de carpeta/paquete interno
+     distinto al nombre público — es una práctica común, no una
+     inconsistencia que alguien de afuera note.
+   - **Encontrado de paso, no soy quien debe decidirlo**: el panel de
+     admin (`public/admin/index.html`) trae baked-in un default real,
+     `https://steamlinker.onrender.com`, como URL del backend
+     (`BASE_URL`). Esto sugiere que en algún momento hubo (¿o hay?) un
+     backend desplegado de verdad en Render con ese nombre. No lo toqué
+     — si ese despliegue existe y sigue en uso, cambiar el string sin
+     más contexto podría romper el acceso por defecto al panel. El
+     usuario debería confirmar si ese despliegue sigue vivo antes de
+     tocarlo.
+10. **Checklist de SEO/descubribilidad que mandó el usuario — organizado
+    por prioridad real, con mi criterio de qué aplica y qué no todavía.**
+    El bloqueo de fondo: **la mayoría de estos ítems no tienen sentido
+    sin un dominio real y el backend+frontend desplegados de verdad** —
+    hoy todo corre en local. No es que falte hacerlos, es que el
+    prerrequisito de todos ellos (el dominio) no está resuelto.
+    - **Tier 0 — la decisión que desbloquea todo lo demás**: **el
+      dominio** (comprarlo + decidir dónde se despliega el backend y el
+      frontend). Nada de lo que sigue tiene sentido real sin esto
+      primero. Esto es una decisión del usuario (presupuesto, proveedor),
+      no algo que se resuelva escribiendo código.
+    - **Tier 1 — se puede hacer YA, no depende del dominio, barato**:
+      metatítulos y descripciones (`web/index.html`, ya tiene algunos
+      básicos del splash/PWA — falta revisar que la descripción sea
+      buena), texto alternativo en imágenes (ojo: Flutter Web con el
+      renderer HTML puede exponerlo vía `Semantics(label: ...)`, hay que
+      revisar caso por caso qué imágenes lo necesitan de verdad — logos
+      decorativos no, carátulas de juegos sí), contraste de colores
+      (auditoría rápida de la paleta actual contra WCAG AA), enlaces
+      rotos (auditoría dentro de la app, no depende de estar publicado).
+    - **Tier 2 — depende 100% de tener el dominio ya resuelto, pero
+      simples una vez que exista**: sitemap.xml y robots.txt, Google
+      Search Console (verificación de propiedad), indexación de Google.
+    - **Tier 3 — opcional / cuestionable, mi opinión honesta**:
+      - **Analítica**: de acuerdo con el usuario en que no vale la pena
+        todavía — sin tráfico real no hay nada que medir. Mejor
+        justo cuando se publique el dominio, no antes.
+      - **"Ficha de Google" (Google Business Profile)**: esto es para
+        negocios con presencia física/local (restaurantes, tiendas,
+        consultorios) — SteamMatch es una app web, no aplica en el
+        sentido tradicional. Si el usuario se refería a otra cosa (ej.
+        una futura ficha en Google Play si algún día hay app nativa),
+        aclarar — tal como está pedido, no es un ítem real para este
+        proyecto.
+      - **Velocidad de carga optimizada**: parcialmente ya cubierto
+        (tree-shaking de fuentes/íconos ya activo en cada `flutter build
+        web`), pero medirla de verdad con Lighthouse solo tiene sentido
+        una vez desplegado — ya estaba anotado así en el Nivel 2 de
+        arriba, no es un ítem nuevo.
 
 ## 12. Cómo retomar
 
