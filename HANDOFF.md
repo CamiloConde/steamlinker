@@ -1563,18 +1563,81 @@ parecen:**
   - [x] Botones "Configuración"/"Salir" del header de Perfil, más
         compactos (`compact: true` en el primero, padding reducido en el
         segundo) — el usuario los sentía "muy grandes, muy ocupados".
-  - **Pedido, no hecho — necesita más investigación antes de construirlo**:
-        distinguir juegos propios vs. compartidos por Family Sharing,
-        como hace SteamDB. Mi lectura honesta: la API pública de Steam
-        (`GetOwnedGames`) no expone esa distinción para cuentas de
-        terceros — devuelve todo a lo que la cuenta tiene acceso, sin
-        decir si es propio o prestado. SteamDB probablemente lo infiere
-        con señales que no están disponibles vía API key simple (datos
-        cruzados entre cuentas a lo largo del tiempo, o acceso a la
-        sesión propia del usuario). No se descarta, pero antes de
-        construir nada hace falta confirmar si existe algún endpoint o
-        método real que lo permita — no vale la pena prometerlo sin esa
-        confirmación.
+  - [x] **Investigación cerrada: distinguir juegos propios de compartidos
+        por Family Sharing NO es viable sin pedirle al usuario su sesión
+        privada de Steam — se descarta, no se va a construir.**
+        `GetOwnedGames` (la API pública, con API key normal) confirma que
+        nunca expone esa distinción — devuelve la licencia, nunca cómo se
+        obtuvo. El único endpoint que sí lo sabe es uno no documentado,
+        `IFamilyGroupsService/GetSharedLibraryApps` (así es como
+        probablemente lo hace SteamDB): necesita un `family_groupid` (se
+        consigue con `GetFamilyGroupForUser`) más un `access_token` de
+        corta duración que **solo se puede sacar de una sesión de
+        navegador ya logueada en steamcommunity.com/store.steampowered.com**
+        (vía `store.steampowered.com/pointssummary/ajaxgetasyncconfig`) —
+        no es algo que el login OpenID 2.0 que ya usamos entregue, ni algo
+        que una API key de servidor pueda pedir en nombre de otro usuario.
+        Construir esto exigiría pedirle al usuario que de alguna forma nos
+        entregue su sesión activa de Steam (cookies/token), que es
+        exactamente el tipo de práctica que no vale la pena ni deberíamos
+        montar: no es solo "difícil", es pedir un credential que no nos
+        corresponde tener. Conclusión: nos quedamos con la biblioteca vía
+        `GetOwnedGames` (Steam-API-key) tal como está, sin distinción de
+        familia. Fuentes: FAQ de SteamDB, hilo de GitHub
+        `IsThereAnyDeal/AugmentedSteam#1907`, documentación de
+        `IFamilyGroupsService` reconstruida por la comunidad.
+  - [x] **Integridad de "Juegos verificados" — problema real encontrado
+        por el usuario probando con su cuenta, corregido.** Agregar un
+        juego a mano (buscador de Steam Store, sin dueño real verificado)
+        se mostraba idéntico a uno importado de verdad por la API de
+        Steam, y ambos contaban igual en "Juegos verificados" y en
+        "juegos en común" para matchear — el usuario lo probó agregando
+        Baldur's Gate 3 sin tenerlo realmente. Arreglado con una columna
+        nueva `origen_usujg` ('steam' | 'manual') en `usuarios_juegos`
+        (migración `008_add_origen_juegos.sql`, con backfill de mejor
+        esfuerzo: cuentas ya vinculadas a Steam se marcan 'steam' para
+        sus filas existentes). `importarBibliotecaSteam` siempre estampa
+        'steam' (incluso sobre un juego agregado a mano antes — un import
+        real de Steam es autoritativo); `POST /juegos/agregar` estampa
+        'manual' solo en el INSERT inicial (editar horas/favorito después
+        no degrada un juego ya verificado). El conteo "JUEGOS VERIFICADOS"
+        en Perfil ahora solo cuenta origen 'steam'; cada fila de juego
+        muestra un badge STEAM/MANUAL; "juegos en común" en
+        `/perfil/descubrir` y `/perfil/comparar/:id` (rama local, sin API
+        key) ahora exige origen 'steam' en ambos lados — ya no se puede
+        inflar una coincidencia agregando a mano el juego que le falta.
+        El aviso "Tienes este juego verificado en tu biblioteca" en el
+        detalle de una publicación también exige origen 'steam'. Test
+        `perfil.descubrir.test.js` actualizado para cubrir ambos casos
+        (27/27 tests de backend pasando).
+  - [x] **¿Qué pasa si alguien vincula con el perfil de Steam en
+        privado? — pregunta directa del usuario, respondida con UI
+        nueva.** Antes: la cuenta quedaba vinculada pero sin biblioteca,
+        con un solo toast que se perdía al cerrarse, sin ninguna pista
+        persistente de qué hacer. Ahora, en Inicio, si hay Steam vinculado
+        pero la biblioteca está vacía aparece una tarjeta persistente
+        ("BIBLIOTECA VACÍA") con la explicación y un botón que abre
+        directo `steamcommunity.com/my/edit/settings` (ajustes de
+        privacidad de Steam) más un atajo a Perfil para reimportar
+        (`_TarjetaBibliotecaVacia` en `home_screen.dart`).
+  - [x] **Bug de scroll en Inicio (hueco intermitente arriba del todo) —
+        mitigación aplicada, sin poder verificarse en vivo.** El usuario
+        describió un hueco que aparece en la zona superior según la
+        posición del scroll y desaparece al volver a subir. Lectura más
+        probable con el código a la vista: `RefreshIndicator` (pull-to-
+        refresh) en Flutter Web puede armarse solo con la rueda del mouse/
+        trackpad si la física de scroll permite un rebote elástico al
+        llegar al tope — un problema documentado de Flutter Web, no
+        exclusivo de esta app. Se fijó `ClampingScrollPhysics` explícito
+        en el `SingleChildScrollView` de Inicio (antes usaba la física
+        ambiental por defecto, que puede variar) — esto no le quita la
+        función de pull-to-refresh a quien sí arrastra de verdad en
+        móvil/touch, solo evita el rebote elástico que dispara el hueco
+        sin que nadie esté jalando. **No se pudo confirmar en vivo**: el
+        navegador integrado de esta sesión no logra completar un login
+        real dentro de la app (limitación de entorno ya documentada, no
+        un bug de SteamMatch) — hace falta que alguien lo revise a ojo
+        haciendo scroll en Inicio.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
@@ -1646,11 +1709,13 @@ real.
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-6. **Investigar si existe alguna forma real de distinguir juegos propios de
-   compartidos por Family Sharing** (pedido explícito, ver Nivel 4 arriba)
-   antes de prometer construirlo — mi lectura inicial es que la API
-   pública de Steam no lo expone, pero vale la pena confirmar antes de
-   descartarlo del todo.
+6. **Confirmar a ojo la mitigación del bug de scroll en Inicio**
+   (`ClampingScrollPhysics` explícito, ver Nivel 4 arriba) — no se pudo
+   verificar en vivo por la limitación conocida del navegador integrado
+   de esta sesión con el login. Si el hueco sigue apareciendo, revisar
+   si el `RefreshIndicator` en sí (no solo la física) necesita
+   deshabilitarse en escritorio, o si el origen es otro (ej.
+   `_HeroEntrada` con `Transform.scale`/`Transform.translate`).
 7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
    usuario duda del valor — bajo prioridad real).
 8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/estado_familia_helper.dart';
@@ -131,7 +132,16 @@ class _HomeScreenState extends State<HomeScreen> {
         child: DesktopBodyWidth(
           maxWidth: 760,
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
+            // ClampingScrollPhysics explicito (no el fisico ambiental, que
+            // en Flutter Web puede rebotar de forma elastica con rueda del
+            // mouse/trackpad): un rebote elastico sobre el tope hace que
+            // RefreshIndicator arme su hueco/indicador con solo desplazar
+            // la rueda, sin que el usuario este realmente "jalando" -- ese
+            // es el hueco intermitente reportado arriba del todo. Ver
+            // HANDOFF.md.
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: ClampingScrollPhysics(),
+            ),
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,6 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 10),
                   _TarjetaSteamNoVinculado(
                     onVincular: () => _ir(7, const PerfilScreen()),
+                  ),
+                ] else if (perfilProv.juegos.isEmpty) ...[
+                  const SizedBox(height: 10),
+                  _TarjetaBibliotecaVacia(
+                    onIrAPerfil: () => _ir(7, const PerfilScreen()),
                   ),
                 ],
 
@@ -524,6 +539,66 @@ class _TarjetaSteamNoVinculado extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             child: const Text('Vincular'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Cuenta ya vinculada pero con biblioteca vacia -- casi siempre porque el
+/// perfil de Steam es privado, asi que el import automatico no pudo leer
+/// nada. Sin esta tarjeta el usuario quedaba "vinculado" para siempre sin
+/// ninguna pista de qué hacer (ver HANDOFF.md).
+class _TarjetaBibliotecaVacia extends StatelessWidget {
+  final VoidCallback onIrAPerfil;
+  const _TarjetaBibliotecaVacia({required this.onIrAPerfil});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SteamColors.bgCard,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.yellow),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'BIBLIOTECA VACÍA',
+            style: TextStyle(
+              color: SteamColors.yellow,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.9,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Tu cuenta de Steam está vinculada, pero no pudimos leer tu '
+            'biblioteca — casi siempre porque el perfil de Steam sigue en '
+            'privado. Hazlo público y vuelve a importar desde Perfil.',
+            style: TextStyle(color: SteamColors.light, fontSize: 13.5, height: 1.4),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () => launchUrl(
+                  Uri.parse('https://steamcommunity.com/my/edit/settings'),
+                  webOnlyWindowName: '_self',
+                ),
+                child: const Text('Abrir ajustes de privacidad de Steam'),
+              ),
+              const Spacer(),
+              OutlinedButton(
+                onPressed: onIrAPerfil,
+                child: const Text('Ir a Perfil'),
+              ),
+            ],
           ),
         ],
       ),

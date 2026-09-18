@@ -190,7 +190,8 @@ router.get('/descubrir', verificarToken, async (req, res) => {
                    (SELECT COUNT(*)::int FROM usuarios_juegos uj WHERE uj.id_usu = u.id_usu) AS total_juegos,
                    (SELECT COUNT(*)::int FROM usuarios_juegos uj1
                     JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
-                    WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu) AS juegos_en_comun,
+                    WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu
+                      AND uj1.origen_usujg = 'steam' AND uj2.origen_usujg = 'steam') AS juegos_en_comun,
                    EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = u.id_usu) AS steam_vinculado,
                    (SELECT json_agg(row_to_json(jc)) FROM (
                         SELECT j.appid, j.nom_jg, j.headerimg_jg
@@ -198,6 +199,7 @@ router.get('/descubrir', verificarToken, async (req, res) => {
                         JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
                         JOIN juegos j ON j.appid = uj1.appid
                         WHERE uj1.id_usu = $1 AND uj2.id_usu = u.id_usu
+                          AND uj1.origen_usujg = 'steam' AND uj2.origen_usujg = 'steam'
                         LIMIT 3
                     ) jc) AS juegos_comunes_muestra,
                    (SELECT row_to_json(jr) FROM (
@@ -335,7 +337,7 @@ router.get('/comparar/:id', verificarToken, async (req, res) => {
         }
 
         const queryJuegos = `
-            SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, uj.horas_usujg
+            SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, uj.horas_usujg, uj.origen_usujg
             FROM usuarios_juegos uj
             JOIN juegos j ON uj.appid = j.appid
             WHERE uj.id_usu = $1
@@ -348,10 +350,15 @@ router.get('/comparar/:id', verificarToken, async (req, res) => {
 
         const misJuegos = misRows.rows;
         const susJuegos = susRows.rows;
-        const setOtro = new Set(susJuegos.map((j) => j.appid));
+        // Solo cuenta como "en comun" si en AMBOS lados el juego viene de
+        // Steam de verdad -- si no, cualquiera podria agregarse a mano el
+        // juego que le hiciera falta y fingir una coincidencia.
+        const setOtroVerificado = new Set(
+            susJuegos.filter((j) => j.origen_usujg === 'steam').map((j) => j.appid)
+        );
 
         const comunes = misJuegos
-            .filter((j) => setOtro.has(j.appid))
+            .filter((j) => j.origen_usujg === 'steam' && setOtroVerificado.has(j.appid))
             .map((j) => {
                 const otro = susJuegos.find((o) => o.appid === j.appid);
                 return {
@@ -408,7 +415,7 @@ router.get('/:id', verificarToken, async (req, res) => {
         if (mostrarBiblioteca) {
             const juegosRes = await pool.query(
                 `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg,
-                        uj.horas_usujg, uj.esfav_usujg
+                        uj.horas_usujg, uj.esfav_usujg, uj.origen_usujg
                  FROM usuarios_juegos uj
                  JOIN juegos j ON uj.appid = j.appid
                  WHERE uj.id_usu = $1
@@ -489,10 +496,10 @@ async function importarBibliotecaSteam(idUsu, steamid) {
         );
 
         const result = await pool.query(
-            `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg)
-             VALUES ($1, $2, $3, $4)
+            `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg, origen_usujg)
+             VALUES ($1, $2, $3, $4, 'steam')
              ON CONFLICT (id_usu, appid) DO UPDATE
-             SET horas_usujg = EXCLUDED.horas_usujg
+             SET horas_usujg = EXCLUDED.horas_usujg, origen_usujg = 'steam'
              RETURNING *`,
             [idUsu, juego.appid, juego.hoursPlayed, false]
         );
@@ -560,11 +567,14 @@ router.post('/juegos/agregar', verificarToken, async (req, res) => {
             [appid, nombre, headerimg || null, capsuleimg || null]
         );
 
-        // Agregar el juego al perfil del usuario
+        // Agregar el juego al perfil del usuario. El origen solo se marca
+        // 'manual' en el INSERT inicial -- si el juego ya estaba marcado
+        // 'steam' (importado de verdad), editar horas/favorito aqui no debe
+        // degradarlo a "no verificado".
         const resultado = await pool.query(
-            `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (id_usu, appid) DO UPDATE 
+            `INSERT INTO usuarios_juegos (id_usu, appid, horas_usujg, esfav_usujg, origen_usujg)
+             VALUES ($1, $2, $3, $4, 'manual')
+             ON CONFLICT (id_usu, appid) DO UPDATE
              SET horas_usujg = $3, esfav_usujg = $4
              RETURNING *`,
             [req.usuario.id, appid, horas || 0, favorito || false]

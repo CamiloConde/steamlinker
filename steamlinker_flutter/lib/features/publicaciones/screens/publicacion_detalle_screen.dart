@@ -193,7 +193,12 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
         !esMia &&
         (pub['juegos'] as List<dynamic>? ?? []).any((j) {
           final appid = (j as Map)['appid'];
-          return perfilProv.juegos.any((mio) => mio['appid'] == appid);
+          // Solo cuenta si el juego viene de la biblioteca de Steam de
+          // verdad -- uno agregado a mano no deberia mostrarse como
+          // "verificado" (ver HANDOFF.md).
+          return perfilProv.juegos.any(
+            (mio) => mio['appid'] == appid && mio['origen'] == 'steam',
+          );
         });
 
     return Scaffold(

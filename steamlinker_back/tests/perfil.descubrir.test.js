@@ -26,7 +26,8 @@ before(async () => {
     });
     tokenOtro = resOtro.body.token;
 
-    // Un juego en comun entre ambos.
+    // Un juego agregado a mano por ambos -- NO debe contar como "en comun"
+    // verificado (ver HANDOFF.md, seccion de integridad de biblioteca).
     for (const token of [tokenYo, tokenOtro]) {
         await request(app)
             .post('/perfil/juegos/agregar')
@@ -34,16 +35,29 @@ before(async () => {
             .send({ appid: 990990, nombre: 'Juego de prueba comun' });
     }
 
+    // Un segundo juego, agregado igual por la ruta manual pero luego
+    // "promovido" a origen Steam directo en BD (simula lo que hace
+    // importarBibliotecaSteam) -- este si debe contar como en comun.
+    for (const token of [tokenYo, tokenOtro]) {
+        await request(app)
+            .post('/perfil/juegos/agregar')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ appid: 990991, nombre: 'Juego de prueba comun verificado' });
+    }
+    await pool.query(
+        `UPDATE usuarios_juegos SET origen_usujg = 'steam' WHERE appid = 990991`
+    );
+
     // El otro usuario necesita una publicacion activa para aparecer en
     // /perfil/descubrir (solo lista gente con publicaciones abiertas).
-    // Le asociamos el mismo juego para poder probar juego_reciente.
+    // Le asociamos el juego verificado para poder probar juego_reciente.
     await request(app)
         .post('/publicaciones/crear')
         .set('Authorization', `Bearer ${tokenOtro}`)
         .send({
             tipo: 'busco_companero',
             titulo: 'Publicacion de prueba descubrir',
-            juegos: [{ appid: 990990, nombre: 'Juego de prueba comun' }],
+            juegos: [{ appid: 990991, nombre: 'Juego de prueba comun verificado' }],
         });
 });
 
@@ -61,11 +75,13 @@ test('descubrir incluye juegos_en_comun, total_juegos y steam_vinculado', async 
     assert.equal(res.status, 200);
     const fila = res.body.usuarios.find((u) => u.username_usu === otro);
     assert.ok(fila, 'el otro usuario debe aparecer en el listado');
+    // total_juegos cuenta toda la biblioteca (2), pero juegos_en_comun solo
+    // el que quedo marcado como origen Steam -- el agregado a mano no cuenta.
+    assert.equal(fila.total_juegos, 2);
     assert.equal(fila.juegos_en_comun, 1);
-    assert.equal(fila.total_juegos, 1);
     assert.equal(fila.steam_vinculado, false);
     assert.equal(fila.tipo_publi_reciente, 'busco_companero');
     assert.equal(fila.juegos_comunes_muestra.length, 1);
-    assert.equal(fila.juegos_comunes_muestra[0].appid, 990990);
-    assert.equal(fila.juego_reciente.appid, 990990);
+    assert.equal(fila.juegos_comunes_muestra[0].appid, 990991);
+    assert.equal(fila.juego_reciente.appid, 990991);
 });

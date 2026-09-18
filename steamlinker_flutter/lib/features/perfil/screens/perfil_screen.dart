@@ -387,12 +387,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
             color: SteamColors.bgPanel,
           ),
         ),
-        title: Text(
-          juego['nombre'] ?? 'Juego',
-          style: const TextStyle(
-            color: SteamColors.light,
-            fontWeight: FontWeight.w500,
-          ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                juego['nombre'] ?? 'Juego',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: SteamColors.light,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            _BadgeOrigenJuego(esSteam: juego['origen'] == 'steam'),
+          ],
         ),
         subtitle: Text(
           'Horas: ${juego['horas']} • ${juego['favorito'] == true ? '⭐ Favorito' : 'No favorito'}',
@@ -493,7 +502,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 children: [
                   _PerfilHeader(
                     perfil: perfil,
-                    juegosCount: perfilProv.juegos.length,
+                    juegosCount: perfilProv.juegos
+                        .where((j) => j['origen'] == 'steam')
+                        .length,
                     amigosCount: amistadProv.amigos.length,
                     estadoFamilia: estadoFamilia,
                     onConfiguracion: () {
@@ -1080,6 +1091,49 @@ class _StatCell extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Distingue un juego importado de verdad desde la API de Steam (origen
+/// confiable) de uno agregado a mano con el buscador (el usuario puede
+/// escribir cualquier juego ahi sin poseerlo realmente). Antes de esto
+/// ambos se veian identicos y el conteo de "Juegos verificados" los
+/// mezclaba -- ver HANDOFF.md.
+class _BadgeOrigenJuego extends StatelessWidget {
+  final bool esSteam;
+  const _BadgeOrigenJuego({required this.esSteam});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = esSteam ? SteamColors.teal : SteamColors.muted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(31),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withAlpha(102)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            esSteam ? Icons.verified : Icons.edit_outlined,
+            size: 11,
+            color: color,
+          ),
+          const SizedBox(width: 3),
+          Text(
+            esSteam ? 'STEAM' : 'MANUAL',
+            style: TextStyle(
+              color: color,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
             ),
           ),
         ],

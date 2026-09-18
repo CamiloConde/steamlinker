@@ -53,6 +53,10 @@ class PerfilProvider extends ChangeNotifier {
       'capsuleimg': raw['capsuleimg_jg'] ?? raw['capsuleimg'] ?? '',
       'horas': raw['horas_usujg'] ?? raw['horas'] ?? 0,
       'favorito': raw['esfav_usujg'] == true || raw['favorito'] == true,
+      // 'steam' = importado de la API real de Steam, 'manual' = agregado a
+      // mano con el buscador (no garantiza que el usuario lo posea de
+      // verdad). Ver HANDOFF.md, integridad de "juegos verificados".
+      'origen': raw['origen_usujg'] ?? raw['origen'] ?? 'manual',
     };
   }
 
