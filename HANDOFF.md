@@ -1887,76 +1887,45 @@ futura: Nivel 1 → Nivel 1.5 (en cuanto haya respuesta sobre las cuentas) →
 Nivel 2 → recién ahí evaluar Niveles 3 y 4 con la app ya en manos de gente
 real.
 
-### Cosas pendientes de esta sesión (no alcanzadas, ordenadas por mi
-### prioridad si se retoma)
+### Cosas pendientes (actualizado 2026-09-18, tras la ronda de rediseño de
+### escritorio + integridad de datos — ordenadas por mi prioridad)
 
-1. **Verificación visual en vivo de toda la sesión** — los cambios (Descubrir,
-   Configuración, Avisos, perfil de usuario, "Apoya el proyecto", 404,
-   favicon, Aviso legal/Privacidad) están cubiertos por `flutter
-   analyze`/`flutter test`/tests de backend (16/16 backend, 10/10
-   frontend), pero no se pudieron ver en el navegador por un problema de
-   escala de coordenadas en la automatización (no un bug de la app). Antes
-   de dar la sesión por cerrada del todo, alguien debería abrir
-   `flutter build web` y probar a ojo: Descubrir (filtros, dropdown de
-   juego), Configuración (etiquetas decorativas + tarjeta Legal), Avisos →
-   Marcadas (que ancle arriba), perfil de otro usuario (que ya no aparezca
-   "Match recibido"), Inicio → "Apoya el proyecto" (que el botón abra
-   https://ko-fi.com/camiko31), el registro (que muestre y abra los enlaces
-   legales), y una URL rota (que caiga en la 404 con estilo).
-2. **Selector de idioma: traducir el resto de la app.** La infraestructura
-   (`.arb`, `AppLocalizations`, `LocaleProvider`, tarjeta "Idioma" en
-   Configuración) ya está completa y funcionando — lo que falta es
-   traducción pantalla por pantalla. Elegir inglés hoy solo traduce
-   login/registro, el bottom nav móvil y el sidebar de escritorio; el
-   resto de la app (Inicio, Descubrir, Publicaciones, Perfil,
-   Configuración, Chat, Notificaciones, Amistad, Aviso legal/Privacidad,
-   Contacto, panel de admin) sigue en español sin importar el idioma
-   elegido. Patrón para continuar: agregar claves a
-   `lib/l10n/app_es.arb`/`app_en.arb` → `flutter pub get` (regenera
-   `AppLocalizations`) → reemplazar los `Text('...')` literales por
-   `AppLocalizations.of(context)!.miClave`, pantalla por pantalla completa
-   (nunca a medias dentro de una misma pantalla, para no mezclar idiomas
-   en el mismo lugar). Ojo con Inicio en particular: depende de
-   `PublicacionConstants.etiquetaTipo()` y `PaisUtil.codigoANombre()`
-   (nombres de tipo de publicación y de país), que hay que traducir
-   primero para que Inicio quede completo de verdad.
-3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
-   mejor en una sesión dedicada a eso o con una herramienta de diseño. De
-   paso quedan pendientes los íconos grandes de instalación PWA
-   (`web/icons/Icon-*.png`, 192/512), que siguen con el logo de Flutter.
-4. Nivel 1 queda esencialmente cerrado (legal, privacidad, seguridad
-   urgente, 404, CTA única, cookies confirmado que no aplica). Lo único
-   pendiente ahí: rotación/revocación de JWT (requiere refresh tokens +
-   tabla de sesiones, cambio de esquema más grande) y revisar a fondo
-   `npm audit` (vulnerabilidad moderada conocida en `qs`, dependencia
-   transitiva de `express`).
-5. Nivel 2 queda prácticamente cerrado esta sesión (loading screen, botón
-   volver arriba, mensajes de error/éxito unificados, formulario de
-   contacto, **y ahora también su vista de admin**). Solo falta:
-   optimización de velocidad (medir con Lighthouse una vez desplegado, no
-   antes).
-6. **Confirmar a ojo el tercer intento del bug de scroll en Inicio** — van
-   3 intentos: `ClampingScrollPhysics` (no funcionó, confirmado por el
-   usuario), quitar la capa `Opacity`/`Transform` persistente de
-   `_HeroEntrada` (no se pudo confirmar en vivo, el usuario reportó que
-   seguía igual con una captura de su navegador real mostrando el hueco
-   con la app ya en layout de escritorio), y ahora eliminar la doble
-   barra superior de escritorio (ver Nivel 4 arriba, rediseño de
-   header). Ninguno de los 3 se ha podido reproducir dentro del
-   navegador integrado de las sesiones de Claude — solo el usuario lo ve
-   en su navegador real. Si el tercero tampoco alcanza, el siguiente
-   sospechoso es deshabilitar `RefreshIndicator` del todo en escritorio,
-   o forzar el renderer CanvasKit (`flutter build web --web-renderer
-   canvaskit`) para descartar que sea específico del renderer HTML. Si
-   se retoma, sería útil pedirle al usuario datos más precisos antes de
-   intentar un cuarto arreglo a ciegas: navegador exacto, mouse o
-   trackpad, si pasa siempre en la misma posición de scroll o
-   aleatoriamente, y si otras pantallas con scroll (Descubrir,
-   Publicaciones) muestran lo mismo o es exclusivo de Inicio.
-7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
-   usuario duda del valor — bajo prioridad real).
-8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,
-   rediseño del panel admin, pagos locales), en ese orden.
+1. **Confirmar el bug de scroll en Inicio — 4 intentos hechos, sin
+   confirmación del usuario sobre el último.** `ClampingScrollPhysics`
+   (no funcionó), quitar la capa `Opacity`/`Transform` persistente de
+   `_HeroEntrada` (no confirmado), eliminar la doble barra de escritorio
+   (no confirmado), y reescribir `_HeroEntrada` a `StatefulWidget` propio
+   + `RefreshIndicator` inerte en escritorio (el más reciente, tampoco
+   confirmado todavía). Ninguno reproducible dentro del navegador
+   integrado de Claude — solo el usuario lo ve en su Chrome real con
+   trackpad. Si sigue apareciendo, los siguientes sospechosos: deshabilitar
+   `RefreshIndicator` del todo en escritorio, o forzar CanvasKit
+   (`flutter build web --web-renderer canvaskit`) para descartar que sea
+   específico del renderer HTML.
+2. **Selector de idioma: traducir el resto de la app.** Sigue igual que
+   antes de esta ronda — la infraestructura (`.arb`, `AppLocalizations`,
+   `LocaleProvider`) ya está completa; falta traducción pantalla por
+   pantalla (Inicio, Descubrir, Publicaciones, Perfil, Configuración,
+   Chat, Notificaciones, Amistad, legal, Contacto, admin). Ojo con
+   `PublicacionConstants.etiquetaTipo()`/`PaisUtil.codigoANombre()`
+   (sistemas de strings aparte que Inicio también usa).
+3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código.
+   Iconos PWA (`web/icons/Icon-*.png`) siguen con el logo de Flutter.
+4. **Pulido menor pendiente de esta ronda** (bajo esfuerzo si se retoma):
+   agregar tags de género y avatares de "juegan en común" a
+   `PublicacionCard` (el usuario dijo "cuando puedas", sin prisa); revisar
+   si el stat "FAMILIA" del grid de Perfil necesita el mismo tipo de
+   aclaración que se le hizo a "TU ESTADO" en Inicio.
+5. Nivel 1: rotación/revocación de JWT (refresh tokens + tabla de
+   sesiones) y `npm audit` a fondo (vulnerabilidad moderada conocida en
+   `qs`, transitiva de `express`) — sin cambios esta ronda.
+6. Nivel 2: optimización de velocidad (Lighthouse, una vez desplegado) —
+   sin cambios esta ronda.
+7. Nivel 3: solo "botones de redes sociales" pendiente (el usuario duda
+   del valor — baja prioridad real).
+8. Roadmap Nivel 4 restante: login con Google, rediseño visual del panel
+   de administración. **Pagos locales (Nequi/Bancolombia) ya no está acá
+   — se implementó esta ronda vía llave Bre-B**, ver arriba.
 
 ## 12. Cómo retomar
 
