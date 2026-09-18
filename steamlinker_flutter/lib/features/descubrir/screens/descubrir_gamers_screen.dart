@@ -33,11 +33,20 @@ class DescubrirGamersScreen extends StatefulWidget {
   final int? filtroAppidExterno;
   final String? filtroJuegoNombreExterno;
 
+  /// true solo cuando `ResponsiveShell` la usa como pestaña de verdad del
+  /// IndexedStack -- Navigator.canPop() daba falsos positivos en esta app
+  /// (el router deja el stack raíz con más de una entrada incluso en el
+  /// caso normal), así que se usa una señal explícita en vez de intentar
+  /// adivinarlo. Bug real reportado por el usuario: refrescar/filtros
+  /// duplicados en escritorio. Ver HANDOFF.md.
+  final bool esPestana;
+
   const DescubrirGamersScreen({
     super.key,
     this.busquedaExterna = '',
     this.filtroAppidExterno,
     this.filtroJuegoNombreExterno,
+    this.esPestana = false,
   });
 
   @override
@@ -307,11 +316,6 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     final base = _baseFiltrada(perfilProv, miId);
     final lista = _listaFiltrada(base);
 
-    // Si se llegó aquí pusheado encima (no como pestaña de
-    // ResponsiveShell), hace falta la barra con flecha de volver aunque
-    // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
-    final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
-
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       // En escritorio la barra global de ResponsiveShell ya trae el
@@ -320,7 +324,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       // barra propia sin título. El filtro (tune) ya estaba oculto en
       // escritorio de antes -- el panel lateral lo cubre. Se elimina del
       // todo solo cuando esta pantalla es una pestaña de verdad.
-      appBar: (esEscritorio && !puedeVolver)
+      appBar: (esEscritorio && widget.esPestana)
           ? null
           : SteamAppBar(
               title: 'DESCUBRIR',

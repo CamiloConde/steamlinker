@@ -1811,6 +1811,27 @@ parecen:**
       mandó el usuario también tenía tags de género (Soulslike/Co-op/...)
       y avatares de "juegan en común" — `PublicacionCard` no los tiene
       todavía; se puede agregar después si hace falta más pulido.
+- [x] **Bug real: refrescar y filtros aparecían duplicados en escritorio
+      (Publicaciones, y en general las 4 pantallas) — el chequeo de
+      `Navigator.canPop()` del punto anterior daba un falso positivo.**
+      El usuario lo encontró probando: en Publicaciones aparecían DOS
+      juegos de íconos de filtro/refrescar, uno en la barra global y otro
+      flotando arriba del todo (el AppBar "fantasma" que se suponía
+      debía desaparecer). Causa real: el router de esta app (GoRouter)
+      deja el stack raíz de Flutter con más de una entrada incluso en el
+      caso normal de navegar entre pestañas, así que
+      `Navigator.of(context, rootNavigator: true).canPop()` no es una
+      señal confiable para distinguir "soy una pestaña embebida" de "me
+      pushearon encima". Reemplazado por una señal explícita: las 4
+      pantallas (`HomeScreen`, `DescubrirGamersScreen`,
+      `PublicacionesScreen`, `AmistadScreen`) ahora reciben un parámetro
+      -- `onNavigateIndex` en Home (ya existía, se reutilizó tal cual) y
+      un `esPestana: bool` nuevo en las otras tres -- que `ResponsiveShell`
+      pasa explícitamente en `true` al construirlas como pestañas del
+      `IndexedStack`. Cualquier otro lugar que las construya sin ese
+      parámetro (`pushAppScreen`, un `Navigator.push` directo) sigue
+      mostrando el AppBar completo por defecto, sin necesidad de adivinar
+      nada sobre el estado del Navigator.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)

@@ -28,7 +28,15 @@ import 'publicacion_detalle_screen.dart';
 const _kEscritorio = 768.0;
 
 class PublicacionesScreen extends StatefulWidget {
-  const PublicacionesScreen({super.key});
+  /// true solo cuando `ResponsiveShell` la usa como pestaña de verdad del
+  /// IndexedStack -- Navigator.canPop() daba falsos positivos en esta app
+  /// (el router deja el stack raíz con más de una entrada incluso en el
+  /// caso normal), así que se usa una señal explícita en vez de intentar
+  /// adivinarlo. Bug real reportado por el usuario: refrescar/filtros
+  /// duplicados en escritorio. Ver HANDOFF.md.
+  final bool esPestana;
+
+  const PublicacionesScreen({super.key, this.esPestana = false});
 
   @override
   State<PublicacionesScreen> createState() => _PublicacionesScreenState();
@@ -302,19 +310,14 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
           .where((p) => _tabDe(p['tipo_publi'] as String?) == _tabActivo)
           .toList();
 
-      // Si se llegó aquí pusheado encima (no como pestaña de
-      // ResponsiveShell), hace falta la barra con flecha de volver aunque
-      // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
-      final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
-
       return Scaffold(
         backgroundColor: SteamColors.bgDeep,
         // En escritorio la barra global de ResponsiveShell ya trae el
         // refrescar único; el filtro se movió a la fila de pestañas de
         // abajo (_ConmutadorTabs.trailing) en vez de flotar solo en una
         // barra propia sin título. Solo se omite del todo cuando esta
-        // pantalla es una pestaña de verdad (no se puede volver).
-        appBar: !puedeVolver
+        // pantalla es una pestaña de verdad.
+        appBar: widget.esPestana
             ? null
             : SteamAppBar(
                 title: 'PUBLICACIONES',

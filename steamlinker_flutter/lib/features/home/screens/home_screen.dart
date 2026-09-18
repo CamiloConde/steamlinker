@@ -128,10 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final nadaPendiente =
         pendientes.isEmpty && misPublicaciones.isEmpty && steamVinculado;
 
-    // Si se llegó aquí pusheado encima (no como pestaña de
-    // ResponsiveShell), hace falta la barra con flecha de volver aunque
-    // sea escritorio -- si no, no hay forma de volver. Ver HANDOFF.md.
-    final puedeVolver = Navigator.of(context, rootNavigator: true).canPop();
+    // onNavigateIndex solo llega no-nulo cuando ResponsiveShell la usa
+    // como pestaña de verdad -- Navigator.canPop() daba falsos positivos
+    // (el router de esta app deja el stack raíz con más de una entrada
+    // incluso en el caso normal), así que se cambió por esta señal
+    // explícita en vez de intentar adivinarlo. Bug real reportado por el
+    // usuario: refrescar y filtros aparecían duplicados. Ver HANDOFF.md.
+    final esPestana = widget.onNavigateIndex != null;
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
@@ -140,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
       // tenía título visible ahí (fundirConFondo) ni acciones (siempre
       // null), así que solo dejaba ~57px vacíos sin ningún propósito.
       // Se elimina del todo solo cuando esta pantalla es una pestaña de
-      // verdad (no se puede volver).
-      appBar: (esEscritorio && !puedeVolver)
+      // verdad.
+      appBar: (esEscritorio && esPestana)
           ? null
           : SteamAppBar(
               title: 'INICIO',
