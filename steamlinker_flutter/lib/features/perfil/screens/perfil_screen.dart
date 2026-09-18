@@ -19,7 +19,6 @@ import '../../busqueda/screens/busqueda_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../publicaciones/providers/publicaciones_provider.dart';
 import '../providers/perfil_provider.dart';
-import '../widgets/apoyar_proyecto_card.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -702,8 +701,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                             ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const ApoyarProyectoCard(),
                 ],
               ),
             ),

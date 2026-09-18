@@ -1276,13 +1276,16 @@ orden de prioridad que yo hubiera sugerido por defecto:**
       usuario creó la cuenta en la misma sesión:
       **https://ko-fi.com/camiko31**.
       Tarjeta `ApoyarProyectoCard`
-      (`lib/features/perfil/widgets/apoyar_proyecto_card.dart`), visible al
-      final de la pantalla Perfil, usando `url_launcher` igual que el
-      enlace al panel de administración. La URL real ya está puesta como
-      valor por defecto de `AppConfig.kofiUrl` (sigue pudiendo
-      sobreescribirse con `--dart-define=KOFI_URL=...` si algún día
-      cambia). El botón "Invitar un café" queda funcionando de verdad
-      desde este build — no hace falta tocar código de nuevo.
+      (`lib/features/perfil/widgets/apoyar_proyecto_card.dart`), usando
+      `url_launcher` igual que el enlace al panel de administración. La URL
+      real ya está puesta como valor por defecto de `AppConfig.kofiUrl`
+      (sigue pudiendo sobreescribirse con `--dart-define=KOFI_URL=...` si
+      algún día cambia). El botón "Invitar un café" queda funcionando de
+      verdad desde este build — no hace falta tocar código de nuevo.
+      **Movida de Perfil a Inicio** (pedido del usuario tras la primera
+      versión: en Perfil quedaba "un poco escondida"): ahora vive en
+      `home_screen.dart`, justo antes del pie de página, visible sin
+      necesidad de entrar a otra pantalla.
       El link a Nequi/Bancolombia para Colombia que se mencionó en la
       sesión anterior queda fuera de esta ronda (Ko-fi ya acepta tarjetas
       internacionales; un canal 100% local es un paso posterior si de
@@ -1384,7 +1387,7 @@ real.
    `flutter build web` y probar a ojo: Descubrir (filtros, dropdown de
    juego), Configuración (etiquetas decorativas + tarjeta Legal), Avisos →
    Marcadas (que ancle arriba), perfil de otro usuario (que ya no aparezca
-   "Match recibido"), Perfil → "Apoya el proyecto" (que el botón abra
+   "Match recibido"), Inicio → "Apoya el proyecto" (que el botón abra
    https://ko-fi.com/camiko31), el registro (que muestre y abra los enlaces
    legales), y una URL rota (que caiga en la 404 con estilo).
 2. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;

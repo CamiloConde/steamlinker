@@ -12,6 +12,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../perfil/providers/perfil_provider.dart';
 import '../../perfil/screens/perfil_screen.dart';
+import '../../perfil/widgets/apoyar_proyecto_card.dart';
 import '../../publicaciones/providers/publicaciones_provider.dart';
 import '../../publicaciones/screens/crear_publicacion_screen.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
@@ -300,6 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ],
+
+                const SizedBox(height: 24),
+                const ApoyarProyectoCard(),
 
                 const SizedBox(height: 28),
                 const _FooterInicio(),
