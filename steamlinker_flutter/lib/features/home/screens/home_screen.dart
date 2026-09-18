@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/pais_util.dart';
+import '../../../core/refresh_signal.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/estado_familia_helper.dart';
 import '../../../theme/colors.dart';
@@ -38,6 +39,22 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _inicializado = false;
+
+  @override
+  void initState() {
+    super.initState();
+    refreshSignal.addListener(_onRefreshSignal);
+  }
+
+  @override
+  void dispose() {
+    refreshSignal.removeListener(_onRefreshSignal);
+    super.dispose();
+  }
+
+  void _onRefreshSignal() {
+    if (refreshSignal.indice == 0) _cargar();
+  }
 
   @override
   void didChangeDependencies() {
@@ -113,18 +130,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: 'INICIO',
-        actions: esEscritorio
-            ? null
-            : [
+      // En escritorio la barra global de ResponsiveShell ya trae perfil/
+      // cerrar sesión/refrescar -- la barra propia de esta pantalla no
+      // tenía título visible ahí (fundirConFondo) ni acciones (siempre
+      // null), así que solo dejaba ~57px vacíos sin ningún propósito.
+      appBar: esEscritorio
+          ? null
+          : SteamAppBar(
+              title: 'INICIO',
+              actions: [
                 IconButton(
                   icon: const Icon(Icons.logout, color: SteamColors.muted),
                   tooltip: 'Cerrar sesión',
                   onPressed: () => confirmarYCerrarSesion(context),
                 ),
               ],
-      ),
+            ),
       body: RefreshIndicator(
         color: SteamColors.blue,
         backgroundColor: SteamColors.bgDeep,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/refresh_signal.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
@@ -32,21 +33,45 @@ class _AmistadScreenState extends State<AmistadScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    refreshSignal.addListener(_onRefreshSignal);
+  }
+
+  @override
+  void dispose() {
+    refreshSignal.removeListener(_onRefreshSignal);
+    super.dispose();
+  }
+
+  void _onRefreshSignal() {
+    if (refreshSignal.indice == 3) context.read<AmistadProvider>().cargarTodo();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final prov = context.watch<AmistadProvider>();
+    final esEscritorio = MediaQuery.of(context).size.width >= 768;
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: 'AMIGOS',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: SteamColors.blue),
-            tooltip: 'Actualizar',
-            onPressed: () => prov.cargarTodo(),
-          ),
-        ],
-      ),
+      // En escritorio la barra global de ResponsiveShell ya trae un botón
+      // de refrescar único (ver _TopBar) -- repetirlo aquí en una barra
+      // propia sin título (por el "fundirConFondo" de SteamAppBar) dejaba
+      // un solo ícono flotando en ~57px vacíos. Se elimina del todo acá;
+      // en móvil (sin barra global) sigue haciendo falta.
+      appBar: esEscritorio
+          ? null
+          : SteamAppBar(
+              title: 'AMIGOS',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: SteamColors.blue),
+                  tooltip: 'Actualizar',
+                  onPressed: () => prov.cargarTodo(),
+                ),
+              ],
+            ),
       body: DesktopBodyWidth(
         child: Column(
           children: [

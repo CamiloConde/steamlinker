@@ -19,12 +19,15 @@ import '../../busqueda/screens/busqueda_screen.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../chat/widgets/floating_chat.dart';
 import '../../descubrir/screens/descubrir_gamers_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../perfil/perfil_scroll_signal.dart';
 import '../../perfil/providers/perfil_provider.dart';
 import '../../perfil/screens/perfil_screen.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/refresh_signal.dart';
 import 'home_screen.dart';
 import 'main_shell.dart';
 
@@ -42,10 +45,16 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   bool _initDone = false;
   bool _steamCallbackChecked = false;
   String _busquedaDescubrir = '';
+  int? _filtroAppidDescubrir;
+  String? _filtroJuegoNombreDescubrir;
 
   List<Widget> get _pages => [
         HomeScreen(onNavigateIndex: _onSelect),
-        DescubrirGamersScreen(busquedaExterna: _busquedaDescubrir),
+        DescubrirGamersScreen(
+          busquedaExterna: _busquedaDescubrir,
+          filtroAppidExterno: _filtroAppidDescubrir,
+          filtroJuegoNombreExterno: _filtroJuegoNombreDescubrir,
+        ),
         const PublicacionesScreen(),
         const AmistadScreen(),
         const BusquedaScreen(),
@@ -137,6 +146,14 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     });
   }
 
+  void _filtrarDescubrirPorJuego(int appid, String nombre) {
+    setState(() {
+      _filtroAppidDescubrir = appid;
+      _filtroJuegoNombreDescubrir = nombre;
+      _index = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_esEscritorio(context)) {
@@ -155,6 +172,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
             currentIndex: _index,
             badgeAmigos: solicitudesAmigos,
             onSelect: _onSelect,
+            onJuegoTap: _filtrarDescubrirPorJuego,
           ),
           Expanded(
             child: Column(
@@ -164,6 +182,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   onBuscar: _buscarEnDescubrir,
                   onNotif: () => _onSelect(6),
                   onPerfil: () => _onSelect(7),
+                  onRefrescar: () => refreshSignal.pedirRefresh(_index),
                 ),
                 Expanded(
                   child: Stack(
@@ -190,11 +209,13 @@ class _SideNav extends StatelessWidget {
   final int currentIndex;
   final int badgeAmigos;
   final ValueChanged<int> onSelect;
+  final void Function(int appid, String nombre) onJuegoTap;
 
   const _SideNav({
     required this.currentIndex,
     required this.badgeAmigos,
     required this.onSelect,
+    required this.onJuegoTap,
   });
 
   @override
@@ -292,7 +313,15 @@ class _SideNav extends StatelessWidget {
               ),
             )
           else
-            for (final j in juegos.take(5)) _MiniJuegoRow(juego: j),
+            for (final j in juegos.take(5))
+              _MiniJuegoRow(
+                juego: j,
+                onTap: () {
+                  final appid = j['appid'] as int?;
+                  if (appid == null) return;
+                  onJuegoTap(appid, j['nombre']?.toString() ?? '');
+                },
+              ),
           if (juegos.length > 5)
             Padding(
               padding: const EdgeInsets.only(left: 18, top: 4),
@@ -314,45 +343,17 @@ class _SideNav extends StatelessWidget {
               ),
             ),
           const Spacer(),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: SteamColors.bgCard,
-                borderRadius: BorderRadius.circular(SteamRadii.sm),
-                border: Border.all(color: SteamColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.diversity_3, color: SteamColors.blue, size: 20),
-                  const SizedBox(height: 8),
-                  Text(
-                    t.connectPromoTitle,
-                    style: const TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    t.connectPromoBody,
-                    style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => onSelect(1),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: SteamColors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                      ),
-                      child: Text(t.exploreButton, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Antes había una tarjeta "Conecta con otros gamers" acá cuyo
+          // único botón llevaba a Descubrir -- exactamente el mismo
+          // destino que el ítem de nav "Descubrir" un poco más arriba en
+          // este mismo sidebar. Se reemplaza por "Apoya el proyecto"
+          // (antes solo visible al fondo del scroll de Inicio): acá queda
+          // visible en todas las pantallas de escritorio sin scrollear.
+          // Versión compacta propia (no SteamCard, pensado para un
+          // contenido ancho) para que quepa bien en los 232px del rail.
+          const Padding(
+            padding: EdgeInsets.fromLTRB(18, 0, 18, 18),
+            child: _ApoyarProyectoSidebar(),
           ),
         ],
       ),
@@ -424,41 +425,142 @@ class _SideNavItem extends StatelessWidget {
   }
 }
 
+/// Versión compacta de ApoyarProyectoCard para el rail lateral (232px):
+/// la tarjeta original usa SteamCard, pensada para el ancho de una
+/// pantalla completa -- su encabezado ("APOYA EL PROYECTO" en mayúsculas)
+/// no entra cómodo en un espacio tan angosto. Misma lógica de apertura
+/// del enlace, chrome más simple.
+class _ApoyarProyectoSidebar extends StatelessWidget {
+  const _ApoyarProyectoSidebar();
+
+  bool get _tieneEnlace => AppConfig.kofiUrl.isNotEmpty;
+
+  Future<void> _abrir(BuildContext context) async {
+    final uri = Uri.tryParse(AppConfig.kofiUrl);
+    if (uri == null) return;
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!context.mounted || ok) return;
+      _avisar(context, uri.toString());
+    } catch (_) {
+      if (context.mounted) _avisar(context, uri.toString());
+    }
+  }
+
+  void _avisar(BuildContext context, String url) {
+    showSteamToast(
+      context,
+      'No se pudo abrir el navegador. Copia el enlace:\n$url',
+      SteamColors.orange,
+      duration: const Duration(seconds: 6),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: SteamColors.bgCard,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        border: Border.all(color: SteamColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.favorite_border_rounded, color: SteamColors.yellow, size: 20),
+          const SizedBox(height: 8),
+          const Text(
+            'Apoya el proyecto',
+            style: TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'SteamMatch es independiente. Invítanos un café si te sirve.',
+            style: TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
+          ),
+          const SizedBox(height: 10),
+          if (_tieneEnlace)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _abrir(context),
+                icon: const Icon(Icons.local_cafe_outlined, size: 16),
+                label: const Text('Invitar un café', style: TextStyle(fontSize: 12.5)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: SteamColors.yellow,
+                  foregroundColor: SteamColors.bgDeep,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: SteamColors.bgInput,
+                borderRadius: BorderRadius.circular(SteamRadii.sm),
+                border: Border.all(color: SteamColors.border),
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'Próximamente',
+                style: TextStyle(color: SteamColors.muted, fontSize: 11.5, fontWeight: FontWeight.w600),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Antes solo mostraba el juego como texto suelto, sin ninguna acción —
+/// ahora un clic lleva directo a Descubrir ya filtrado por ese juego (en
+/// vez de ser una lista puramente decorativa, ver HANDOFF.md).
 class _MiniJuegoRow extends StatelessWidget {
   final Map<String, dynamic> juego;
+  final VoidCallback onTap;
 
-  const _MiniJuegoRow({required this.juego});
+  const _MiniJuegoRow({required this.juego, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final header = juego['headerimg'] as String?;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
-      child: Row(
-        children: [
-          Container(
-            width: 22,
-            height: 22,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: SteamColors.bgCard,
-              image: header != null && header.isNotEmpty
-                  ? DecorationImage(image: NetworkImage(header), fit: BoxFit.cover)
-                  : null,
-            ),
-            child: header == null || header.isEmpty
-                ? const Icon(Icons.videogame_asset_outlined, size: 12, color: SteamColors.muted)
-                : null,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+          child: Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  color: SteamColors.bgCard,
+                  image: header != null && header.isNotEmpty
+                      ? DecorationImage(image: NetworkImage(header), fit: BoxFit.cover)
+                      : null,
+                ),
+                child: header == null || header.isEmpty
+                    ? const Icon(Icons.videogame_asset_outlined, size: 12, color: SteamColors.muted)
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  juego['nombre']?.toString() ?? AppLocalizations.of(context)!.defaultGameName,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 14, color: SteamColors.muted),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              juego['nombre']?.toString() ?? AppLocalizations.of(context)!.defaultGameName,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -471,12 +573,14 @@ class _TopBar extends StatefulWidget {
   final ValueChanged<String> onBuscar;
   final VoidCallback onNotif;
   final VoidCallback onPerfil;
+  final VoidCallback onRefrescar;
 
   const _TopBar({
     required this.unreadCount,
     required this.onBuscar,
     required this.onNotif,
     required this.onPerfil,
+    required this.onRefrescar,
   });
 
   @override
@@ -540,6 +644,12 @@ class _TopBarState extends State<_TopBar> {
             ),
           ),
           const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: SteamColors.muted),
+            tooltip: 'Actualizar',
+            onPressed: widget.onRefrescar,
+          ),
+          const SizedBox(width: 4),
           _NotifBell(unreadCount: widget.unreadCount, onTap: widget.onNotif),
           const SizedBox(width: 8),
           _UserBadge(onTap: widget.onPerfil),

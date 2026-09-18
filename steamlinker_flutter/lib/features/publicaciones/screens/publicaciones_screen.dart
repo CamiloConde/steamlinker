@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
+import '../../../core/refresh_signal.dart';
 import '../../../core/utils/relacion_helper.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
@@ -76,9 +77,20 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    refreshSignal.addListener(_onRefreshSignal);
+  }
+
+  @override
   void dispose() {
+    refreshSignal.removeListener(_onRefreshSignal);
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _onRefreshSignal() {
+    if (refreshSignal.indice == 2) _recargar();
   }
 
   Future<void> _recargar() async {
@@ -292,26 +304,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
 
       return Scaffold(
         backgroundColor: SteamColors.bgDeep,
-        appBar: SteamAppBar(
-          title: 'PUBLICACIONES',
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.tune_rounded,
-                color: publicacionesProv.tieneFiltrosActivos
-                    ? SteamColors.blue
-                    : SteamColors.muted,
-              ),
-              tooltip: 'Filtros',
-              onPressed: () => _abrirFiltros(ocultarTipo: true),
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh, color: SteamColors.blue),
-              tooltip: 'Actualizar',
-              onPressed: _recargar,
-            ),
-          ],
-        ),
+        // En escritorio la barra global de ResponsiveShell ya trae el
+        // refrescar único; el filtro se movió a la fila de pestañas de
+        // abajo (_ConmutadorTabs.trailing) en vez de flotar solo en una
+        // barra propia sin título.
         body: DesktopBodyWidth(
           maxWidth: 760,
           child: Column(
@@ -320,6 +316,16 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                 activo: _tabActivo,
                 conteos: conteos,
                 onTab: (i) => setState(() => _tabActivo = i),
+                trailing: IconButton(
+                  icon: Icon(
+                    Icons.tune_rounded,
+                    color: publicacionesProv.tieneFiltrosActivos
+                        ? SteamColors.blue
+                        : SteamColors.muted,
+                  ),
+                  tooltip: 'Filtros',
+                  onPressed: () => _abrirFiltros(ocultarTipo: true),
+                ),
               ),
               _ComposerConmutador(
                 tab: _tabActivo,
@@ -594,6 +600,7 @@ class _ConmutadorTabs extends StatelessWidget {
   final int activo;
   final List<int> conteos;
   final ValueChanged<int> onTab;
+  final Widget? trailing;
 
   static const _etiquetas = ['FAMILIA', 'JUGAR AHORA', 'OTRO'];
 
@@ -601,6 +608,7 @@ class _ConmutadorTabs extends StatelessWidget {
     required this.activo,
     required this.conteos,
     required this.onTab,
+    this.trailing,
   });
 
   @override
@@ -620,6 +628,7 @@ class _ConmutadorTabs extends StatelessWidget {
               activo: activo == i,
               onTap: () => onTab(i),
             ),
+          if (trailing != null) ...[const Spacer(), trailing!],
         ],
       ),
     );

@@ -1673,6 +1673,61 @@ parecen:**
         hueco, pero un scroll de rueda simulado puede no replicar el
         gesto exacto de trackpad/mouse real que sí lo dispara — hace
         falta que el usuario lo confirme de nuevo en su navegador real.
+- [x] **Bug real encontrado al reconciliar contra Steam: el backfill de
+      origen de juegos marcaba mal las cuentas con juegos agregados a
+      mano antes de vincular.** Ver arriba en la sección de integridad de
+      "juegos verificados" — corregido con
+      `scripts/reconciliar_origen_juegos.js` contra la API real.
+- [x] **Rediseño del header de escritorio + sidebar — pedido explícito
+      tras QA, con 3 decisiones confirmadas por el usuario antes de
+      implementar (`AskUserQuestion`).** El usuario mandó capturas
+      mostrando que, en escritorio, cada pantalla (Inicio, Descubrir,
+      Publicaciones, Amigos) tenía su propia barra de `SteamAppBar`
+      "fundida con el fondo" (sin título, por diseño) apilada DEBAJO de
+      la barra global de `ResponsiveShell` (`_TopBar`) — dejaba ~57px
+      vacíos con 1-2 íconos sueltos flotando a la derecha, muy notorio en
+      Amigos (solo tenía el ícono de refrescar, en un hueco enorme).
+      Reproducido en vivo con el navegador integrado a 1400px (antes solo
+      se había probado en 436px, que nunca activa el layout de
+      escritorio — por eso no se veía este problema antes).
+      Implementado:
+  - Nueva señal compartida `lib/core/refresh_signal.dart` (mismo patrón
+    que `PerfilScrollSignal`, con el índice de a cuál pantalla refrescar
+    para no refrescar las 8 a la vez solo porque todas viven en el mismo
+    `IndexedStack`): un solo ícono de refrescar en `_TopBar`
+    (`responsive_shell.dart`) que reemplaza al que estaba duplicado en
+    Inicio/Descubrir/Publicaciones/Amigos.
+  - "Mis solicitudes" (Descubrir) se movió del AppBar al cuerpo de
+    escritorio (`_CuerpoEscritorio`, junto al título "Descubrir"); el
+    filtro (`tune_rounded`) de Publicaciones se movió a la fila de
+    pestañas (`_ConmutadorTabs.trailing`).
+  - Las 4 pantallas ahora ponen `appBar: null` en escritorio (antes
+    reservaban la barra vacía siempre) — el contenido arranca justo
+    debajo de la barra global, sin doble barra.
+  - **"Tus juegos" del sidebar, de lista decorativa a atajo real**: un
+    clic en cualquier juego de la lista ahora lleva a Descubrir ya
+    filtrado por ese juego (`DescubrirGamersScreen` gana
+    `filtroAppidExterno`/`filtroJuegoNombreExterno`, mismo patrón que
+    `busquedaExterna`). **Bug propio encontrado al probarlo**: la primera
+    versión solo guardaba el filtro en el estado local sin volver a
+    pedirle la lista al backend con el nuevo `appid` — corregido
+    llamando `_recargar()` después de actualizar el filtro; confirmado
+    en la red que el request ahora sí manda `?appid=...`.
+  - **"Conecta con otros gamers" (sidebar) se elimina** — el usuario la
+    señaló como 100% redundante con el ítem "Descubrir" de la nav, un
+    clic arriba en el mismo sidebar. En su lugar va **"Apoya el
+    proyecto"**: antes solo visible al fondo del scroll de Inicio, ahora
+    visible en todas las pantallas de escritorio sin scrollear (versión
+    compacta propia, `_ApoyarProyectoSidebar`, porque la tarjeta original
+    basada en `SteamCard` no entraba cómoda en los 232px del rail). Se
+    quitó de Inicio para no duplicarla.
+  - **Efecto colateral en el bug de scroll de Inicio**: al quitar la
+    doble barra (global + propia) en Inicio también, el árbol de widgets
+    cambió de forma real — no se pudo reproducir el hueco de nuevo en el
+    navegador integrado tras este cambio, pero ya van 2 intentos previos
+    donde tampoco se pudo reproducir ahí y el usuario sí lo vio en su
+    navegador real, así que **sigue sin confirmación real** hasta que el
+    usuario lo pruebe.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
@@ -1744,15 +1799,24 @@ real.
    contacto, **y ahora también su vista de admin**). Solo falta:
    optimización de velocidad (medir con Lighthouse una vez desplegado, no
    antes).
-6. **Confirmar a ojo el segundo intento del bug de scroll en Inicio**
-   (quitar la capa `Opacity`/`Transform` persistente de `_HeroEntrada`
-   una vez termina su animación, ver Nivel 4 arriba) — el primer intento
-   (`ClampingScrollPhysics`) NO lo arregló, según el propio usuario. Si
-   este segundo tampoco alcanza, el siguiente sospechoso a revisar es si
-   `RefreshIndicator` necesita deshabilitarse del todo en escritorio, o
-   probar forzando el renderer CanvasKit (`flutter build web
-   --web-renderer canvaskit`) para descartar que sea un problema
-   específico del renderer HTML.
+6. **Confirmar a ojo el tercer intento del bug de scroll en Inicio** — van
+   3 intentos: `ClampingScrollPhysics` (no funcionó, confirmado por el
+   usuario), quitar la capa `Opacity`/`Transform` persistente de
+   `_HeroEntrada` (no se pudo confirmar en vivo, el usuario reportó que
+   seguía igual con una captura de su navegador real mostrando el hueco
+   con la app ya en layout de escritorio), y ahora eliminar la doble
+   barra superior de escritorio (ver Nivel 4 arriba, rediseño de
+   header). Ninguno de los 3 se ha podido reproducir dentro del
+   navegador integrado de las sesiones de Claude — solo el usuario lo ve
+   en su navegador real. Si el tercero tampoco alcanza, el siguiente
+   sospechoso es deshabilitar `RefreshIndicator` del todo en escritorio,
+   o forzar el renderer CanvasKit (`flutter build web --web-renderer
+   canvaskit`) para descartar que sea específico del renderer HTML. Si
+   se retoma, sería útil pedirle al usuario datos más precisos antes de
+   intentar un cuarto arreglo a ciegas: navegador exacto, mouse o
+   trackpad, si pasa siempre en la misma posición de scroll o
+   aleatoriamente, y si otras pantallas con scroll (Descubrir,
+   Publicaciones) muestran lo mismo o es exclusivo de Inicio.
 7. Nivel 3 queda solo con "botones de redes sociales" pendiente (el propio
    usuario duda del valor — bajo prioridad real).
 8. Todo lo demás del roadmap de Nivel 4 de arriba (login con Google,

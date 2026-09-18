@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
+import '../../../core/refresh_signal.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
@@ -26,7 +27,18 @@ class DescubrirGamersScreen extends StatefulWidget {
   /// esa pantalla usa su propio buscador interno.
   final String busquedaExterna;
 
-  const DescubrirGamersScreen({super.key, this.busquedaExterna = ''});
+  /// Filtro por juego disparado desde "Tus juegos" en el sidebar de
+  /// escritorio: un clic en un juego de la lista te trae directo aquí ya
+  /// filtrado por ese juego, en vez de ser solo una lista decorativa.
+  final int? filtroAppidExterno;
+  final String? filtroJuegoNombreExterno;
+
+  const DescubrirGamersScreen({
+    super.key,
+    this.busquedaExterna = '',
+    this.filtroAppidExterno,
+    this.filtroJuegoNombreExterno,
+  });
 
   @override
   State<DescubrirGamersScreen> createState() => _DescubrirGamersScreenState();
@@ -51,6 +63,10 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       _inicializado = true;
       _busqueda = widget.busquedaExterna;
       _busquedaCtrl.text = _busqueda;
+      if (widget.filtroAppidExterno != null) {
+        _filtroAppid = widget.filtroAppidExterno;
+        _filtroJuegoNombre = widget.filtroJuegoNombreExterno;
+      }
       _inicializar();
     }
   }
@@ -64,13 +80,41 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       _busquedaCtrl.text = _busqueda;
       _busquedaCtrl.selection = TextSelection.collapsed(offset: _busqueda.length);
     }
+    if (widget.filtroAppidExterno != null &&
+        widget.filtroAppidExterno != oldWidget.filtroAppidExterno) {
+      setState(() {
+        _filtroAppid = widget.filtroAppidExterno;
+        _filtroJuegoNombre = widget.filtroJuegoNombreExterno;
+        // El filtro por appid es server-side (_recargar lo manda como
+        // query param) -- guardarlo en el estado local sin volver a pedir
+        // la lista no cambiaba nada en pantalla. Se resetean los demás
+        // filtros porque este clic viene con una intención nueva y
+        // puntual ("gente que juega ESTO"), no debería arrastrar un
+        // filtro de tipo/país que haya quedado de antes.
+        _filtroTipoEtiqueta = null;
+        _filtroPaisEtiqueta = null;
+        _minEnComun = 0;
+      });
+      _recargar();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    refreshSignal.addListener(_onRefreshSignal);
   }
 
   @override
   void dispose() {
+    refreshSignal.removeListener(_onRefreshSignal);
     _busquedaCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _onRefreshSignal() {
+    if (refreshSignal.indice == 1) _recargar();
   }
 
   Future<void> _inicializar() async {
@@ -81,7 +125,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       await perfil.cargarPerfil(id);
     }
     if (!mounted) return;
-    await perfil.descubrirUsuarios();
+    await perfil.descubrirUsuarios(appid: _filtroAppid);
   }
 
   Future<void> _recargar() async {
@@ -265,37 +309,40 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: 'DESCUBRIR',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
-            tooltip: 'Mis solicitudes',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const MatchesScreen()),
-              );
-            },
-          ),
-          // En escritorio el panel lateral ya trae sus propios botones de
-          // filtro (juego/país/tipo) — este ícono duplicaba exactamente la
-          // misma hoja modal. Se mantiene solo en móvil, que no tiene panel.
-          if (!esEscritorio)
-            IconButton(
-              icon: Icon(
-                Icons.tune_rounded,
-                color: filtrosActivos ? SteamColors.blue : SteamColors.muted,
-              ),
-              tooltip: 'Filtros de publicación',
-              onPressed: _abrirFiltros,
+      // En escritorio la barra global de ResponsiveShell ya trae el
+      // refrescar único; "Mis solicitudes" se movió dentro del cuerpo de
+      // escritorio (ver _CuerpoEscritorio) en vez de flotar solo en una
+      // barra propia sin título. El filtro (tune) ya estaba oculto en
+      // escritorio de antes -- el panel lateral lo cubre.
+      appBar: esEscritorio
+          ? null
+          : SteamAppBar(
+              title: 'DESCUBRIR',
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
+                  tooltip: 'Mis solicitudes',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MatchesScreen()),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.tune_rounded,
+                    color: filtrosActivos ? SteamColors.blue : SteamColors.muted,
+                  ),
+                  tooltip: 'Filtros de publicación',
+                  onPressed: _abrirFiltros,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: SteamColors.blue),
+                  tooltip: 'Actualizar',
+                  onPressed: _recargar,
+                ),
+              ],
             ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: SteamColors.blue),
-            tooltip: 'Actualizar',
-            onPressed: _recargar,
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           esEscritorio
@@ -324,6 +371,11 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                 perfilProv.descubrirUsuarios();
               },
               onRecargar: _recargar,
+              onMisSolicitudes: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MatchesScreen()),
+                );
+              },
               onTap: _abrirUsuario,
             )
           : DesktopBodyWidth(
@@ -475,6 +527,7 @@ class _CuerpoEscritorio extends StatelessWidget {
   final VoidCallback onLimpiarFiltros;
   final Future<void> Function() onRecargar;
   final ValueChanged<Map<String, dynamic>> onTap;
+  final VoidCallback onMisSolicitudes;
 
   const _CuerpoEscritorio({
     required this.cargando,
@@ -493,6 +546,7 @@ class _CuerpoEscritorio extends StatelessWidget {
     required this.onLimpiarFiltros,
     required this.onRecargar,
     required this.onTap,
+    required this.onMisSolicitudes,
   });
 
   @override
@@ -506,9 +560,23 @@ class _CuerpoEscritorio extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Descubrir',
-                  style: TextStyle(color: SteamColors.light, fontSize: 24, fontWeight: FontWeight.w800),
+                Row(
+                  children: [
+                    const Text(
+                      'Descubrir',
+                      style: TextStyle(color: SteamColors.light, fontSize: 24, fontWeight: FontWeight.w800),
+                    ),
+                    const Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: onMisSolicitudes,
+                      icon: const Icon(Icons.inbox_outlined, size: 16, color: SteamColors.muted),
+                      label: const Text('Mis solicitudes', style: TextStyle(fontSize: 12.5)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: SteamColors.textSec,
+                        side: const BorderSide(color: SteamColors.border),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14),
                 Row(
