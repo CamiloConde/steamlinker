@@ -658,4 +658,49 @@ router.put('/contenido/:id', verificarToken, requireAdmin, async (req, res) => {
     }
 });
 
+// GET /api/admin/mensajes-contacto
+// Mensajes del formulario de contacto (Nivel 2 del roadmap). Sin UI propia
+// en el panel todavía — expuesto para no dejar los mensajes atrapados solo
+// en la base de datos mientras se construye esa pantalla.
+router.get('/mensajes-contacto', verificarToken, requireAdmin, async (req, res) => {
+    try {
+        const resultado = await pool.query(`
+            SELECT
+                id_mensajecontacto,
+                id_usu,
+                nombre_mensajecontacto,
+                email_mensajecontacto,
+                tipo_mensajecontacto,
+                cuerpo_mensajecontacto,
+                leido_mensajecontacto,
+                creadoen_mensajecontacto
+            FROM mensajes_contacto
+            ORDER BY leido_mensajecontacto ASC, creadoen_mensajecontacto DESC
+        `);
+        res.json(resultado.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// PUT /api/admin/mensajes-contacto/:id
+router.put('/mensajes-contacto/:id', verificarToken, requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+        return res.status(400).json({ error: 'id inválido' });
+    }
+    try {
+        const resultado = await pool.query(
+            `UPDATE mensajes_contacto SET leido_mensajecontacto = $1 WHERE id_mensajecontacto = $2 RETURNING *`,
+            [req.body.leido !== false, id]
+        );
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ error: 'Mensaje no encontrado' });
+        }
+        res.json(resultado.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

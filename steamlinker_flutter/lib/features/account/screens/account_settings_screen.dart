@@ -11,6 +11,7 @@ import '../../../widgets/steam_toast.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../core/navigation/app_navigator.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../contacto/screens/contacto_screen.dart';
 import '../../legal/screens/aviso_legal_screen.dart';
 import '../../legal/screens/politica_privacidad_screen.dart';
 import '../../perfil/providers/perfil_provider.dart';
@@ -677,9 +678,16 @@ class _LegalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SteamCard(
       icon: Icons.gavel_outlined,
-      title: 'Legal',
+      title: 'Ayuda y legal',
       child: Column(
         children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.mail_outline, color: SteamColors.muted, size: 20),
+            title: const Text('Contacto y sugerencias', style: TextStyle(color: SteamColors.light, fontSize: 13.5)),
+            trailing: const Icon(Icons.chevron_right, color: SteamColors.muted, size: 18),
+            onTap: () => pushAppScreen(context, const ContactoScreen()),
+          ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.description_outlined, color: SteamColors.muted, size: 20),

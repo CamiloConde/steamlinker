@@ -21,6 +21,7 @@ const calificacionesRoutes = require('./routes/calificaciones');
 const reportesRoutes = require('./routes/reportes');
 const amistadRoutes = require('./routes/amistad');
 const notificacionesRoutes = require('./routes/notificaciones');
+const contactoRoutes = require('./routes/contacto');
 
 validateEnv();
 
@@ -63,6 +64,7 @@ app.use('/calificaciones', calificacionesRoutes);
 app.use('/reportes', reportesRoutes);
 app.use('/amistad', amistadRoutes);
 app.use('/notificaciones', notificacionesRoutes);
+app.use('/contacto', contactoRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/health', async (req, res) => {

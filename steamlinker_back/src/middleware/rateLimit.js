@@ -28,4 +28,15 @@ const registroLimiter = rateLimit({
     message: { error: 'Demasiadas cuentas creadas desde esta red. Inténtalo más tarde.' },
 });
 
-module.exports = { loginLimiter, registroLimiter };
+// Contacto: es publico y sin autenticacion, el blanco mas facil para spam
+// automatizado — ademas del honeypot del propio formulario.
+const contactoLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 8,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => !activo,
+    message: { error: 'Demasiados mensajes enviados desde esta red. Inténtalo más tarde.' },
+});
+
+module.exports = { loginLimiter, registroLimiter, contactoLimiter };

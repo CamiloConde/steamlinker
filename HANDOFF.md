@@ -1293,9 +1293,33 @@ orden de prioridad que yo hubiera sugerido por defecto:**
 
 **Nivel 2 — mejoras de producto con impacto real, más baratas de lo que
 parecen:**
-- [ ] Formulario de contacto / sugerencias / quejas, con validación real y
-      protección anti-spam básica (honeypot o rate-limit por IP alcanza para
-      una beta; reCAPTCHA es overkill al inicio)
+- [x] **Formulario de contacto / sugerencias / quejas — hecho.**
+      Backend: tabla `mensajes_contacto` (migración
+      `007_create_mensajes_contacto.sql`, aplicada tanto en la BD de
+      desarrollo como en `steamlinker_test`) + `POST /contacto`
+      (`src/routes/contacto.js`), público — no exige sesión, pero guarda
+      `id_usu` si llega un token válido. Protección anti-spam de las dos
+      formas baratas que alcanzan para una beta: **honeypot** (campo
+      `sitio_web` invisible para una persona real; si llega relleno, el
+      backend responde 201 falso sin guardar nada, para no delatarle al
+      bot que fue detectado) + **rate-limit** (`contactoLimiter`, 8
+      mensajes/hora por IP, mismo patrón que login/registro). Validación
+      real: nombre/correo/mensaje obligatorios, formato de correo,
+      longitud mínima del mensaje (10 caracteres) y máximos para evitar
+      payloads gigantes. Cubierto por 5 tests nuevos
+      (`tests/contacto.test.js`), suite de backend: 21/21.
+      Frontend: `ContactoScreen`
+      (`lib/features/contacto/screens/contacto_screen.dart`), enlazada
+      desde Configuración → tarjeta "Ayuda y legal" (que antes era solo
+      "Legal", ahora agrupa también el contacto). Precarga nombre/correo
+      si hay sesión iniciada, usa `showSteamToast` para confirmar envío o
+      mostrar errores — consistente con el resto de la app.
+      **Sin UI de admin todavía**: se agregó `GET`/`PUT
+      /api/admin/mensajes-contacto` (mismo patrón que `/reportes`) para
+      que los mensajes no queden atrapados solo en la base de datos
+      mientras se construye esa pantalla — construir la vista real en el
+      panel es trabajo pendiente, no bloqueante (el admin puede consultar
+      la tabla directamente mientras tanto).
 - [x] **Mensajes de error y de éxito consistentes — unificados.** Se
       encontró un bug real al auditar: `showSteamToast` siempre mostraba
       un ícono de palomita verde (✓) sin importar el color pasado — un
@@ -1433,7 +1457,16 @@ real.
    tabla de sesiones, cambio de esquema más grande) y revisar a fondo
    `npm audit` (vulnerabilidad moderada conocida en `qs`, dependencia
    transitiva de `express`).
-4. Todo lo demás del roadmap de Niveles 2–4 de arriba, en ese orden.
+4. **Vista de admin para `mensajes_contacto`** — el endpoint
+   (`GET`/`PUT /api/admin/mensajes-contacto`) ya existe y sigue el mismo
+   patrón que `/reportes`, solo falta la pantalla en
+   `steamlinker_back/public/admin/` (tabla + acción "marcar leído", copiar
+   casi entero de `renderReportes`/`loadReportes` en `admin-panel.js`).
+5. Nivel 2 avanzó bastante esta sesión (loading screen, botón volver
+   arriba, mensajes de error/éxito unificados, formulario de contacto).
+   Queda: optimización de velocidad (medir con Lighthouse una vez
+   desplegado, no antes).
+6. Todo lo demás del roadmap de Niveles 3–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar
 
