@@ -18,6 +18,14 @@ class AppConfig {
     defaultValue: '',
   );
 
+  /// Enlace de donaciones ("Apoya el proyecto"), ej. Ko-fi. Vacío hasta que
+  /// exista una cuenta real — ver HANDOFF.md sección "Nivel 1.5". Se pasa en
+  /// build/run con `--dart-define=KOFI_URL=https://ko-fi.com/tu_usuario`.
+  static const String kofiUrl = String.fromEnvironment(
+    'KOFI_URL',
+    defaultValue: '',
+  );
+
   static const int localPort = 3000;
 
   static bool get isProduction => kReleaseMode;

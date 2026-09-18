@@ -1189,25 +1189,33 @@ have", son requisitos mínimos para que lanzar sea responsable):**
 
 **Nivel 1.5 — pedido explícitamente para el día 1 por el usuario, fuera del
 orden de prioridad que yo hubiera sugerido por defecto:**
-- [ ] **Donaciones / "cómprame un café" estilo SteamDB.** El usuario fue
+- [~] **Donaciones / "cómprame un café" estilo SteamDB.** El usuario fue
       explícito: *"lo de patreon si lo querria funcionando para el dia 1"*.
-      Esto estaba en Nivel 4 en la versión anterior de este roadmap —
-      se sube aquí porque el usuario lo pidió directamente, no porque mi
+      Esto estaba en Nivel 4 en la versión anterior de este roadmap — se
+      subió aquí porque el usuario lo pidió directamente, no porque mi
       criterio haya cambiado sobre qué tan crítico es para el producto en
       sí (sigue sin ser parte del SRS ni del flujo core de matching).
-      **Bloqueo real, no de esfuerzo**: no puedo crear cuentas de Patreon,
-      Ko-fi, Nequi/Bancolombia ni ningún procesador de pagos en nombre del
-      usuario (cuentas y datos financieros están fuera de lo que puedo
-      hacer autónomamente) — y fabricar un botón de "donar" que apunte a un
-      link inventado sería activamente engañoso para quien done. **Falta
-      una respuesta del usuario sobre qué cuenta(s) reales va a usar** antes
-      de que esto pueda estar "funcionando" de verdad. Ver la pregunta
-      concreta que se le dejó en el chat en esta misma sesión.
-      Mientras tanto, lo que sí es trabajo mío sin bloqueo: construir la
-      pantalla/sección "Apoya el proyecto" con la estructura visual lista
-      (tarjeta de card, texto explicativo, lista de botones de enlace) pero
-      con los links vacíos/deshabilitados y marcados "Próximamente" hasta
-      tener destinos reales — así el único paso que falta es pegar las URLs.
+      Se le preguntó al usuario qué cuenta usar; eligió "ninguna todavía,
+      recomiéndame" — se recomendó **Ko-fi** (0% de comisión de plataforma
+      en donaciones/membresías, a diferencia del ~8-12% de Patreon; no
+      exige persona jurídica en Colombia; configuración en minutos) y
+      quedó como la opción elegida.
+      **Ya construido esta sesión**: tarjeta `ApoyarProyectoCard`
+      (`lib/features/perfil/widgets/apoyar_proyecto_card.dart`), visible al
+      final de la pantalla Perfil, usando `url_launcher` igual que el enlace
+      al panel de administración. Lee la URL de
+      `AppConfig.kofiUrl` (`--dart-define=KOFI_URL=...`, vacío por defecto);
+      **mientras esté vacía, el botón se reemplaza por un aviso
+      "Próximamente"** en vez de fabricar un destino falso — no puedo crear
+      la cuenta de Ko-fi en nombre del usuario (fuera de lo que puedo hacer
+      autónomamente: cuentas y datos financieros).
+      **Sigue pendiente, y es 100% del usuario**: crear la cuenta en
+      ko-fi.com y pasarme (o dejar en el `.env`/build command) la URL real
+      — en cuanto exista, el botón se activa solo, no hace falta tocar el
+      código de nuevo. El link a Nequi/Bancolombia para Colombia que se
+      mencionó en la sesión anterior queda fuera de esta ronda (Ko-fi ya
+      acepta tarjetas internacionales; un canal 100% local es un paso
+      posterior si de verdad hace falta, ver Nivel 4).
 
 **Nivel 2 — mejoras de producto con impacto real, más baratas de lo que
 parecen:**
@@ -1282,11 +1290,9 @@ real.
 ### Cosas pendientes de esta sesión (no alcanzadas, ordenadas por mi
 ### prioridad si se retoma)
 
-1. **Respuesta del usuario sobre Patreon/donaciones** — qué cuenta(s) usar
-   (Patreon, Ko-fi, "Buy Me a Coffee", link directo a Nequi/Bancolombia,
-   alguna combinación) determina si esto puede construirse de verdad. Sin
-   esto, lo máximo responsable es la pantalla-contenedor con links vacíos
-   (ver Nivel 1.5).
+1. **Crear la cuenta real de Ko-fi y pasar la URL** (`KOFI_URL`) — es lo
+   único que falta para que "Apoya el proyecto" (Nivel 1.5) quede
+   100% funcional; el código ya está listo y no requiere tocarse de nuevo.
 2. **Verificación visual en vivo del build de esta ronda** — los cambios de
    esta sesión (Descubrir, Configuración, Avisos, perfil de usuario) están
    cubiertos por `flutter analyze`/`flutter test`/tests de backend, pero no
