@@ -7,6 +7,7 @@ import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/notification_tile.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../core/navigation/app_navigator.dart';
+import '../../../core/refresh_signal.dart';
 import '../../amistad/screens/amistad_screen.dart';
 import '../../chat/screens/chat_conversation_screen.dart';
 import '../../matches/screens/matches_screen.dart';
@@ -30,6 +31,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     super.initState();
     _tabs = TabController(length: _filters.length, vsync: this);
     _tabs.addListener(_onTabChanged);
+    refreshSignal.addListener(_onRefreshSignal);
+  }
+
+  void _onRefreshSignal() {
+    if (refreshSignal.indice == 6) _cargarFiltroActual();
   }
 
   void _onTabChanged() {
@@ -68,6 +74,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   void dispose() {
     _tabs.removeListener(_onTabChanged);
     _tabs.dispose();
+    refreshSignal.removeListener(_onRefreshSignal);
     super.dispose();
   }
 
@@ -115,40 +122,53 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             ...prov.notificaciones.where((n) => n.interested != true),
           ];
 
-    return Scaffold(
-      backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: 'NOTIFICACIONES',
-        showBack: false,
-        // En escritorio la nav superior global ya muestra el usuario.
-        showUserActions: MediaQuery.of(context).size.width < 768,
-        actions: [
-          if (unread > 0)
-            TextButton(
-              onPressed: () async {
-                await prov.marcarTodasLeidas();
-              },
-              child: const Text(
-                'Todo leído',
-                style: TextStyle(
-                  color: SteamColors.blue,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+    final esEscritorio = MediaQuery.of(context).size.width >= 768;
+    final botonTodoLeido = unread > 0
+        ? TextButton(
+            onPressed: () async {
+              await prov.marcarTodasLeidas();
+            },
+            child: const Text(
+              'Todo leído',
+              style: TextStyle(
+                color: SteamColors.blue,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: SteamColors.blue),
-            tooltip: 'Actualizar',
-            onPressed: _cargarFiltroActual,
-          ),
-        ],
-      ),
+          )
+        : null;
+
+    return Scaffold(
+      backgroundColor: SteamColors.bgDeep,
+      // En escritorio esta pantalla solo se ve como pestaña (el bell de
+      // la barra global la selecciona) -- nunca se pushea sola, así que
+      // no hace falta un esPestana explícito, a diferencia de Descubrir/
+      // Publicaciones/Amigos. "Todo leído" se mueve junto a las pestañas
+      // de abajo; el refrescar ya vive en la barra global.
+      appBar: esEscritorio
+          ? null
+          : SteamAppBar(
+              title: 'NOTIFICACIONES',
+              showBack: false,
+              showUserActions: true,
+              actions: [
+                ?botonTodoLeido,
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: SteamColors.blue),
+                  tooltip: 'Actualizar',
+                  onPressed: _cargarFiltroActual,
+                ),
+              ],
+            ),
       body: DesktopBodyWidth(child: Column(
         children: [
           Container(
             color: SteamColors.bgPanel,
-            child: TabBar(
+            child: Row(
+              children: [
+                Expanded(
+                  child: TabBar(
               controller: _tabs,
               indicatorColor: SteamColors.blue,
               indicatorWeight: 2,
@@ -163,6 +183,14 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 _buildTab('Todas', 0),
                 _buildTab('No leídas', unread, badgeColor: SteamColors.red),
                 _buildTab('Marcadas', marcadas, badgeColor: SteamColors.yellow),
+              ],
+                  ),
+                ),
+                if (esEscritorio && botonTodoLeido != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: botonTodoLeido,
+                  ),
               ],
             ),
           ),

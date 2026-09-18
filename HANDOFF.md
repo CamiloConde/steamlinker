@@ -1925,6 +1925,12 @@ parecen:**
       `http://localhost:3000` (donde de verdad corre el backend hoy) y la
       línea que forzaba la URL muerta ahora solo rellena el campo con lo
       que ya esté activo, respetando `localStorage`.
+      **Nota importante para el usuario**: este arreglo solo cambia el
+      *default* para quien nunca lo haya usado — si tu propio navegador
+      ya tenía `sl_base_url` guardado en `localStorage` apuntando a la
+      URL muerta (de antes de este arreglo), el código nuevo no lo borra
+      solo. Si el panel "no te deja entrar", en la pantalla de login
+      borra el campo de URL y escribe `http://localhost:3000` a mano.
 - [x] **Formulario de feedback/sugerencias, más visible — pedido
       explícito.** Antes solo existía escondido en Configuración → Ayuda
       y legal → Contacto y sugerencias. Nueva tarjeta `_FeedbackCard` en
@@ -2045,6 +2051,26 @@ real.
    backend desplegado**, solo en el entorno de desarrollo/tests. No amerita
    más acción que revisar de nuevo si `superagent` publica una versión
    nueva más adelante.
+5b. **Bug real: Perfil y Avisos se habían quedado fuera de la ronda de
+   header de escritorio — mismo hueco reportado por el usuario, ahora
+   con captura.** La ronda del rediseño de header solo tocó las 4
+   pantallas que el usuario señaló en ese momento (Home/Descubrir/
+   Publicaciones/Amigos); `PerfilScreen` y `NotificationsScreen` seguían
+   con su `SteamAppBar` fundida-con-el-fondo pero SIN condicional,
+   dejando el mismo hueco vacío en escritorio. `PerfilScreen` no
+   necesita `esPestana` (solo se construye como pestaña, nunca se pushea
+   sola en escritorio — confirmado grepeando todos los usos). Igual
+   `NotificationsScreen` (solo el bell de la barra global la selecciona);
+   "Todo leído" se movió a la fila de pestañas cuando hay notificaciones
+   sin leer. **`BusquedaScreen` y `ChatScreen` se revisaron y NO
+   necesitaban el fix**: `BusquedaScreen` solo se ve pusheada de verdad
+   (desde "Ir a búsqueda" en Perfil) — el índice de pestaña nunca se
+   selecciona en ningún lado del código; `ChatScreen` (índice 5) tampoco
+   se selecciona nunca — `FloatingChat` es un overlay autónomo que no
+   navega ahí. Ambas están "vivas" en el `IndexedStack` pero nunca se
+   muestran como pestaña activa en escritorio, así que su AppBar
+   incondicional no produce ningún hueco visible en la práctica.
+   Confirmado en vivo (Perfil) con el navegador integrado.
 6. Nivel 2: optimización de velocidad (Lighthouse, una vez desplegado) —
    sin cambios esta ronda.
 7. Nivel 3: solo "botones de redes sociales" pendiente (el usuario duda

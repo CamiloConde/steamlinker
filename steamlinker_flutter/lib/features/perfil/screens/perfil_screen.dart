@@ -467,21 +467,31 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final esEscritorio = MediaQuery.of(context).size.width >= 768;
     final puedeVolver = Navigator.of(context).canPop();
 
+    // PerfilScreen SIEMPRE se construye como pestaña del IndexedStack
+    // (ResponsiveShell/MainShell) o vía _ir(), que en escritorio usa
+    // onNavigateIndex (cambia de pestaña) en vez de pushear -- nunca se
+    // pushea sola en escritorio, así que a diferencia de Home/Descubrir/
+    // Publicaciones/Amigos no hace falta un esPestana explícito. Antes
+    // esta pantalla se quedó fuera de esa ronda de arreglos y seguía
+    // mostrando el AppBar "fundida con el fondo" vacía en escritorio --
+    // el hueco que reportó el usuario. Ver HANDOFF.md.
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(
-        title: puedeVolver ? 'MIS JUEGOS' : 'PERFIL',
-        showUserActions: puedeVolver,
-        actions: puedeVolver || esEscritorio
-            ? null
-            : [
-                IconButton(
-                  icon: const Icon(Icons.logout, color: SteamColors.muted),
-                  tooltip: 'Cerrar sesión',
-                  onPressed: () => confirmarYCerrarSesion(context),
-                ),
-              ],
-      ),
+      appBar: (esEscritorio && !puedeVolver)
+          ? null
+          : SteamAppBar(
+              title: puedeVolver ? 'MIS JUEGOS' : 'PERFIL',
+              showUserActions: puedeVolver,
+              actions: puedeVolver
+                  ? null
+                  : [
+                      IconButton(
+                        icon: const Icon(Icons.logout, color: SteamColors.muted),
+                        tooltip: 'Cerrar sesión',
+                        onPressed: () => confirmarYCerrarSesion(context),
+                      ),
+                    ],
+            ),
       body: perfilProv.cargando && perfil == null
           ? const Center(
               child: CircularProgressIndicator(
