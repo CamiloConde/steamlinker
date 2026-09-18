@@ -1,8 +1,16 @@
+import '../constants/publicacion_constants.dart';
+
 /// Deriva el estado de familia de un usuario a partir de datos que ya
 /// existen (no hay tabla/rol de membresía formal en el backend — ver
 /// HANDOFF.md). Usado en Inicio y Perfil para no duplicar la heurística:
-/// - "Buscando familia" si tiene una publicación propia y abierta de tipo
-///   busco_familia/busco_miembros (con cupos si el backend los trae).
+/// - "Busco familia" o "Busco miembros" (el texto EXACTO de tu propia
+///   publicación, ver `PublicacionConstants.etiquetaTipo`) si tienes una
+///   publicación propia y abierta de alguno de esos dos tipos -- antes
+///   ambos casos mostraban el mismo "Buscando familia" genérico, lo cual
+///   es literalmente lo contrario para busco_miembros (ya tienes gente/
+///   cupos y estás reclutando, no buscando una familia para unirte). El
+///   usuario lo notó probando: ya tiene familia real en Steam y una
+///   publicación de tipo busco_miembros, pero veía "Buscando familia".
 /// - "En una familia" si tiene un match Aceptado (enviado por él) hacia una
 ///   publicación de ese tipo que sigue abierta.
 /// - "Sin familia" en cualquier otro caso.
@@ -34,9 +42,10 @@ EstadoFamilia calcularEstadoFamilia({
 }) {
   for (final p in misPublicaciones) {
     final map = Map<String, dynamic>.from(p as Map);
-    if (esTipoFamilia(map['tipo_publi'] as String?)) {
+    final tipo = map['tipo_publi'] as String?;
+    if (esTipoFamilia(tipo)) {
       return EstadoFamilia(
-        etiqueta: 'Buscando familia',
+        etiqueta: PublicacionConstants.etiquetaTipo(tipo),
         ocupados: map['cupos_ocupados'] as int?,
         total: map['cupos_totales'] as int?,
       );

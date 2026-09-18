@@ -27,6 +27,16 @@ class AppConfig {
     defaultValue: 'https://ko-fi.com/camiko31',
   );
 
+  /// Llave Bre-B (sistema de pagos inmediatos interoperable de Colombia,
+  /// ver HANDOFF.md sección "Nivel 1.5") para donaciones desde Colombia
+  /// sin exponer número de cuenta/cédula/celular -- es una llave
+  /// alfanumérica, no un dato personal identificable. Sobreescribible con
+  /// `--dart-define=BREB_KEY=...`.
+  static const String brebKey = String.fromEnvironment(
+    'BREB_KEY',
+    defaultValue: '@ccc643',
+  );
+
   static const int localPort = 3000;
 
   static bool get isProduction => kReleaseMode;

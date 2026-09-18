@@ -19,14 +19,13 @@ import '../../busqueda/screens/busqueda_screen.dart';
 import '../../chat/screens/chat_screen.dart';
 import '../../chat/widgets/floating_chat.dart';
 import '../../descubrir/screens/descubrir_gamers_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../notifications/providers/notificaciones_provider.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../perfil/perfil_scroll_signal.dart';
 import '../../perfil/providers/perfil_provider.dart';
+import '../../perfil/screens/apoyar_proyecto_screen.dart';
 import '../../perfil/screens/perfil_screen.dart';
 import '../../publicaciones/screens/publicaciones_screen.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/refresh_signal.dart';
 import 'home_screen.dart';
 import 'main_shell.dart';
@@ -434,29 +433,6 @@ class _SideNavItem extends StatelessWidget {
 class _ApoyarProyectoSidebar extends StatelessWidget {
   const _ApoyarProyectoSidebar();
 
-  bool get _tieneEnlace => AppConfig.kofiUrl.isNotEmpty;
-
-  Future<void> _abrir(BuildContext context) async {
-    final uri = Uri.tryParse(AppConfig.kofiUrl);
-    if (uri == null) return;
-    try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!context.mounted || ok) return;
-      _avisar(context, uri.toString());
-    } catch (_) {
-      if (context.mounted) _avisar(context, uri.toString());
-    }
-  }
-
-  void _avisar(BuildContext context, String url) {
-    showSteamToast(
-      context,
-      'No se pudo abrir el navegador. Copia el enlace:\n$url',
-      SteamColors.orange,
-      duration: const Duration(seconds: 6),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -477,39 +453,27 @@ class _ApoyarProyectoSidebar extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'SteamMatch es independiente. Invítanos un café si te sirve.',
+            'SteamMatch es independiente. Ayúdanos a seguir mejorándolo.',
             style: TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
           ),
           const SizedBox(height: 10),
-          if (_tieneEnlace)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => _abrir(context),
-                icon: const Icon(Icons.local_cafe_outlined, size: 16),
-                label: const Text('Invitar un café', style: TextStyle(fontSize: 12.5)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: SteamColors.yellow,
-                  foregroundColor: SteamColors.bgDeep,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              // Ya no abre Ko-fi directo -- lleva a ApoyarProyectoScreen,
+              // que separa Colombia (llave Bre-B) de otros países (Ko-fi).
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ApoyarProyectoScreen()),
               ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: SteamColors.bgInput,
-                borderRadius: BorderRadius.circular(SteamRadii.sm),
-                border: Border.all(color: SteamColors.border),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'Próximamente',
-                style: TextStyle(color: SteamColors.muted, fontSize: 11.5, fontWeight: FontWeight.w600),
+              icon: const Icon(Icons.favorite_rounded, size: 16),
+              label: const Text('Ver cómo apoyar', style: TextStyle(fontSize: 12.5)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SteamColors.yellow,
+                foregroundColor: SteamColors.bgDeep,
+                padding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
+          ),
         ],
       ),
     );

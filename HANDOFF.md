@@ -1593,6 +1593,14 @@ parecen:**
         Mientras eso no pase, seguir intentándolo no cambia la
         conclusión — no es cuestión de esfuerzo, es que el dato
         simplemente no está expuesto por ningún medio legítimo hoy.
+        **Aclaración final, tras preguntar de nuevo "¿pero cómo hace
+        SteamDB entonces?":** SteamDB no resuelve el mismo problema. Lo
+        que muestra públicamente (campo `exfgls`/"Exclude from family
+        sharing") es si un JUEGO es elegible para compartirse — un dato
+        del catálogo, igual para cualquiera que lo consulte, sin relación
+        con ninguna cuenta. No es "¿de quién es esta copia del juego que
+        tengo yo?" (eso sigue siendo privado, sin exponerse por ningún
+        medio público, ni en SteamDB). Cierre definitivo del tema.
   - [x] **Integridad de "Juegos verificados" — problema real encontrado
         por el usuario probando con su cuenta, corregido.** Agregar un
         juego a mano (buscador de Steam Store, sin dueño real verificado)
@@ -1832,14 +1840,38 @@ parecen:**
       parámetro (`pushAppScreen`, un `Navigator.push` directo) sigue
       mostrando el AppBar completo por defecto, sin necesidad de adivinar
       nada sobre el estado del Navigator.
+- [x] **"TU ESTADO EN STEAMMATCH" ahora muestra la etiqueta real de tu
+      publicación ("Busco familia" o "Busco miembros") en vez de un
+      "Buscando familia" genérico para ambos tipos.** El usuario insistió
+      en que la tarjeta debía "captar una intención real": tiene una
+      publicación real de tipo `busco_miembros` (ya tiene gente/cupos,
+      está reclutando) pero la tarjeta decía "Buscando familia" (como si
+      estuviera buscando unirse a una) — literalmente lo opuesto.
+      `calcularEstadoFamilia` (`estado_familia_helper.dart`) ahora usa
+      `PublicacionConstants.etiquetaTipo(tipo)` en vez de un string fijo,
+      así que muestra el texto exacto de lo que de verdad publicaste. Se
+      evaluó y descartó la alternativa de un selector manual de
+      "propósito" (familia/compañeros/chill): reemplazar un dato real
+      (cupos ocupados de una publicación real) por algo puramente
+      declarativo habría sido un paso atrás, no adelante.
+- [x] **"Apoya el proyecto" ahora separa Colombia de otros países —
+      pedido explícito, con datos reales del usuario.** Nueva pantalla
+      `ApoyarProyectoScreen` (`features/perfil/screens/
+      apoyar_proyecto_screen.dart`): Colombia muestra una llave Bre-B
+      (sistema de pagos inmediatos interoperable, copiable con un toque —
+      `AppConfig.brebKey`, configurable vía `--dart-define=BREB_KEY=...`,
+      con el valor real del usuario por defecto); otros países sigue
+      usando Ko-fi (`AppConfig.kofiUrl`, sin cambios). El botón "Invitar
+      un café" tanto en `ApoyarProyectoCard` (Inicio, móvil) como en el
+      sidebar de escritorio ya no abre Ko-fi directo — ahora llevan a
+      esta pantalla nueva, con un botón "Ver cómo apoyar". **Por qué una
+      llave y no número de cuenta/Nequi por separado**: Bre-B permite
+      registrar una llave alfanumérica que no expone cédula/celular/
+      correo — el usuario prefirió expresamente esta opción por ser más
+      simple y más privada que mostrar varios identificadores en crudo.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
-- [ ] Si el "Apoya el proyecto" de Nivel 1.5 funciona bien, evaluar
-      integración de pagos locales reales (Nequi/Bancolombia vía un
-      agregador tipo Wompi/ePayco — requiere persona jurídica o el
-      agregador la absorbe según el plan) más allá de un simple link
-      externo a Patreon/Ko-fi.
 
 **Mi criterio general, ya que se pidió directamente:** no, no hay que hacer
 todo esto — varias cosas de los niveles 3 y 4 son apuestas razonables solo
