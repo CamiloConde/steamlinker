@@ -1223,33 +1223,31 @@ have", son requisitos mínimos para que lanzar sea responsable):**
 
 **Nivel 1.5 — pedido explícitamente para el día 1 por el usuario, fuera del
 orden de prioridad que yo hubiera sugerido por defecto:**
-- [~] **Donaciones / "cómprame un café" estilo SteamDB.** El usuario fue
-      explícito: *"lo de patreon si lo querria funcionando para el dia 1"*.
-      Esto estaba en Nivel 4 en la versión anterior de este roadmap — se
-      subió aquí porque el usuario lo pidió directamente, no porque mi
-      criterio haya cambiado sobre qué tan crítico es para el producto en
-      sí (sigue sin ser parte del SRS ni del flujo core de matching).
+- [x] **Donaciones / "cómprame un café" estilo SteamDB — cerrado.** El
+      usuario fue explícito: *"lo de patreon si lo querria funcionando
+      para el dia 1"*. Esto estaba en Nivel 4 en la versión anterior de
+      este roadmap — se subió aquí porque el usuario lo pidió
+      directamente, no porque mi criterio haya cambiado sobre qué tan
+      crítico es para el producto en sí (sigue sin ser parte del SRS ni
+      del flujo core de matching).
       Se le preguntó al usuario qué cuenta usar; eligió "ninguna todavía,
       recomiéndame" — se recomendó **Ko-fi** (0% de comisión de plataforma
       en donaciones/membresías, a diferencia del ~8-12% de Patreon; no
-      exige persona jurídica en Colombia; configuración en minutos) y
-      quedó como la opción elegida.
-      **Ya construido esta sesión**: tarjeta `ApoyarProyectoCard`
+      exige persona jurídica en Colombia; configuración en minutos), y el
+      usuario creó la cuenta en la misma sesión:
+      **https://ko-fi.com/camiko31**.
+      Tarjeta `ApoyarProyectoCard`
       (`lib/features/perfil/widgets/apoyar_proyecto_card.dart`), visible al
-      final de la pantalla Perfil, usando `url_launcher` igual que el enlace
-      al panel de administración. Lee la URL de
-      `AppConfig.kofiUrl` (`--dart-define=KOFI_URL=...`, vacío por defecto);
-      **mientras esté vacía, el botón se reemplaza por un aviso
-      "Próximamente"** en vez de fabricar un destino falso — no puedo crear
-      la cuenta de Ko-fi en nombre del usuario (fuera de lo que puedo hacer
-      autónomamente: cuentas y datos financieros).
-      **Sigue pendiente, y es 100% del usuario**: crear la cuenta en
-      ko-fi.com y pasarme (o dejar en el `.env`/build command) la URL real
-      — en cuanto exista, el botón se activa solo, no hace falta tocar el
-      código de nuevo. El link a Nequi/Bancolombia para Colombia que se
-      mencionó en la sesión anterior queda fuera de esta ronda (Ko-fi ya
-      acepta tarjetas internacionales; un canal 100% local es un paso
-      posterior si de verdad hace falta, ver Nivel 4).
+      final de la pantalla Perfil, usando `url_launcher` igual que el
+      enlace al panel de administración. La URL real ya está puesta como
+      valor por defecto de `AppConfig.kofiUrl` (sigue pudiendo
+      sobreescribirse con `--dart-define=KOFI_URL=...` si algún día
+      cambia). El botón "Invitar un café" queda funcionando de verdad
+      desde este build — no hace falta tocar código de nuevo.
+      El link a Nequi/Bancolombia para Colombia que se mencionó en la
+      sesión anterior queda fuera de esta ronda (Ko-fi ya acepta tarjetas
+      internacionales; un canal 100% local es un paso posterior si de
+      verdad hace falta, ver Nivel 4).
 
 **Nivel 2 — mejoras de producto con impacto real, más baratas de lo que
 parecen:**
@@ -1324,20 +1322,21 @@ real.
 ### Cosas pendientes de esta sesión (no alcanzadas, ordenadas por mi
 ### prioridad si se retoma)
 
-1. **Crear la cuenta real de Ko-fi y pasar la URL** (`KOFI_URL`) — es lo
-   único que falta para que "Apoya el proyecto" (Nivel 1.5) quede
-   100% funcional; el código ya está listo y no requiere tocarse de nuevo.
-2. **Verificación visual en vivo del build de esta ronda** — los cambios de
-   esta sesión (Descubrir, Configuración, Avisos, perfil de usuario) están
-   cubiertos por `flutter analyze`/`flutter test`/tests de backend, pero no
-   se pudieron ver en el navegador por un problema de escala de coordenadas
-   en la automatización (no un bug de la app). Antes de dar la ronda por
-   cerrada del todo, alguien debería abrir `flutter build web` y probar a
-   ojo: Descubrir (filtros, dropdown de juego), Configuración (etiquetas
-   decorativas), Avisos → Marcadas (que ancle arriba), perfil de otro
-   usuario (que ya no aparezca "Match recibido").
-3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
+1. **Verificación visual en vivo del build de esta ronda** — los cambios de
+   esta sesión (Descubrir, Configuración, Avisos, perfil de usuario,
+   "Apoya el proyecto") están cubiertos por `flutter analyze`/`flutter
+   test`/tests de backend, pero no se pudieron ver en el navegador por un
+   problema de escala de coordenadas en la automatización (no un bug de la
+   app). Antes de dar la ronda por cerrada del todo, alguien debería abrir
+   `flutter build web` y probar a ojo: Descubrir (filtros, dropdown de
+   juego), Configuración (etiquetas decorativas), Avisos → Marcadas (que
+   ancle arriba), perfil de otro usuario (que ya no aparezca "Match
+   recibido"), y Perfil → "Apoya el proyecto" (que el botón abra
+   https://ko-fi.com/camiko31 de verdad).
+2. **Logo / identidad visual** — trabajo de diseño gráfico, no de código;
    mejor en una sesión dedicada a eso o con una herramienta de diseño.
+3. Rotación/revocación de JWT (ver sección de Seguridad arriba) y revisar
+   a fondo `npm audit` (vulnerabilidad moderada conocida en `qs`).
 4. Todo lo demás del roadmap de Niveles 1–4 de arriba, en ese orden.
 
 ## 12. Cómo retomar

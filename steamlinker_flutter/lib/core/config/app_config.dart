@@ -18,12 +18,13 @@ class AppConfig {
     defaultValue: '',
   );
 
-  /// Enlace de donaciones ("Apoya el proyecto"), ej. Ko-fi. Vacío hasta que
-  /// exista una cuenta real — ver HANDOFF.md sección "Nivel 1.5". Se pasa en
-  /// build/run con `--dart-define=KOFI_URL=https://ko-fi.com/tu_usuario`.
+  /// Enlace de donaciones ("Apoya el proyecto") — ver HANDOFF.md sección
+  /// "Nivel 1.5". Puede sobreescribirse con
+  /// `--dart-define=KOFI_URL=https://ko-fi.com/otro_usuario` si algún día
+  /// cambia, pero por defecto ya apunta a la cuenta real.
   static const String kofiUrl = String.fromEnvironment(
     'KOFI_URL',
-    defaultValue: '',
+    defaultValue: 'https://ko-fi.com/camiko31',
   );
 
   static const int localPort = 3000;
