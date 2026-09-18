@@ -372,21 +372,22 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                   color: SteamColors.blue,
                   backgroundColor: SteamColors.bgDeep,
                   onRefresh: _recargar,
-                  child: _TablaPublicaciones(
-                    cargando: publicacionesProv.cargando,
-                    error: publicacionesProv.error,
-                    tab: _tabActivo,
+                  // Antes esto era _TablaPublicaciones, una tabla densa
+                  // (TIPO/USUARIO/CUPOS/REP/HACE). El usuario comparó
+                  // contra el wireframe y contra Descubrir (que ya pasó
+                  // de tabla a tarjeta rica antes, por el mismo pedido) y
+                  // pidió lo mismo acá. En vez de diseñar una tarjeta
+                  // nueva, se reutiliza PublicacionCard -- ya existía y
+                  // ya se usaba en móvil, con avatar+autor+reputación,
+                  // título, descripción, portada del juego y país. Ver
+                  // HANDOFF.md.
+                  child: _buildLista(
+                    publicacionesProv,
+                    auth,
+                    matchesProv,
+                    amistadProv,
+                    auth.usuario?['id'] as int?,
                     filas: filaFiltradas,
-                    onTap: (id) async {
-                      final actualizado = await Navigator.of(context).push<bool>(
-                        MaterialPageRoute(
-                          builder: (_) => PublicacionDetalleScreen(idPubli: id),
-                        ),
-                      );
-                      if (actualizado == true && context.mounted) {
-                        await _recargar();
-                      }
-                    },
                   ),
                 ),
               ),
@@ -450,8 +451,11 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     AuthProvider auth,
     MatchesProvider matchesProv,
     AmistadProvider amistadProv,
-    int? miId,
-  ) {
+    int? miId, {
+    List<dynamic>? filas,
+  }) {
+    final lista = filas ?? publicacionesProv.publicaciones;
+
     if (publicacionesProv.cargando) {
       return const Center(
         child: CircularProgressIndicator(
@@ -473,7 +477,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
       );
     }
 
-    if (publicacionesProv.publicaciones.isEmpty) {
+    if (lista.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
@@ -495,10 +499,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     return ListView.separated(
       controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
-      itemCount: publicacionesProv.publicaciones.length,
+      itemCount: lista.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final publicacion = publicacionesProv.publicaciones[index];
+        final publicacion = lista[index];
         final autorId = publicacion['id_usu'] as int?;
         final esMia = miId != null && miId == autorId;
         final relacion = RelacionResumen.paraUsuario(
@@ -775,360 +779,6 @@ class _ComposerConmutador extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Tabla densa por pestaña (wireframe turno 3b): las columnas cambian
-/// según lo que importa en cada intención, no solo el filtro de fondo.
-class _TablaPublicaciones extends StatelessWidget {
-  final bool cargando;
-  final String? error;
-  final int tab;
-  final List<dynamic> filas;
-  final ValueChanged<int> onTap;
-
-  const _TablaPublicaciones({
-    required this.cargando,
-    required this.error,
-    required this.tab,
-    required this.filas,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (cargando) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-        ),
-      );
-    }
-
-    if (error != null) {
-      return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        children: [Text(error!, style: const TextStyle(color: Colors.red))],
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-      physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        if (filas.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 40),
-            child: Center(
-              child: Text(
-                'Nada por aquí todavía.',
-                style: TextStyle(color: SteamColors.textSec),
-              ),
-            ),
-          )
-        else
-          Container(
-            decoration: BoxDecoration(
-              color: SteamColors.bgCard,
-              borderRadius: BorderRadius.circular(SteamRadii.sm),
-              border: Border.all(color: SteamColors.border),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                _encabezado(tab),
-                for (var i = 0; i < filas.length; i++)
-                  _FilaTabla(
-                    tab: tab,
-                    publicacion: Map<String, dynamic>.from(filas[i] as Map),
-                    ultima: i == filas.length - 1,
-                    onTap: () {
-                      final id = filas[i]['id_publi'] as int?;
-                      if (id != null) onTap(id);
-                    },
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _encabezado(int tab) {
-    const estilo = TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      letterSpacing: 0.8,
-      color: SteamColors.muted,
-      fontFamily: 'monospace',
-    );
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: SteamColors.border)),
-      ),
-      child: tab == 0
-          ? const Row(
-              children: [
-                SizedBox(width: 96, child: Text('TIPO', style: estilo)),
-                Expanded(child: Text('USUARIO', style: estilo)),
-                SizedBox(width: 58, child: Text('CUPOS', style: estilo, textAlign: TextAlign.right)),
-                SizedBox(width: 50, child: Text('REP', style: estilo, textAlign: TextAlign.right)),
-                SizedBox(width: 66, child: Text('HACE', style: estilo, textAlign: TextAlign.right)),
-              ],
-            )
-          : tab == 1
-              ? const Row(
-                  children: [
-                    SizedBox(width: 120, child: Text('JUEGO', style: estilo)),
-                    Expanded(child: Text('PUBLICACIÓN', style: estilo)),
-                    SizedBox(width: 58, child: Text('GENTE', style: estilo, textAlign: TextAlign.right)),
-                    SizedBox(width: 66, child: Text('CUÁNDO', style: estilo, textAlign: TextAlign.right)),
-                  ],
-                )
-              : const Row(
-                  children: [
-                    Expanded(child: Text('USUARIO', style: estilo)),
-                    Expanded(flex: 2, child: Text('TÍTULO', style: estilo)),
-                    SizedBox(width: 66, child: Text('HACE', style: estilo, textAlign: TextAlign.right)),
-                  ],
-                ),
-    );
-  }
-}
-
-class _FilaTabla extends StatelessWidget {
-  final int tab;
-  final Map<String, dynamic> publicacion;
-  final bool ultima;
-  final VoidCallback onTap;
-
-  const _FilaTabla({
-    required this.tab,
-    required this.publicacion,
-    required this.ultima,
-    required this.onTap,
-  });
-
-  static String _hace(dynamic fecha) {
-    if (fecha == null) return '—';
-    final dt = fecha is String ? DateTime.tryParse(fecha) : null;
-    if (dt == null) return '—';
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'ahora';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min';
-    if (diff.inHours < 24) return '${diff.inHours} h';
-    if (diff.inDays < 7) return '${diff.inDays} d';
-    return '${dt.day}/${dt.month}';
-  }
-
-  static String _cupos(Map<String, dynamic> p) {
-    final total = p['cupos_totales'];
-    if (total == null) return '—';
-    final ocupados = p['cupos_ocupados'] ?? 0;
-    return '$ocupados/$total';
-  }
-
-  Widget _avatar(String username) {
-    return Container(
-      width: 22,
-      height: 22,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [SteamColors.blue, SteamColors.teal],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        username.isNotEmpty ? username[0].toUpperCase() : '?',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const numero = TextStyle(fontFamily: 'monospace', fontSize: 12.5, color: SteamColors.light);
-    final username = (publicacion['username_usu'] as String?) ?? 'Autor';
-    final pais = publicacion['pais_usu'] as String?;
-
-    late Widget contenido;
-    switch (tab) {
-      case 0:
-        final tipo = publicacion['tipo_publi'] as String?;
-        final colorTipo = tipo == 'busco_miembros' ? SteamColors.teal : SteamColors.blue;
-        final ocupados = publicacion['cupos_ocupados'] as int? ?? 0;
-        final total = publicacion['cupos_totales'] as int?;
-        contenido = Row(
-          children: [
-            SizedBox(
-              width: 96,
-              child: Text(
-                PublicacionConstants.etiquetaTipo(tipo).toUpperCase(),
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.6,
-                  color: colorTipo,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Row(
-                children: [
-                  _avatar(username),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      pais != null && pais.isNotEmpty ? '$username · $pais' : username,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: SteamColors.light, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              width: 58,
-              child: Text(
-                _cupos(publicacion),
-                textAlign: TextAlign.right,
-                style: numero.copyWith(
-                  color: total != null && ocupados < total ? SteamColors.teal : SteamColors.muted,
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 50,
-              child: Text(
-                double.tryParse('${publicacion['repu_usu']}')?.toStringAsFixed(1) ?? '—',
-                textAlign: TextAlign.right,
-                style: numero,
-              ),
-            ),
-            SizedBox(
-              width: 66,
-              child: Text(
-                _hace(publicacion['creadoen_publi']),
-                textAlign: TextAlign.right,
-                style: numero.copyWith(color: SteamColors.muted, fontSize: 11.5),
-              ),
-            ),
-          ],
-        );
-        break;
-      case 1:
-        final juegos = (publicacion['juegos'] as List<dynamic>?) ?? [];
-        final juego = juegos.isNotEmpty ? juegos.first as Map : null;
-        contenido = Row(
-          children: [
-            SizedBox(
-              width: 120,
-              child: Row(
-                children: [
-                  Container(
-                    width: 20,
-                    height: 26,
-                    color: SteamColors.bgInput,
-                  ),
-                  const SizedBox(width: 7),
-                  Flexible(
-                    child: Text(
-                      juego?['nom_jg']?.toString() ?? '—',
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: SteamColors.light, fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Text(
-                publicacion['titulo_publi'] as String? ?? '',
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: SteamColors.light, fontSize: 13),
-              ),
-            ),
-            SizedBox(
-              width: 58,
-              child: Text(
-                _cupos(publicacion),
-                textAlign: TextAlign.right,
-                style: numero.copyWith(color: SteamColors.teal),
-              ),
-            ),
-            SizedBox(
-              width: 66,
-              child: Text(
-                _hace(publicacion['creadoen_publi']),
-                textAlign: TextAlign.right,
-                style: numero.copyWith(color: SteamColors.muted, fontSize: 11.5),
-              ),
-            ),
-          ],
-        );
-        break;
-      default:
-        contenido = Row(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  _avatar(username),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      username,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: SteamColors.light, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Text(
-                publicacion['titulo_publi'] as String? ?? '',
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: SteamColors.light, fontSize: 13),
-              ),
-            ),
-            SizedBox(
-              width: 66,
-              child: Text(
-                _hace(publicacion['creadoen_publi']),
-                textAlign: TextAlign.right,
-                style: numero.copyWith(color: SteamColors.muted, fontSize: 11.5),
-              ),
-            ),
-          ],
-        );
-    }
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
-          decoration: BoxDecoration(
-            border: ultima
-                ? null
-                : const Border(bottom: BorderSide(color: Color(0xFF1C2338))),
-          ),
-          child: contenido,
-        ),
       ),
     );
   }

@@ -1796,6 +1796,21 @@ parecen:**
     flecha de volver se muestra igual aunque sea escritorio. Solo se
     omite del todo cuando la pantalla es una pestaña real del
     `IndexedStack` (no se puede volver, porque no hay a dónde).
+- [x] **Publicaciones en escritorio pasa de tabla densa a tarjeta rica
+      (pedido explícito, comparando contra Descubrir y un wireframe con
+      tarjetas).** `_TablaPublicaciones`/`_FilaTabla` (columnas TIPO/
+      USUARIO/CUPOS/REP/HACE) se eliminaron del todo — en vez de diseñar
+      una tarjeta nueva desde cero, se reutiliza `PublicacionCard`
+      (`widgets/publicacion_card.dart`), que ya existía y ya se usaba en
+      móvil: avatar+autor+reputación, título, descripción, portada del
+      juego, país y "Ver detalle". `_buildLista` (la función que arma la
+      lista para móvil) ganó un parámetro opcional `filas` para poder
+      pasarle la lista ya filtrada por pestaña (Familia/Jugar ahora/Otro)
+      del lado de escritorio, en vez de duplicar la lógica de armado de
+      lista. **Pendiente, no incluido en esta pasada**: el wireframe que
+      mandó el usuario también tenía tags de género (Soulslike/Co-op/...)
+      y avatares de "juegan en común" — `PublicacionCard` no los tiene
+      todavía; se puede agregar después si hace falta más pulido.
 - [ ] Panel de administración renovado a la par del resto de la app (hoy
       `AdminPanelSection` es funcional pero no ha recibido el mismo
       tratamiento visual que el resto desde la ronda 4)
