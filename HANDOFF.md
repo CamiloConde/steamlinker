@@ -1586,6 +1586,13 @@ parecen:**
         familia. Fuentes: FAQ de SteamDB, hilo de GitHub
         `IsThereAnyDeal/AugmentedSteam#1907`, documentación de
         `IFamilyGroupsService` reconstruida por la comunidad.
+        **Nota para un "después" largo (pedido explícito del usuario, no
+        para retomar pronto)**: si alguna vez Steam publica una API
+        oficial y documentada para membresía de Family Sharing (no el
+        endpoint no documentado de arriba), vale la pena reabrir esto.
+        Mientras eso no pase, seguir intentándolo no cambia la
+        conclusión — no es cuestión de esfuerzo, es que el dato
+        simplemente no está expuesto por ningún medio legítimo hoy.
   - [x] **Integridad de "Juegos verificados" — problema real encontrado
         por el usuario probando con su cuenta, corregido.** Agregar un
         juego a mano (buscador de Steam Store, sin dueño real verificado)
