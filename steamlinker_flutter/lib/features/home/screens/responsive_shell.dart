@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/auth/session_actions.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../amistad/providers/amistad_provider.dart';
@@ -147,6 +148,7 @@ class _SideNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final juegos = context.watch<PerfilProvider>().juegos;
+    final t = AppLocalizations.of(context)!;
 
     return Container(
       width: 232,
@@ -184,28 +186,28 @@ class _SideNav extends StatelessWidget {
           _SideNavItem(
             icon: Icons.home_outlined,
             activeIcon: Icons.home_rounded,
-            label: 'Inicio',
+            label: t.navHome,
             active: currentIndex == 0,
             onTap: () => onSelect(0),
           ),
           _SideNavItem(
             icon: Icons.explore_outlined,
             activeIcon: Icons.explore_rounded,
-            label: 'Descubrir',
+            label: t.navDiscover,
             active: currentIndex == 1,
             onTap: () => onSelect(1),
           ),
           _SideNavItem(
             icon: Icons.campaign_outlined,
             activeIcon: Icons.campaign_rounded,
-            label: 'Publicaciones',
+            label: t.navPublicaciones,
             active: currentIndex == 2,
             onTap: () => onSelect(2),
           ),
           _SideNavItem(
             icon: Icons.group_outlined,
             activeIcon: Icons.group_rounded,
-            label: 'Amigos',
+            label: t.navFriends,
             active: currentIndex == 3,
             badge: badgeAmigos,
             onTap: () => onSelect(3),
@@ -213,15 +215,15 @@ class _SideNav extends StatelessWidget {
           _SideNavItem(
             icon: Icons.manage_accounts_outlined,
             activeIcon: Icons.manage_accounts_rounded,
-            label: 'Perfil',
+            label: t.navProfile,
             active: currentIndex == 7,
             onTap: () => onSelect(7),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(18, 18, 18, 8),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
             child: Text(
-              'TUS JUEGOS',
-              style: TextStyle(
+              t.yourGamesSection,
+              style: const TextStyle(
                 color: SteamColors.muted,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
@@ -230,11 +232,11 @@ class _SideNav extends StatelessWidget {
             ),
           ),
           if (juegos.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 18),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Text(
-                'Aún no agregas juegos.',
-                style: TextStyle(color: SteamColors.muted, fontSize: 12),
+                t.noGamesYet,
+                style: const TextStyle(color: SteamColors.muted, fontSize: 12),
               ),
             )
           else
@@ -249,7 +251,7 @@ class _SideNav extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   minimumSize: const Size(0, 28),
                 ),
-                child: const Text('Ver todos →', style: TextStyle(fontSize: 12.5)),
+                child: Text(t.viewAllArrow, style: const TextStyle(fontSize: 12.5)),
               ),
             ),
           const Spacer(),
@@ -267,14 +269,14 @@ class _SideNav extends StatelessWidget {
                 children: [
                   const Icon(Icons.diversity_3, color: SteamColors.blue, size: 20),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Conecta con otros gamers',
-                    style: TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700),
+                  Text(
+                    t.connectPromoTitle,
+                    style: const TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Encuentra personas con los mismos juegos y horarios que tú.',
-                    style: TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
+                  Text(
+                    t.connectPromoBody,
+                    style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -286,7 +288,7 @@ class _SideNav extends StatelessWidget {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                       ),
-                      child: const Text('Explorar', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                      child: Text(t.exploreButton, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -392,7 +394,7 @@ class _MiniJuegoRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              juego['nombre']?.toString() ?? 'Juego',
+              juego['nombre']?.toString() ?? AppLocalizations.of(context)!.defaultGameName,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
             ),

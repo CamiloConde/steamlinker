@@ -1,0 +1,58 @@
+{
+  "@@locale": "es",
+
+  "appTagline": "Tu conector de comunidad gamer",
+  "@appTagline": {"description": "Subtítulo bajo el logo en la pantalla de login"},
+
+  "loginTitle": "INICIAR SESIÓN",
+  "registerTitle": "CREAR CUENTA",
+  "usernameLabel": "NOMBRE DE USUARIO",
+  "usernameHint": "Tu nombre de usuario",
+  "emailLabel": "CORREO",
+  "emailHint": "tu@correo.com",
+  "passwordLabel": "CONTRASEÑA",
+  "loginButton": "INGRESAR",
+
+  "steamLinkNote": "Vincular tu cuenta de Steam es un paso posterior, dentro de Perfil. Hace falta solo para publicar o matchear en Familia.",
+
+  "legalConsentPrefix": "Al crear tu cuenta, aceptas nuestro ",
+  "legalConsentAnd": " y nuestra ",
+  "legalConsentSuffix": ".",
+  "legalNoticeLink": "Aviso legal",
+  "privacyPolicyLink": "Política de privacidad",
+
+  "haveAccountQuestion": "¿Ya tienes cuenta? ",
+  "noAccountQuestion": "¿No tienes cuenta? ",
+  "signInLink": "Inicia sesión",
+  "signUpLink": "Crear cuenta gratis",
+  "notAffiliated": "No afiliado a Valve Corporation",
+
+  "errorEmailRequired": "El correo es obligatorio",
+  "errorEmailInvalid": "El correo no tiene un formato válido",
+  "errorPasswordRequired": "La contraseña es obligatoria",
+  "errorPasswordTooShort": "La contraseña debe tener al menos 4 caracteres",
+  "errorUsernameRequired": "El nombre de usuario es obligatorio",
+  "errorUsernameTooShort": "El usuario debe tener al menos 3 caracteres",
+  "sessionStarted": "Sesión iniciada correctamente",
+
+  "navHome": "Inicio",
+  "navDiscover": "Descubrir",
+  "navPosts": "Publica.",
+  "navFriends": "Amigos",
+  "navChat": "Chat",
+  "navAlerts": "Avisos",
+  "navProfile": "Perfil",
+  "navPublicaciones": "Publicaciones",
+
+  "yourGamesSection": "TUS JUEGOS",
+  "noGamesYet": "Aún no agregas juegos.",
+  "viewAllArrow": "Ver todos →",
+  "connectPromoTitle": "Conecta con otros gamers",
+  "connectPromoBody": "Encuentra personas con los mismos juegos y horarios que tú.",
+  "exploreButton": "Explorar",
+  "defaultGameName": "Juego",
+
+  "languageSectionTitle": "Idioma",
+  "languageSpanish": "Español",
+  "languageEnglish": "English"
+}

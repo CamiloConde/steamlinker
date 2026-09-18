@@ -1435,11 +1435,51 @@ parecen:**
     manual — son APIs estándar de Flutter (`PageTransitionsTheme`,
     `TweenAnimationBuilder`, `Material`/`InkWell`) usadas de forma
     convencional, bajo riesgo de que no se vean como se espera.
-- [ ] Selector de idioma (inglés + español Colombia): técnicamente viable
-      con `flutter_localizations`, pero es trabajo real (extraer TODOS los
-      strings hardcodeados del código a archivos `.arb`) — no es un toggle.
-      Opinión: dejarlo para después de tener usuarios reales que lo pidan;
-      hoy sería trabajo especulativo.
+- [~] **Selector de idioma (español/inglés) — pedido explícito del usuario,
+      infraestructura completa + una porción real traducida, resto
+      pendiente y documentado (no fingido como terminado).**
+  - [x] **Infraestructura completa**: `flutter_localizations` + `intl` en
+        `pubspec.yaml` (`generate: true`), `l10n.yaml`,
+        `lib/l10n/app_es.arb` (base) y `lib/l10n/app_en.arb`, código
+        generado con `flutter gen-l10n` y comiteado (no hace falta
+        recordar correrlo en cada sesión). `LocaleProvider`
+        (`lib/core/providers/locale_provider.dart`) guarda el idioma
+        elegido en `SharedPreferences` y persiste entre sesiones; español
+        es el default. `MaterialApp.router` en `main.dart` queda
+        conectado vía `Consumer<LocaleProvider>`.
+  - [x] **Selector real en Configuración**: tarjeta "Idioma" (ES/EN) en
+        `account_settings_screen.dart`, con el mismo estilo de chip que
+        las pestañas Solicitudes/Amigos.
+  - [x] **Pantallas totalmente traducidas** (el idioma que se elija SÍ
+        cambia lo que se ve, no es cosmético): login/registro completo
+        (`login_screen.dart` — título, labels, validaciones, nota de
+        Steam, enlaces legales, toggle login↔registro), el bottom nav
+        móvil (`main_shell.dart`) y el sidebar de escritorio completo,
+        incluida la tarjeta "Conecta con otros gamers"
+        (`responsive_shell.dart`).
+  - [ ] **Sin traducir todavía — la gran mayoría de la app**: Inicio (el
+        resto además de lo que ya se hizo), Descubrir, Publicaciones,
+        Perfil, Configuración (excepto lo ya hecho), Chat, Notificaciones,
+        Amistad, Aviso legal/Privacidad, Contacto, y el panel de admin.
+        Elegir inglés hoy deja esas pantallas en español — **esto es
+        deliberado y documentado, no un descuido**: traducir todo de una
+        sentada arriesgaba una migración mecánica sin verificar sobre
+        decenas de archivos. Nota real de alcance encontrada al hacer
+        esto: hasta una pantalla aparentemente simple como Inicio termina
+        dependiendo de `PublicacionConstants.etiquetaTipo()` y
+        `PaisUtil.codigoANombre()` (nombres de tipo de publicación y de
+        país), que son sus propios sistemas de texto hardcodeado — para
+        traducir Inicio de verdad hay que traducir esos dos módulos
+        primero. El patrón para seguir extendiendo esto en sesiones
+        futuras: agregar claves a los dos `.arb`, `flutter pub get`
+        (regenera `AppLocalizations`), reemplazar los `Text('...')`
+        literales por `AppLocalizations.of(context)!.miClave` pantalla
+        por pantalla — nunca a medias dentro de una misma pantalla.
+  - **Sin verificar en vivo**: mismo límite de `localStorage`/
+    `SharedPreferences` de esta sesión (tampoco funcionó forzar
+    `flutter.locale_code` antes del arranque). Verificado que el español
+    (default) se sigue viendo exactamente igual que antes — `flutter
+    analyze`, `flutter test` y el build de producción, todos limpios.
 - [ ] Botones de redes sociales: el propio usuario duda del valor — de
       acuerdo, bajo prioridad. Si se hace, que lleve a compartir un perfil o
       publicación real, no solo íconos decorativos a redes de la empresa.

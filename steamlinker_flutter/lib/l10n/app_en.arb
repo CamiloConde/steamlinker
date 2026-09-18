@@ -1,0 +1,57 @@
+{
+  "@@locale": "en",
+
+  "appTagline": "Your gamer community connector",
+
+  "loginTitle": "SIGN IN",
+  "registerTitle": "CREATE ACCOUNT",
+  "usernameLabel": "USERNAME",
+  "usernameHint": "Your username",
+  "emailLabel": "EMAIL",
+  "emailHint": "you@email.com",
+  "passwordLabel": "PASSWORD",
+  "loginButton": "SIGN IN",
+
+  "steamLinkNote": "Linking your Steam account is a later step, inside Profile. It's only needed to post or match in a Family.",
+
+  "legalConsentPrefix": "By creating your account, you accept our ",
+  "legalConsentAnd": " and our ",
+  "legalConsentSuffix": ".",
+  "legalNoticeLink": "Legal Notice",
+  "privacyPolicyLink": "Privacy Policy",
+
+  "haveAccountQuestion": "Already have an account? ",
+  "noAccountQuestion": "Don't have an account? ",
+  "signInLink": "Sign in",
+  "signUpLink": "Create free account",
+  "notAffiliated": "Not affiliated with Valve Corporation",
+
+  "errorEmailRequired": "Email is required",
+  "errorEmailInvalid": "Email format is invalid",
+  "errorPasswordRequired": "Password is required",
+  "errorPasswordTooShort": "Password must be at least 4 characters",
+  "errorUsernameRequired": "Username is required",
+  "errorUsernameTooShort": "Username must be at least 3 characters",
+  "sessionStarted": "Signed in successfully",
+
+  "navHome": "Home",
+  "navDiscover": "Discover",
+  "navPosts": "Posts",
+  "navFriends": "Friends",
+  "navChat": "Chat",
+  "navAlerts": "Alerts",
+  "navProfile": "Profile",
+  "navPublicaciones": "Posts",
+
+  "yourGamesSection": "YOUR GAMES",
+  "noGamesYet": "You haven't added any games yet.",
+  "viewAllArrow": "View all →",
+  "connectPromoTitle": "Connect with other gamers",
+  "connectPromoBody": "Find people with the same games and schedule as you.",
+  "exploreButton": "Explore",
+  "defaultGameName": "Game",
+
+  "languageSectionTitle": "Language",
+  "languageSpanish": "Español",
+  "languageEnglish": "English"
+}

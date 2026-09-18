@@ -1,6 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
+import '../../../theme/radii.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_card.dart';
 import '../../../widgets/strength_bar.dart';
@@ -224,6 +227,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       const _SecurityCard(),
       const SizedBox(height: 16),
       const _PrivacyCard(),
+      const SizedBox(height: 16),
+      const _LanguageCard(),
       const SizedBox(height: 16),
       const _LegalCard(),
       const SizedBox(height: 16),
@@ -666,6 +671,84 @@ class _PrivacyCardState extends State<_PrivacyCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Selector ES/EN. Solo login/registro, el bottom nav y el sidebar de
+/// escritorio están traducidos todavía — ver HANDOFF.md, el resto de la
+/// app sigue en español sin importar lo que se elija acá.
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
+    final localeProv = context.watch<LocaleProvider>();
+    final esEspanol = localeProv.locale.languageCode == 'es';
+
+    return SteamCard(
+      icon: Icons.language_outlined,
+      title: t.languageSectionTitle,
+      child: Row(
+        children: [
+          Expanded(
+            child: _OpcionIdioma(
+              label: t.languageSpanish,
+              seleccionado: esEspanol,
+              onTap: () => context.read<LocaleProvider>().cambiarA('es'),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _OpcionIdioma(
+              label: t.languageEnglish,
+              seleccionado: !esEspanol,
+              onTap: () => context.read<LocaleProvider>().cambiarA('en'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpcionIdioma extends StatelessWidget {
+  final String label;
+  final bool seleccionado;
+  final VoidCallback onTap;
+
+  const _OpcionIdioma({
+    required this.label,
+    required this.seleccionado,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: seleccionado ? SteamColors.blue : SteamColors.bgPanel,
+      borderRadius: BorderRadius.circular(SteamRadii.sm),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
+            border: Border.all(color: seleccionado ? SteamColors.blue : SteamColors.border),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: seleccionado ? Colors.white : SteamColors.light,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }

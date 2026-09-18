@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../amistad/screens/amistad_screen.dart';
@@ -87,6 +88,7 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context)!;
     return Container(
       decoration: const BoxDecoration(
         color: SteamColors.bgPanel,
@@ -100,7 +102,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home_rounded,
-                label: 'Inicio',
+                label: t.navHome,
                 index: 0,
                 currentIndex: currentIndex,
                 onTap: () => onTap(0),
@@ -108,7 +110,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.people_outline,
                 activeIcon: Icons.people_rounded,
-                label: 'Descubrir',
+                label: t.navDiscover,
                 index: 1,
                 currentIndex: currentIndex,
                 onTap: () => onTap(1),
@@ -116,7 +118,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.campaign_outlined,
                 activeIcon: Icons.campaign_rounded,
-                label: 'Publica.',
+                label: t.navPosts,
                 index: 2,
                 currentIndex: currentIndex,
                 onTap: () => onTap(2),
@@ -124,7 +126,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.group_outlined,
                 activeIcon: Icons.group_rounded,
-                label: 'Amigos',
+                label: t.navFriends,
                 index: 3,
                 currentIndex: currentIndex,
                 onTap: () => onTap(3),
@@ -132,7 +134,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.chat_bubble_outline,
                 activeIcon: Icons.chat_bubble_rounded,
-                label: 'Chat',
+                label: t.navChat,
                 index: 4,
                 currentIndex: currentIndex,
                 onTap: () => onTap(4),
@@ -140,7 +142,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.notifications_outlined,
                 activeIcon: Icons.notifications_rounded,
-                label: 'Avisos',
+                label: t.navAlerts,
                 index: 5,
                 currentIndex: currentIndex,
                 badge: unreadCount,
@@ -149,7 +151,7 @@ class _BottomNavBar extends StatelessWidget {
               _NavItem(
                 icon: Icons.manage_accounts_outlined,
                 activeIcon: Icons.manage_accounts_rounded,
-                label: 'Perfil',
+                label: t.navProfile,
                 index: 6,
                 currentIndex: currentIndex,
                 onTap: () => onTap(6),

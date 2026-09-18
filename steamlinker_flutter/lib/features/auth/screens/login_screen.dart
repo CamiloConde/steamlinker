@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/navigation/app_navigator.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../legal/screens/aviso_legal_screen.dart';
@@ -39,34 +40,35 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
+    final t = AppLocalizations.of(context)!;
     // Validaciones antes de llamar al backend
     if (_emailController.text.trim().isEmpty) {
-      showSteamToast(context, 'El correo es obligatorio', SteamColors.orange);
+      showSteamToast(context, t.errorEmailRequired, SteamColors.orange);
       return;
     }
 
     if (!_emailController.text.trim().contains('@')) {
-      showSteamToast(context, 'El correo no tiene un formato válido', SteamColors.orange);
+      showSteamToast(context, t.errorEmailInvalid, SteamColors.orange);
       return;
     }
 
     if (_passwordController.text.isEmpty) {
-      showSteamToast(context, 'La contraseña es obligatoria', SteamColors.orange);
+      showSteamToast(context, t.errorPasswordRequired, SteamColors.orange);
       return;
     }
 
     if (_passwordController.text.length < 4) {
-      showSteamToast(context, 'La contraseña debe tener al menos 4 caracteres', SteamColors.orange);
+      showSteamToast(context, t.errorPasswordTooShort, SteamColors.orange);
       return;
     }
 
     if (_mostrarRegistro && _usernameController.text.trim().isEmpty) {
-      showSteamToast(context, 'El nombre de usuario es obligatorio', SteamColors.orange);
+      showSteamToast(context, t.errorUsernameRequired, SteamColors.orange);
       return;
     }
 
     if (_mostrarRegistro && _usernameController.text.trim().length < 3) {
-      showSteamToast(context, 'El usuario debe tener al menos 3 caracteres', SteamColors.orange);
+      showSteamToast(context, t.errorUsernameTooShort, SteamColors.orange);
       return;
     }
 
@@ -87,13 +89,14 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (exito && mounted) {
-      showSteamToast(context, 'Sesión iniciada correctamente', SteamColors.green);
+      showSteamToast(context, t.sessionStarted, SteamColors.green);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final t = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
@@ -133,9 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: SteamColors.light,
                   ),
                 ),
-                const Text(
-                  'Tu conector de comunidad gamer',
-                  style: TextStyle(fontSize: 13, color: SteamColors.textSec),
+                Text(
+                  t.appTagline,
+                  style: const TextStyle(fontSize: 13, color: SteamColors.textSec),
                 ),
                 const SizedBox(height: 40),
 
@@ -152,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
 
                       Text(
-                        _mostrarRegistro ? 'CREAR CUENTA' : 'INICIAR SESIÓN',
+                        _mostrarRegistro ? t.registerTitle : t.loginTitle,
                         style: const TextStyle(
                           color: SteamColors.light,
                           fontSize: 14,
@@ -164,40 +167,40 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       // Campo username solo en registro
                       if (_mostrarRegistro) ...[
-                        const Text('NOMBRE DE USUARIO',
-                            style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
+                        Text(t.usernameLabel,
+                            style: const TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _usernameController,
                           style: const TextStyle(color: SteamColors.light),
-                          decoration: const InputDecoration(
-                            hintText: 'Tu nombre de usuario',
-                            hintStyle: TextStyle(color: SteamColors.muted),
-                            prefixIcon: Icon(Icons.person_outline, size: 18, color: SteamColors.muted),
+                          decoration: InputDecoration(
+                            hintText: t.usernameHint,
+                            hintStyle: const TextStyle(color: SteamColors.muted),
+                            prefixIcon: const Icon(Icons.person_outline, size: 18, color: SteamColors.muted),
                           ),
                         ),
                         const SizedBox(height: 16),
                       ],
 
                       // Campo email
-                      const Text('CORREO',
-                          style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
+                      Text(t.emailLabel,
+                          style: const TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         style: const TextStyle(color: SteamColors.light),
-                        decoration: const InputDecoration(
-                          hintText: 'tu@correo.com',
-                          hintStyle: TextStyle(color: SteamColors.muted),
-                          prefixIcon: Icon(Icons.email_outlined, size: 18, color: SteamColors.muted),
+                        decoration: InputDecoration(
+                          hintText: t.emailHint,
+                          hintStyle: const TextStyle(color: SteamColors.muted),
+                          prefixIcon: const Icon(Icons.email_outlined, size: 18, color: SteamColors.muted),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Campo contrasena
-                      const Text('CONTRASEÑA',
-                          style: TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
+                      Text(t.passwordLabel,
+                          style: const TextStyle(fontSize: 11, color: SteamColors.textSec, letterSpacing: 1)),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _passwordController,
@@ -267,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : Text(_mostrarRegistro ? 'CREAR CUENTA' : 'INGRESAR'),
+                              : Text(_mostrarRegistro ? t.registerTitle : t.loginButton),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -293,12 +296,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(width: 9),
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'Vincular tu cuenta de Steam es un paso posterior, '
-                                'dentro de Perfil. Hace falta solo para publicar o '
-                                'matchear en Familia.',
-                                style: TextStyle(
+                                t.steamLinkNote,
+                                style: const TextStyle(
                                   color: SteamColors.textSec,
                                   fontSize: 12,
                                   height: 1.4,
@@ -320,21 +321,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       text: TextSpan(
                         style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
                         children: [
-                          const TextSpan(text: 'Al crear tu cuenta, aceptas nuestro '),
+                          TextSpan(text: t.legalConsentPrefix),
                           TextSpan(
-                            text: 'Aviso legal',
+                            text: t.legalNoticeLink,
                             style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => pushAppScreen(context, const AvisoLegalScreen()),
                           ),
-                          const TextSpan(text: ' y nuestra '),
+                          TextSpan(text: t.legalConsentAnd),
                           TextSpan(
-                            text: 'Política de privacidad',
+                            text: t.privacyPolicyLink,
                             style: const TextStyle(color: SteamColors.blue, fontWeight: FontWeight.w600),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () => pushAppScreen(context, const PoliticaPrivacidadScreen()),
                           ),
-                          const TextSpan(text: '.'),
+                          TextSpan(text: t.legalConsentSuffix),
                         ],
                       ),
                     ),
@@ -347,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: WrapAlignment.center,
                   children: [
                     Text(
-                      _mostrarRegistro ? '¿Ya tienes cuenta? ' : '¿No tienes cuenta? ',
+                      _mostrarRegistro ? t.haveAccountQuestion : t.noAccountQuestion,
                       style: const TextStyle(color: SteamColors.textSec, fontSize: 13),
                     ),
                     GestureDetector(
@@ -355,7 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _mostrarRegistro = !_mostrarRegistro;
                       }),
                       child: Text(
-                        _mostrarRegistro ? 'Inicia sesión' : 'Crear cuenta gratis',
+                        _mostrarRegistro ? t.signInLink : t.signUpLink,
                         style: const TextStyle(
                           color: SteamColors.blue,
                           fontSize: 13,
@@ -370,7 +371,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
             ),
           ),
-          const Positioned(
+          Positioned(
             left: 0,
             right: 0,
             bottom: 10,
@@ -378,8 +379,8 @@ class _LoginScreenState extends State<LoginScreen> {
               top: false,
               child: Center(
                 child: Text(
-                  'No afiliado a Valve Corporation',
-                  style: TextStyle(color: SteamColors.muted, fontSize: 11),
+                  t.notAffiliated,
+                  style: const TextStyle(color: SteamColors.muted, fontSize: 11),
                 ),
               ),
             ),
