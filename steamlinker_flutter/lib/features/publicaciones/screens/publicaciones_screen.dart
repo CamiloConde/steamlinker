@@ -8,6 +8,7 @@ import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/drop_field.dart';
 import '../../../widgets/publicacion_card.dart';
+import '../../../widgets/scroll_to_top_fab.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -33,6 +34,7 @@ class PublicacionesScreen extends StatefulWidget {
 
 class _PublicacionesScreenState extends State<PublicacionesScreen> {
   bool _inicializado = false;
+  final _scrollCtrl = ScrollController();
 
   // Conmutador de escritorio (wireframe turno 3b): "Familia" agrupa
   // busco_familia+busco_miembros, "Jugar ahora" es busco_companero, "Otro"
@@ -70,6 +72,12 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
       context.read<AmistadProvider>().cargarTodo(),
       context.read<ChatProvider>().cargarConversaciones(),
     ]);
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _recargar() async {
@@ -389,7 +397,16 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
-      body: DesktopBodyWidth(child: SafeArea(child: feed)),
+      body: DesktopBodyWidth(
+        child: SafeArea(
+          child: Stack(
+            children: [
+              feed,
+              ScrollToTopFab(controller: _scrollCtrl),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -441,6 +458,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     }
 
     return ListView.separated(
+      controller: _scrollCtrl,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
       itemCount: publicacionesProv.publicaciones.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),

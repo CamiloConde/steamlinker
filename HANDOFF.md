@@ -1313,9 +1313,23 @@ parecen:**
       real hoy porque nadie está instalando la PWA todavía, y de todas
       formas hay que rehacerlos cuando exista el logo real (ver pendiente
       de identidad visual, sección de Nivel 2).
-- [ ] Loading screen inicial (hoy el arranque de Flutter Web puede verse en
-      blanco unos segundos)
-- [ ] Botón "volver arriba" en listas largas (Descubrir, Publicaciones)
+- [x] **Loading screen inicial — hecho.** Splash puro HTML/CSS en
+      `web/index.html` (círculo con el gradiente azul→teal de la marca +
+      "STEAMMATCH"), visible antes de que cargue cualquier JS — se pinta
+      apenas el navegador recibe el HTML, no espera al motor de Flutter.
+      Se quita solo al evento real `flutter-first-frame` (nunca por un
+      `setTimeout` arbitrario, que podría desaparecer antes de tiempo en
+      una red lenta o quedarse pegado si Flutter tarda más).
+- [x] **Botón "volver arriba" en listas largas — hecho en Descubrir y
+      Publicaciones (vista móvil).** `ScrollToTopFab`
+      (`lib/widgets/scroll_to_top_fab.dart`): aparece solo después de bajar
+      ~400px, anima el scroll de vuelta a 0 en vez de saltar de golpe. En
+      Publicaciones se ubica abajo a la izquierda para no chocar con el FAB
+      "Crear" que ya vive abajo a la derecha. **No se hizo en la vista de
+      escritorio de ninguna de las dos pantallas** (usan tabla/panel
+      lateral con menos necesidad real de esto, y son layouts distintos
+      que no comparten el mismo `ScrollController`) — alcance acotado a
+      propósito, no un olvido.
 - [ ] Optimización de velocidad: ya se hizo tree-shaking de íconos en cada
       build; falta medir con Lighthouse una vez esté desplegado, no antes
 - [x] ~~Arreglar los hallazgos de la auditoría de esta sesión que quedaron

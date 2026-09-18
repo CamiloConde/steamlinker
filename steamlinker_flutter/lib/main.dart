@@ -63,7 +63,7 @@ class _SteamlinkerAppState extends State<SteamlinkerApp> {
       ],
       child: ApiBootstrap(
         child: MaterialApp.router(
-          title: 'Steamlinker',
+          title: 'SteamMatch',
           debugShowCheckedModeBanner: false,
           theme: SteamTheme.theme,
           routerConfig: _router,

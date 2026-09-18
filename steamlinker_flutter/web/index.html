@@ -31,8 +31,66 @@
 
   <title>SteamMatch</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Splash de arranque: puro HTML/CSS, se pinta antes de que cargue
+       cualquier JS. Sin esto, Flutter Web deja la pestaña en blanco unos
+       segundos mientras descarga el motor — confuso para quien no sabe
+       que la app sigue cargando. Se quita solo al primer frame real
+       (evento "flutter-first-frame"), nunca por un timer. */
+    html, body {
+      background: #0A0E1A;
+      height: 100%;
+      margin: 0;
+    }
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #0A0E1A;
+      z-index: 9999;
+      transition: opacity 0.25s ease-out;
+    }
+    #splash.splash-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #splash-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3B82F6, #22D3EE);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: splash-pulse 1.6s ease-in-out infinite;
+    }
+    #splash-logo svg { width: 32px; height: 32px; }
+    #splash-title {
+      color: #E8ECF4;
+      font: 700 15px/1.4 system-ui, -apple-system, sans-serif;
+      letter-spacing: 2px;
+    }
+    @keyframes splash-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.85; }
+    }
+  </style>
 </head>
 <body>
+  <div id="splash">
+    <div id="splash-logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#FFFFFF" d="M21 6H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1ZM7.5 13H6v1.5a.5.5 0 0 1-1 0V13H3.5a.5.5 0 0 1 0-1H5V10.5a.5.5 0 0 1 1 0V12h1.5a.5.5 0 0 1 0 1Zm7.75 1.75a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Zm2.5-3a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5Z"/>
+      </svg>
+    </div>
+    <div id="splash-title">STEAMMATCH</div>
+  </div>
+
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -42,5 +100,13 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('splash');
+      if (!splash) return;
+      splash.classList.add('splash-hidden');
+      setTimeout(function () { splash.remove(); }, 300);
+    });
+  </script>
 </body>
 </html>

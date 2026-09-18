@@ -6,6 +6,7 @@ import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/drop_field.dart';
+import '../../../widgets/scroll_to_top_fab.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/usuario_card.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -41,6 +42,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
   _Orden _orden = _Orden.enComun;
   String _busqueda = '';
   final _busquedaCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
 
   @override
   void didChangeDependencies() {
@@ -67,6 +69,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
   @override
   void dispose() {
     _busquedaCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -293,7 +296,9 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
           ),
         ],
       ),
-      body: esEscritorio
+      body: Stack(
+        children: [
+          esEscritorio
           ? _CuerpoEscritorio(
               cargando: perfilProv.descubrirCargando,
               base: base,
@@ -375,12 +380,15 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                                 valueColor: AlwaysStoppedAnimation(SteamColors.blue),
                               ),
                             )
-                          : _ListaGamers(usuarios: lista, onTap: _abrirUsuario),
+                          : _ListaGamers(usuarios: lista, onTap: _abrirUsuario, controller: _scrollCtrl),
                     ),
                   ),
                 ],
               ),
             ),
+          ScrollToTopFab(controller: _scrollCtrl),
+        ],
+      ),
     );
   }
 
@@ -401,8 +409,9 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
 class _ListaGamers extends StatelessWidget {
   final List<Map<String, dynamic>> usuarios;
   final ValueChanged<Map<String, dynamic>> onTap;
+  final ScrollController? controller;
 
-  const _ListaGamers({required this.usuarios, required this.onTap});
+  const _ListaGamers({required this.usuarios, required this.onTap, this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -426,6 +435,7 @@ class _ListaGamers extends StatelessWidget {
     }
 
     return ListView.separated(
+      controller: controller,
       padding: const EdgeInsets.all(16),
       itemCount: usuarios.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
