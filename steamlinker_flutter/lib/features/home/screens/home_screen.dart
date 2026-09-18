@@ -137,64 +137,70 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Tarjeta de Bienvenida ────────────────────────────
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [SteamColors.blue, SteamColors.teal],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                _HeroEntrada(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [SteamColors.blue, SteamColors.teal],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(SteamRadii.sm),
+                      border: Border.all(color: SteamColors.blue, width: 1),
                     ),
-                    borderRadius: BorderRadius.circular(SteamRadii.sm),
-                    border: Border.all(color: SteamColors.blue, width: 1),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Bienvenido',
-                            style: TextStyle(
-                              color: SteamColors.textSec,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Bienvenido',
+                              style: TextStyle(
+                                color: SteamColors.textSec,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            usuario['username'] ?? 'Usuario',
-                            style: const TextStyle(
-                              color: SteamColors.light,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
+                            const SizedBox(height: 6),
+                            Text(
+                              usuario['username'] ?? 'Usuario',
+                              style: const TextStyle(
+                                color: SteamColors.light,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(SteamRadii.sm),
-                          color: SteamColors.blue.withAlpha(51),
-                          border: Border.all(color: SteamColors.blue, width: 2),
+                          ],
                         ),
-                        child: Center(
-                          child: Text(
-                            (usuario['username'] as String).isNotEmpty
-                                ? (usuario['username'] as String)[0].toUpperCase()
-                                : 'U',
-                            style: const TextStyle(
-                              color: SteamColors.light,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(SteamRadii.sm),
+                            color: SteamColors.blue.withAlpha(51),
+                            border: Border.all(
+                              color: SteamColors.blue,
+                              width: 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              (usuario['username'] as String).isNotEmpty
+                                  ? (usuario['username'] as String)[0]
+                                        .toUpperCase()
+                                  : 'U',
+                              style: const TextStyle(
+                                color: SteamColors.light,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -206,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 if (!steamVinculado) ...[
                   const SizedBox(height: 10),
-                  _TarjetaSteamNoVinculado(onVincular: () => _ir(7, const PerfilScreen())),
+                  _TarjetaSteamNoVinculado(
+                    onVincular: () => _ir(7, const PerfilScreen()),
+                  ),
                 ],
 
                 if (pendientes.isNotEmpty) ...[
@@ -219,12 +227,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _FilaSolicitud(
                         match: Map<String, dynamic>.from(m as Map),
                         onAceptar: () async {
-                          await matchesProv.responder(m['id_match'], 'Aceptada');
+                          await matchesProv.responder(
+                            m['id_match'],
+                            'Aceptada',
+                          );
                           if (!context.mounted) return;
                           await _cargar();
                         },
                         onRechazar: () async {
-                          await matchesProv.responder(m['id_match'], 'Rechazada');
+                          await matchesProv.responder(
+                            m['id_match'],
+                            'Rechazada',
+                          );
                         },
                         onVerPerfil: () => Navigator.of(context).push(
                           MaterialPageRoute(
@@ -244,7 +258,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     const _Titulo('TUS PUBLICACIONES ABIERTAS'),
                     TextButton(
                       onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CrearPublicacionScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const CrearPublicacionScreen(),
+                        ),
                       ),
                       child: const Text('Crear publicación'),
                     ),
@@ -255,7 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: EdgeInsets.only(bottom: 8),
                     child: Text(
                       'No tienes publicaciones abiertas.',
-                      style: TextStyle(color: SteamColors.textSec, fontSize: 13),
+                      style: TextStyle(
+                        color: SteamColors.textSec,
+                        fontSize: 13,
+                      ),
                     ),
                   )
                 else
@@ -271,7 +290,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           await publicacionesProv.cerrar(p['id_publi'] as int);
                         },
                         onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const PublicacionesScreen()),
+                          MaterialPageRoute(
+                            builder: (_) => const PublicacionesScreen(),
+                          ),
                         ),
                       ),
                     ),
@@ -293,8 +314,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 6),
                           TextButton(
-                            onPressed: () => _ir(2, const PublicacionesScreen()),
-                            child: const Text('Ver publicaciones de la comunidad'),
+                            onPressed: () =>
+                                _ir(2, const PublicacionesScreen()),
+                            child: const Text(
+                              'Ver publicaciones de la comunidad',
+                            ),
                           ),
                         ],
                       ),
@@ -347,7 +371,11 @@ class _FooterInicio extends StatelessWidget {
             'Conectamos gamers para formar familias de Steam y encontrar '
             'compañeros de juego, a partir de tu biblioteca verificada. '
             'Un proyecto independiente, no un servicio oficial de Steam.',
-            style: TextStyle(color: SteamColors.muted, fontSize: 12, height: 1.5),
+            style: TextStyle(
+              color: SteamColors.muted,
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -357,6 +385,34 @@ class _FooterInicio extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Animación de entrada del hero (tarjeta de bienvenida): fundido + una
+/// leve subida y escala al aparecer, una sola vez al montar la pantalla.
+/// Nada de bucles infinitos ni movimiento constante — eso cansa la vista
+/// en una pantalla que se revisita todo el tiempo.
+class _HeroEntrada extends StatelessWidget {
+  final Widget child;
+  const _HeroEntrada({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 480),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, child) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 14),
+            child: Transform.scale(scale: 0.98 + (t * 0.02), child: child),
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
@@ -383,7 +439,10 @@ class _TarjetaEstado extends StatelessWidget {
   final String estado;
   final int publicacionesAbiertas;
 
-  const _TarjetaEstado({required this.estado, required this.publicacionesAbiertas});
+  const _TarjetaEstado({
+    required this.estado,
+    required this.publicacionesAbiertas,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -492,11 +551,13 @@ class _FilaSolicitud extends StatelessWidget {
     final accion = tipo == 'busco_familia' || tipo == 'busco_miembros'
         ? 'quiere unirse a tu publicación'
         : tipo == 'busco_companero'
-            ? 'quiere jugar contigo'
-            : 'quiere conectar contigo';
+        ? 'quiere jugar contigo'
+        : 'quiere conectar contigo';
 
     final partes = <String>[];
-    if (tipo != null) partes.add(PublicacionConstants.etiquetaTipo(tipo).toUpperCase());
+    if (tipo != null) {
+      partes.add(PublicacionConstants.etiquetaTipo(tipo).toUpperCase());
+    }
     final total = match['cupos_totales'] as int?;
     if (total != null) {
       partes.add('${match['cupos_ocupados'] ?? 0}/$total cupos');
@@ -508,7 +569,9 @@ class _FilaSolicitud extends StatelessWidget {
       partes.add('★ ${double.tryParse('$rep')?.toStringAsFixed(1) ?? rep}');
     }
     final pais = match['solicitante_pais'] as String?;
-    if (pais != null && pais.isNotEmpty) partes.add(PaisUtil.codigoANombre(pais));
+    if (pais != null && pais.isNotEmpty) {
+      partes.add(PaisUtil.codigoANombre(pais));
+    }
 
     return Container(
       padding: const EdgeInsets.all(11),
@@ -533,7 +596,11 @@ class _FilaSolicitud extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               username.isNotEmpty ? username[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           const SizedBox(width: 11),
@@ -554,7 +621,10 @@ class _FilaSolicitud extends StatelessWidget {
                       ),
                       TextSpan(
                         text: ' $accion',
-                        style: const TextStyle(color: SteamColors.textSec, fontWeight: FontWeight.w400),
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
                     ],
                   ),
@@ -564,7 +634,10 @@ class _FilaSolicitud extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       partes.join(' · '),
-                      style: const TextStyle(color: SteamColors.muted, fontSize: 11.5),
+                      style: const TextStyle(
+                        color: SteamColors.muted,
+                        fontSize: 11.5,
+                      ),
                     ),
                   ),
               ],
@@ -640,8 +713,9 @@ class _FilaPublicacionPropia extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      PublicacionConstants.etiquetaTipo(publicacion['tipo_publi'] as String?)
-                          .toUpperCase(),
+                      PublicacionConstants.etiquetaTipo(
+                        publicacion['tipo_publi'] as String?,
+                      ).toUpperCase(),
                       style: const TextStyle(
                         color: SteamColors.light,
                         fontSize: 12.5,
@@ -653,7 +727,10 @@ class _FilaPublicacionPropia extends StatelessWidget {
                       solicitudesNuevas > 0
                           ? '$solicitudesNuevas solicitud${solicitudesNuevas == 1 ? '' : 'es'} nueva${solicitudesNuevas == 1 ? '' : 's'}'
                           : (publicacion['titulo_publi'] as String? ?? ''),
-                      style: const TextStyle(color: SteamColors.muted, fontSize: 11.5),
+                      style: const TextStyle(
+                        color: SteamColors.muted,
+                        fontSize: 11.5,
+                      ),
                     ),
                   ],
                 ),
@@ -667,9 +744,20 @@ class _FilaPublicacionPropia extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('CUPOS', style: TextStyle(color: SteamColors.textSec, fontSize: 10)),
-                          Text('$ocupados/$total',
-                              style: const TextStyle(color: SteamColors.textSec, fontSize: 10)),
+                          const Text(
+                            'CUPOS',
+                            style: TextStyle(
+                              color: SteamColors.textSec,
+                              fontSize: 10,
+                            ),
+                          ),
+                          Text(
+                            '$ocupados/$total',
+                            style: const TextStyle(
+                              color: SteamColors.textSec,
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 3),
@@ -679,7 +767,9 @@ class _FilaPublicacionPropia extends StatelessWidget {
                           value: total > 0 ? (ocupados / total).clamp(0, 1) : 0,
                           minHeight: 5,
                           backgroundColor: SteamColors.bgInput,
-                          valueColor: const AlwaysStoppedAnimation(SteamColors.teal),
+                          valueColor: const AlwaysStoppedAnimation(
+                            SteamColors.teal,
+                          ),
                         ),
                       ),
                     ],
@@ -692,7 +782,10 @@ class _FilaPublicacionPropia extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: SteamColors.textSec,
                   side: const BorderSide(color: SteamColors.border),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                 ),
                 child: const Text('Cerrar', style: TextStyle(fontSize: 12.5)),
               ),

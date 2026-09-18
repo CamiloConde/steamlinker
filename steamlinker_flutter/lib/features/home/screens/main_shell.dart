@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
@@ -95,65 +95,67 @@ class _BottomNavBar extends StatelessWidget {
       child: SafeArea(
         child: SizedBox(
           height: 60,
-          child: Row(children: [
-            _NavItem(
-              icon: Icons.home_outlined,
-              activeIcon: Icons.home_rounded,
-              label: 'Inicio',
-              index: 0,
-              currentIndex: currentIndex,
-              onTap: () => onTap(0),
-            ),
-            _NavItem(
-              icon: Icons.people_outline,
-              activeIcon: Icons.people_rounded,
-              label: 'Descubrir',
-              index: 1,
-              currentIndex: currentIndex,
-              onTap: () => onTap(1),
-            ),
-            _NavItem(
-              icon: Icons.campaign_outlined,
-              activeIcon: Icons.campaign_rounded,
-              label: 'Publica.',
-              index: 2,
-              currentIndex: currentIndex,
-              onTap: () => onTap(2),
-            ),
-            _NavItem(
-              icon: Icons.group_outlined,
-              activeIcon: Icons.group_rounded,
-              label: 'Amigos',
-              index: 3,
-              currentIndex: currentIndex,
-              onTap: () => onTap(3),
-            ),
-            _NavItem(
-              icon: Icons.chat_bubble_outline,
-              activeIcon: Icons.chat_bubble_rounded,
-              label: 'Chat',
-              index: 4,
-              currentIndex: currentIndex,
-              onTap: () => onTap(4),
-            ),
-            _NavItem(
-              icon: Icons.notifications_outlined,
-              activeIcon: Icons.notifications_rounded,
-              label: 'Avisos',
-              index: 5,
-              currentIndex: currentIndex,
-              badge: unreadCount,
-              onTap: () => onTap(5),
-            ),
-            _NavItem(
-              icon: Icons.manage_accounts_outlined,
-              activeIcon: Icons.manage_accounts_rounded,
-              label: 'Perfil',
-              index: 6,
-              currentIndex: currentIndex,
-              onTap: () => onTap(6),
-            ),
-          ]),
+          child: Row(
+            children: [
+              _NavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: 'Inicio',
+                index: 0,
+                currentIndex: currentIndex,
+                onTap: () => onTap(0),
+              ),
+              _NavItem(
+                icon: Icons.people_outline,
+                activeIcon: Icons.people_rounded,
+                label: 'Descubrir',
+                index: 1,
+                currentIndex: currentIndex,
+                onTap: () => onTap(1),
+              ),
+              _NavItem(
+                icon: Icons.campaign_outlined,
+                activeIcon: Icons.campaign_rounded,
+                label: 'Publica.',
+                index: 2,
+                currentIndex: currentIndex,
+                onTap: () => onTap(2),
+              ),
+              _NavItem(
+                icon: Icons.group_outlined,
+                activeIcon: Icons.group_rounded,
+                label: 'Amigos',
+                index: 3,
+                currentIndex: currentIndex,
+                onTap: () => onTap(3),
+              ),
+              _NavItem(
+                icon: Icons.chat_bubble_outline,
+                activeIcon: Icons.chat_bubble_rounded,
+                label: 'Chat',
+                index: 4,
+                currentIndex: currentIndex,
+                onTap: () => onTap(4),
+              ),
+              _NavItem(
+                icon: Icons.notifications_outlined,
+                activeIcon: Icons.notifications_rounded,
+                label: 'Avisos',
+                index: 5,
+                currentIndex: currentIndex,
+                badge: unreadCount,
+                onTap: () => onTap(5),
+              ),
+              _NavItem(
+                icon: Icons.manage_accounts_outlined,
+                activeIcon: Icons.manage_accounts_rounded,
+                label: 'Perfil',
+                index: 6,
+                currentIndex: currentIndex,
+                onTap: () => onTap(6),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -184,65 +186,74 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(clipBehavior: Clip.none, children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                child: Icon(
-                  _active ? activeIcon : icon,
-                  key: ValueKey(_active),
-                  color: _active ? SteamColors.blue : SteamColors.muted,
-                  size: 21,
-                ),
-              ),
-              if (badge > 0)
-                Positioned(
-                  top: -5,
-                  right: -7,
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: SteamColors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      badge > 9 ? '9+' : '$badge',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      _active ? activeIcon : icon,
+                      key: ValueKey(_active),
+                      color: _active ? SteamColors.blue : SteamColors.muted,
+                      size: 21,
                     ),
                   ),
+                  if (badge > 0)
+                    Positioned(
+                      top: -5,
+                      right: -7,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: SteamColors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          badge > 9 ? '9+' : '$badge',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 180),
+                style: TextStyle(
+                  color: _active ? SteamColors.blue : SteamColors.muted,
+                  fontSize: 9,
+                  fontWeight: _active ? FontWeight.w700 : FontWeight.w400,
+                  letterSpacing: 0.2,
                 ),
-            ]),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 180),
-              style: TextStyle(
-                color: _active ? SteamColors.blue : SteamColors.muted,
-                fontSize: 9,
-                fontWeight: _active ? FontWeight.w700 : FontWeight.w400,
-                letterSpacing: 0.2,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-            const SizedBox(height: 2),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 2,
-              width: _active ? 24 : 0,
-              decoration: BoxDecoration(
-                color: SteamColors.blue,
-                borderRadius: BorderRadius.circular(SteamRadii.sm),
+              const SizedBox(height: 2),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 2,
+                width: _active ? 24 : 0,
+                decoration: BoxDecoration(
+                  color: SteamColors.blue,
+                  borderRadius: BorderRadius.circular(SteamRadii.sm),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

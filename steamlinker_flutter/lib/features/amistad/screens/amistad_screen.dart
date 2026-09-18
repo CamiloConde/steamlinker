@@ -47,39 +47,41 @@ class _AmistadScreenState extends State<AmistadScreen> {
           ),
         ],
       ),
-      body: DesktopBodyWidth(child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                _TabChip(
-                  label: 'Solicitudes (${prov.solicitudes.length})',
-                  selected: _tab == 0,
-                  onTap: () => setState(() => _tab = 0),
-                ),
-                const SizedBox(width: 10),
-                _TabChip(
-                  label: 'Amigos (${prov.amigos.length})',
-                  selected: _tab == 1,
-                  onTap: () => setState(() => _tab = 1),
-                ),
-              ],
+      body: DesktopBodyWidth(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  _TabChip(
+                    label: 'Solicitudes (${prov.solicitudes.length})',
+                    selected: _tab == 0,
+                    onTap: () => setState(() => _tab = 0),
+                  ),
+                  const SizedBox(width: 10),
+                  _TabChip(
+                    label: 'Amigos (${prov.amigos.length})',
+                    selected: _tab == 1,
+                    onTap: () => setState(() => _tab = 1),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: prov.cargando
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                    ),
-                  )
-                : _tab == 0
-                    ? _buildSolicitudes(prov)
-                    : _buildAmigos(prov),
-          ),
-        ],
-      )),
+            Expanded(
+              child: prov.cargando
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                      ),
+                    )
+                  : _tab == 0
+                  ? _buildSolicitudes(prov)
+                  : _buildAmigos(prov),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -120,7 +122,11 @@ class _AmistadScreenState extends State<AmistadScreen> {
                     await prov.responder(s['id_amistad'], 'Aceptada');
                     if (!context.mounted) return;
                     context.read<NotificacionesProvider>().cargarContador();
-                    showSteamToast(context, 'Amistad aceptada', SteamColors.green);
+                    showSteamToast(
+                      context,
+                      'Amistad aceptada',
+                      SteamColors.green,
+                    );
                   },
                 ),
                 const SizedBox(height: 6),
@@ -188,22 +194,31 @@ class _TabChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? SteamColors.blue : SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(SteamRadii.sm),
-            border: Border.all(color: selected ? SteamColors.blue : SteamColors.border),
+      child: Material(
+        color: selected ? SteamColors.blue : SteamColors.bgPanel,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
+          hoverColor: (selected ? Colors.white : SteamColors.blue).withValues(
+            alpha: 0.08,
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: selected ? Colors.white : SteamColors.light,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
+              border: Border.all(
+                color: selected ? SteamColors.blue : SteamColors.border,
+              ),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected ? Colors.white : SteamColors.light,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),

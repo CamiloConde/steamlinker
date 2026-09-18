@@ -1399,12 +1399,42 @@ parecen:**
       dentro de una sesión de desarrollo.
 
 **Nivel 3 — pulido visual, alto costo/beneficio dudoso para una beta:**
-- [ ] Animaciones suaves de scroll, microinteracciones en botones, estados
-      hover — Flutter Web ya trae algo de esto gratis (`InkWell`, splash);
-      lo que falta es intencional, no ausente por accidente. Vale la pena
-      solo si hay tiempo sobrante, no es lo que hace o deshace el producto.
-  - [ ] Transiciones entre pantallas
-  - [ ] Animación del hero/banner de bienvenida en Inicio
+- [x] **Animaciones y microinteracciones — pedido explícito del usuario,
+      hecho.** El usuario eligió esto directamente entre las opciones de
+      Nivel 3 cuando se le preguntó qué seguía.
+  - [x] **Transiciones entre pantallas**: `PageTransitionsTheme` nuevo en
+        `theme/app_theme.dart` (`_FadeThroughTransitionsBuilder`, fundido +
+        leve subida), aplicado igual en las 6 plataformas de
+        `TargetPlatform` en vez de dejar que Flutter elija el estilo nativo
+        según `defaultTargetPlatform` — en Flutter Web eso depende del
+        user-agent detectado y se sentía inconsistente entre navegadores.
+        Como `MaterialPageRoute` y las rutas de GoRouter leen el tema
+        automáticamente, esto afecta **todas** las transiciones de la app
+        sin tocar cada pantalla una por una.
+  - [x] **Animación del hero/banner de bienvenida en Inicio**: fundido +
+        leve subida + escala al montar la pantalla, una sola vez (nada de
+        bucles infinitos — es una pantalla que se revisita todo el tiempo,
+        un movimiento constante cansaría). `_HeroEntrada` en
+        `home_screen.dart`, con `TweenAnimationBuilder`.
+  - [x] **Microinteracciones — se encontraron 4 puntos reales sin ningún
+        feedback al tocar** (no "podría ser más lindo", literalmente cero
+        respuesta visual al tap, un `GestureDetector` plano en vez de
+        `InkWell`): la tarjeta de juego (`JuegoCard`, usada en perfil/
+        búsqueda/publicaciones), las 7 pestañas del bottom nav en móvil
+        (`main_shell.dart` — la navegación más usada de toda la app en
+        móvil no tenía ripple), y los selectores de pestañas "Solicitudes/
+        Amigos" y "Recibidos/Enviados" (`amistad_screen.dart`,
+        `matches_screen.dart`, mismo componente duplicado en los dos
+        archivos). Los demás botones/tarjetas de la app ya usaban
+        `Material`+`InkWell` correctamente — no fue una reescritura
+        general, fueron arreglos puntuales donde de verdad faltaba.
+  - **Sin verificar en vivo en navegador**: mismo límite de coordenadas de
+    la automatización de sesiones anteriores; para esto además ni
+    inyectar el token por `localStorage` funcionó para llegar más allá
+    del login. Confirmado por `flutter analyze`/`flutter test` y revisión
+    manual — son APIs estándar de Flutter (`PageTransitionsTheme`,
+    `TweenAnimationBuilder`, `Material`/`InkWell`) usadas de forma
+    convencional, bajo riesgo de que no se vean como se espera.
 - [ ] Selector de idioma (inglés + español Colombia): técnicamente viable
       con `flutter_localizations`, pero es trabajo real (extraer TODOS los
       strings hardcodeados del código a archivos `.arb`) — no es un toggle.

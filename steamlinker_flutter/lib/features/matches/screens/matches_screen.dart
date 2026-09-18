@@ -37,7 +37,11 @@ class _MatchesScreenState extends State<MatchesScreen> {
     return item['id_solicitante'] as int?;
   }
 
-  String _nombreOtro(Map<String, dynamic> item, int miId, {required bool recibido}) {
+  String _nombreOtro(
+    Map<String, dynamic> item,
+    int miId, {
+    required bool recibido,
+  }) {
     if (recibido) return item['solicitante_username'] ?? 'Usuario';
     return item['receptor_username'] ?? 'Usuario';
   }
@@ -96,41 +100,56 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ],
       ),
-      body: DesktopBodyWidth(child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _TabButton(
-                    label: 'Recibidos',
-                    selected: _tabActual == 0,
-                    onTap: () => setState(() => _tabActual = 0),
-                  ),
-                  const SizedBox(width: 12),
-                  _TabButton(
-                    label: 'Enviados',
-                    selected: _tabActual == 1,
-                    onTap: () => setState(() => _tabActual = 1),
-                  ),
-                ],
+      body: DesktopBodyWidth(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    _TabButton(
+                      label: 'Recibidos',
+                      selected: _tabActual == 0,
+                      onTap: () => setState(() => _tabActual = 0),
+                    ),
+                    const SizedBox(width: 12),
+                    _TabButton(
+                      label: 'Enviados',
+                      selected: _tabActual == 1,
+                      onTap: () => setState(() => _tabActual = 1),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: matchesProv.cargando
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+              Expanded(
+                child: matchesProv.cargando
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                        ),
+                      )
+                    : _tabActual == 0
+                    ? _buildLista(
+                        matchesProv.recibidos,
+                        matchesProv,
+                        miId,
+                        recibido: true,
+                      )
+                    : _buildLista(
+                        matchesProv.enviados,
+                        matchesProv,
+                        miId,
+                        recibido: false,
                       ),
-                    )
-                  : _tabActual == 0
-                      ? _buildLista(matchesProv.recibidos, matchesProv, miId, recibido: true)
-                      : _buildLista(matchesProv.enviados, matchesProv, miId, recibido: false),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
-      )),
+      ),
     );
   }
 
@@ -179,14 +198,22 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   await prov.responder(item['id_match'], 'Aceptada');
                   if (!context.mounted) return;
                   context.read<NotificacionesProvider>().cargarContador();
-                  showSteamToast(context, 'Solicitud aceptada — chat creado', SteamColors.green);
+                  showSteamToast(
+                    context,
+                    'Solicitud aceptada — chat creado',
+                    SteamColors.green,
+                  );
                 }
               : null,
           onReject: estado == 'Pendiente' && recibido
               ? () async {
                   await prov.responder(item['id_match'], 'Rechazada');
                   if (!context.mounted) return;
-                  showSteamToast(context, 'Solicitud rechazada', SteamColors.muted);
+                  showSteamToast(
+                    context,
+                    'Solicitud rechazada',
+                    SteamColors.muted,
+                  );
                 }
               : null,
           onCalificar: estado == 'Aceptada' && miId != null
@@ -203,26 +230,39 @@ class _TabButton extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _TabButton({required this.label, required this.selected, required this.onTap});
+  const _TabButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? SteamColors.blue : SteamColors.bgPanel,
-            borderRadius: BorderRadius.circular(SteamRadii.sm),
-            border: Border.all(color: selected ? SteamColors.blue : SteamColors.border),
+      child: Material(
+        color: selected ? SteamColors.blue : SteamColors.bgPanel,
+        borderRadius: BorderRadius.circular(SteamRadii.sm),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(SteamRadii.sm),
+          hoverColor: (selected ? Colors.white : SteamColors.blue).withValues(
+            alpha: 0.08,
           ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: selected ? Colors.white : SteamColors.light,
-              fontWeight: FontWeight.w700,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
+              border: Border.all(
+                color: selected ? SteamColors.blue : SteamColors.border,
+              ),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: selected ? Colors.white : SteamColors.light,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ),
@@ -291,7 +331,10 @@ class _MatchCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _estadoColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(SteamRadii.sm),
@@ -308,7 +351,13 @@ class _MatchCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(subtitle, style: const TextStyle(color: SteamColors.textSec, fontSize: 13)),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: SteamColors.textSec,
+                  fontSize: 13,
+                ),
+              ),
               if (onAccept != null || onReject != null) ...[
                 const SizedBox(height: 12),
                 Row(
@@ -318,7 +367,9 @@ class _MatchCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SteamColors.green,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(SteamRadii.sm),
+                          ),
                         ),
                         onPressed: onAccept,
                         child: const Text('Aceptar'),
@@ -329,10 +380,15 @@ class _MatchCard extends StatelessWidget {
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: SteamColors.red),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(SteamRadii.sm)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(SteamRadii.sm),
+                          ),
                         ),
                         onPressed: onReject,
-                        child: const Text('Rechazar', style: TextStyle(color: SteamColors.red)),
+                        child: const Text(
+                          'Rechazar',
+                          style: TextStyle(color: SteamColors.red),
+                        ),
                       ),
                     ),
                   ],
