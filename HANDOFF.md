@@ -1763,6 +1763,42 @@ parecen:**
       sin poder reproducirse en el navegador integrado de Claude** —
       van 4 intentos sobre el mismo síntoma sin verificación visual
       directa; solo el usuario lo ve en su Chrome real.
+- [x] **Corrección importante al diagnóstico del intento 2/3: esta build
+      NO usa el renderer HTML de Flutter Web — la lectura de "0 canvas"
+      de esa sesión estaba mal.** Al revisar de nuevo (`flutter build web
+      -h` en Flutter 3.47.4 ya ni siquiera tiene la opción
+      `--web-renderer`: CanvasKit/Skwasm es la única opción hoy, el
+      renderer HTML se eliminó del engine) y volver a buscar canvases
+      atravesando manualmente el shadow DOM de `flt-glass-pane`
+      (`document.querySelectorAll('canvas')` no lo hace solo), se
+      confirma que sí hay una jerarquía `FLT-SCENE-HOST`/`FLT-SCENE`
+      típica de CanvasKit — el conteo en 0 fue por buscar mal, no porque
+      falte canvas. La teoría de "costura de composición por el renderer
+      HTML" del intento 2 queda descartada como explicación real; el fix
+      de esa ronda (dejar de re-envolver `_HeroEntrada`) puede seguir
+      siendo una mejora válida por otras razones, pero no por el motivo
+      que se documentó entonces.
+      **Investigación con búsqueda web**: encontré issues abiertos de
+      Flutter relacionados con huecos de renderizado en scroll con
+      CanvasKit (`flutter/flutter#185931`) y comportamiento anormal de
+      touchpad en Flutter Web en Windows (`flutter/flutter#125743`) —
+      ninguno es un match exacto (el primero es específico de Safari,
+      confirmado que NO afecta Chrome/Edge; el segundo es sobre
+      animaciones de "snap" prematuras, no huecos visuales), pero sí
+      confirman que Flutter Web tiene una categoría conocida de bugs de
+      scroll específicos de touchpad/CanvasKit que no son necesariamente
+      arreglables desde código de la app.
+      **Decisión: pausar este bug tras 4 intentos sin poder verlo en
+      vivo, en vez de seguir arreglando a ciegas.** Ya se cubrieron las
+      hipótesis razonables a nivel de código de la app (física del
+      scroll, capa de animación persistente, doble barra, RefreshIndicator).
+      Si el usuario confirma que el 4to intento tampoco funcionó, lo más
+      productivo antes de seguir tocando código sería que el propio
+      usuario aislara la variable: ¿pasa igual con mouse normal (sin
+      trackpad)?, ¿en qué posición exacta de scroll (siempre la misma o
+      aleatoria)?, ¿pasa también en Descubrir/Publicaciones (con scroll
+      real, tienen RefreshIndicator igual) o es exclusivo de Inicio? Sin
+      esos datos, seguir iterando a ciegas tiene rendimientos decrecientes.
 - [x] **"Apoya el proyecto" ya no se duplica en Inicio (escritorio)** —
       ahora que vive siempre visible en el sidebar, repetirla en Inicio
       sería la misma redundancia que se le quitó a "Conecta con otros
@@ -1890,18 +1926,18 @@ real.
 ### Cosas pendientes (actualizado 2026-09-18, tras la ronda de rediseño de
 ### escritorio + integridad de datos — ordenadas por mi prioridad)
 
-1. **Confirmar el bug de scroll en Inicio — 4 intentos hechos, sin
-   confirmación del usuario sobre el último.** `ClampingScrollPhysics`
-   (no funcionó), quitar la capa `Opacity`/`Transform` persistente de
-   `_HeroEntrada` (no confirmado), eliminar la doble barra de escritorio
-   (no confirmado), y reescribir `_HeroEntrada` a `StatefulWidget` propio
-   + `RefreshIndicator` inerte en escritorio (el más reciente, tampoco
-   confirmado todavía). Ninguno reproducible dentro del navegador
-   integrado de Claude — solo el usuario lo ve en su Chrome real con
-   trackpad. Si sigue apareciendo, los siguientes sospechosos: deshabilitar
-   `RefreshIndicator` del todo en escritorio, o forzar CanvasKit
-   (`flutter build web --web-renderer canvaskit`) para descartar que sea
-   específico del renderer HTML.
+1. **Bug de scroll en Inicio — PAUSADO tras 4 intentos sin poder
+   reproducirlo en vivo (ver detalle arriba en Nivel 4).** Se cubrieron
+   las hipótesis razonables a nivel de app (física del scroll, capa de
+   animación persistente, doble barra, `RefreshIndicator`). Se corrigió
+   además un diagnóstico erróneo de una ronda anterior: esta build usa
+   CanvasKit, no el renderer HTML (esa opción ya ni existe en Flutter
+   3.47.4) — la idea de "forzar CanvasKit" como siguiente paso ya no
+   aplica, porque ya está en uso. Antes de intentar un 5to arreglo a
+   ciegas, hace falta que el usuario aísle la variable: ¿pasa igual con
+   mouse normal (sin trackpad)?, ¿siempre en la misma posición de scroll
+   o al azar?, ¿pasa también en Descubrir/Publicaciones o es exclusivo
+   de Inicio? Sin esos datos, seguir iterando no tiene buen retorno.
 2. **Selector de idioma: traducir el resto de la app.** Sigue igual que
    antes de esta ronda — la infraestructura (`.arb`, `AppLocalizations`,
    `LocaleProvider`) ya está completa; falta traducción pantalla por
