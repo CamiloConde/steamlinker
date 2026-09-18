@@ -21,10 +21,12 @@ class ApoyarProyectoScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
       appBar: const SteamAppBar(title: 'APOYA EL PROYECTO'),
-      body: DesktopBodyWidth(
-        maxWidth: 600,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+      // DesktopBodyWidth va DENTRO del SingleChildScrollView, no afuera
+      // -- si no, angosta el scrollable mismo. Ver desktop_body_width.dart.
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: DesktopBodyWidth(
+          maxWidth: 600,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

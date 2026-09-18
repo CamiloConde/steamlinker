@@ -388,9 +388,16 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
               },
               onTap: _abrirUsuario,
             )
-          : DesktopBodyWidth(
-              maxWidth: 720,
-              child: Column(
+          // DesktopBodyWidth NO envuelve esta rama porque el contenido
+          // incluye un ListView (_ListaGamers) -- envolverlo angosta el
+          // Scrollable mismo, no solo lo que se ve, y el scroll con rueda
+          // deja de responder fuera de esa franja angosta (bug real
+          // reportado por el usuario). El margen se calcula acá y se pasa
+          // como extra de padding al ListView. Ver desktop_body_width.dart.
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+                return Column(
                 children: [
                   if (filtrosActivos)
                     Container(
@@ -442,11 +449,17 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                                 valueColor: AlwaysStoppedAnimation(SteamColors.blue),
                               ),
                             )
-                          : _ListaGamers(usuarios: lista, onTap: _abrirUsuario, controller: _scrollCtrl),
+                          : _ListaGamers(
+                              usuarios: lista,
+                              onTap: _abrirUsuario,
+                              controller: _scrollCtrl,
+                              margenExtra: margen,
+                            ),
                     ),
                   ),
                 ],
-              ),
+                );
+              },
             ),
           ScrollToTopFab(controller: _scrollCtrl),
         ],
@@ -472,8 +485,14 @@ class _ListaGamers extends StatelessWidget {
   final List<Map<String, dynamic>> usuarios;
   final ValueChanged<Map<String, dynamic>> onTap;
   final ScrollController? controller;
+  final double margenExtra;
 
-  const _ListaGamers({required this.usuarios, required this.onTap, this.controller});
+  const _ListaGamers({
+    required this.usuarios,
+    required this.onTap,
+    this.controller,
+    this.margenExtra = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -498,7 +517,7 @@ class _ListaGamers extends StatelessWidget {
 
     return ListView.separated(
       controller: controller,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
       itemCount: usuarios.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {

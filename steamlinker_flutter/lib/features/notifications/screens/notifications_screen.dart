@@ -161,7 +161,14 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 ),
               ],
             ),
-      body: DesktopBodyWidth(child: Column(
+      // DesktopBodyWidth NO envuelve esta pantalla: el contenido incluye
+      // un ListView y envolverlo angosta el Scrollable mismo -- el scroll
+      // con rueda deja de responder fuera de esa franja angosta (bug real
+      // reportado por el usuario). El margen se calcula acá y se pasa
+      // como extra de padding al ListView. Ver desktop_body_width.dart.
+      body: LayoutBuilder(builder: (context, constraints) {
+        final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+        return Column(
         children: [
           Container(
             color: SteamColors.bgPanel,
@@ -214,7 +221,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                             color: SteamColors.blue,
                             onRefresh: _cargarFiltroActual,
                             child: ListView.separated(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              padding: EdgeInsets.symmetric(vertical: 8, horizontal: margen),
                               itemCount: lista.length,
                               separatorBuilder: (_, _) => const Divider(
                                 color: SteamColors.border,
@@ -238,7 +245,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                           ),
           ),
         ],
-      )),
+        );
+      }),
     );
   }
 

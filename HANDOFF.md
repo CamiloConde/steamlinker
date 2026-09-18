@@ -1799,6 +1799,52 @@ parecen:**
       aleatoria)?, ¿pasa también en Descubrir/Publicaciones (con scroll
       real, tienen RefreshIndicator igual) o es exclusivo de Inicio? Sin
       esos datos, seguir iterando a ciegas tiene rendimientos decrecientes.
+- [x] **RESUELTO DE VERDAD — causa real encontrada (5to intento, con la
+      descripción exacta del usuario): no era un bug de renderizado, era
+      un problema de hit-testing.** El usuario dio la pista que faltaba:
+      "si pongo el mouse en el centro scrollea, si lo quito de ahí ya no
+      me deja" — y que también pasaba en Publicaciones, "creo que es por
+      cómo está compuesto". Eso apuntaba a algo estructural, no visual.
+      **Causa real**: `DesktopBodyWidth` (el widget que centra contenido
+      en pantallas anchas con `Align + ConstrainedBox`) se estaba usando
+      envolviendo el `SingleChildScrollView`/`ListView` COMPLETO en vez
+      de envolver solo el contenido de adentro. `ConstrainedBox` no solo
+      angosta lo que se VE — angosta el propio `RenderBox` del
+      `Scrollable`, que es literalmente el área donde Flutter escucha los
+      eventos de rueda del mouse (`PointerScrollEvent`). Con
+      `maxWidth: 760` en una ventana de 1400px, el Scrollable quedaba
+      centrado y angosto: el mouse tenía que estar sobre esos ~760px del
+      centro para que la rueda hiciera algo — exactamente el síntoma
+      descrito, en ambas pantallas. Los 4 intentos anteriores (física del
+      scroll, animación de `_HeroEntrada`, doble barra, `RefreshIndicator`
+      inerte) apuntaban todos al lugar equivocado porque el problema
+      nunca fue de renderizado ni de gestos — era que la zona interactiva
+      real era más angosta que la pantalla completa.
+      **Arreglo**: `DesktopBodyWidth` ahora deja documentado en su propio
+      comentario que NO debe envolver un scrollable directamente. Se
+      agregó `DesktopBodyWidth.margenHorizontal(anchoDisponible,
+      maxWidth)`, un helper estático que calcula el margen simétrico
+      necesario, para usarlo como `padding` DEL scrollable (el padding de
+      un `ListView`/`SingleChildScrollView` no angosta su propio
+      `RenderBox` — es una `SliverPadding` interna, así que el área de
+      scroll con rueda sigue siendo toda la pantalla). Se corrigieron
+      **7 pantallas**: `home_screen.dart` y `apoyar_proyecto_screen.dart`
+      (se movió `DesktopBodyWidth` de afuera del `SingleChildScrollView`
+      a adentro, envolviendo solo el `Column`); `amistad_screen.dart`,
+      `descubrir_gamers_screen.dart` (rama móvil), `publicaciones_screen.
+      dart` (ambas ramas) y `matches_screen.dart` (se quitó
+      `DesktopBodyWidth` del todo y se pasa el margen calculado como
+      `padding` extra al `ListView` de cada una). `notifications_screen.
+      dart` también, de paso, aprovechando que ya se estaba tocando ese
+      archivo esta ronda. **`chat_screen.dart` se dejó igual a propósito**
+      -- es la única pantalla de las 8 que nunca se selecciona como
+      pestaña activa en escritorio (confirmado antes, `FloatingChat` es
+      un overlay separado que no navega ahí), así que su versión con el
+      bug no es visible en la práctica hoy.
+      **Confirmado en vivo con el navegador integrado**: con la ventana en
+      1400px, la rueda del mouse cerca del borde derecho de la pantalla
+      (fuera de donde antes vivía el contenido angosto) ahora sí
+      scrollea Publicaciones — antes de este arreglo no respondía ahí.
 - [x] **"Apoya el proyecto" ya no se duplica en Inicio (escritorio)** —
       ahora que vive siempre visible en el sidebar, repetirla en Inicio
       sería la misma redundancia que se le quitó a "Conecta con otros
@@ -1957,18 +2003,14 @@ real.
 ### Cosas pendientes (actualizado 2026-09-18, tras la ronda de rediseño de
 ### escritorio + integridad de datos — ordenadas por mi prioridad)
 
-1. **Bug de scroll en Inicio — PAUSADO tras 4 intentos sin poder
-   reproducirlo en vivo (ver detalle arriba en Nivel 4).** Se cubrieron
-   las hipótesis razonables a nivel de app (física del scroll, capa de
-   animación persistente, doble barra, `RefreshIndicator`). Se corrigió
-   además un diagnóstico erróneo de una ronda anterior: esta build usa
-   CanvasKit, no el renderer HTML (esa opción ya ni existe en Flutter
-   3.47.4) — la idea de "forzar CanvasKit" como siguiente paso ya no
-   aplica, porque ya está en uso. Antes de intentar un 5to arreglo a
-   ciegas, hace falta que el usuario aísle la variable: ¿pasa igual con
-   mouse normal (sin trackpad)?, ¿siempre en la misma posición de scroll
-   o al azar?, ¿pasa también en Descubrir/Publicaciones o es exclusivo
-   de Inicio? Sin esos datos, seguir iterando no tiene buen retorno.
+1. ~~Bug de scroll~~ **RESUELTO (5to intento) — causa real: `DesktopBodyWidth`
+   angostaba el `Scrollable` mismo, no solo lo que se veía, así que la
+   rueda del mouse solo funcionaba con el cursor sobre esa franja
+   centrada.** Ver detalle completo arriba en Nivel 4. Confirmado en vivo.
+   Si vuelve a aparecer en alguna pantalla nueva que use
+   `DesktopBodyWidth`, revisar primero que no esté envolviendo un
+   scrollable directamente (leer el comentario en
+   `widgets/desktop_body_width.dart`).
 2. **Selector de idioma: traducir el resto de la app.** Sigue igual que
    antes de esta ronda — la infraestructura (`.arb`, `AppLocalizations`,
    `LocaleProvider`) ya está completa; falta traducción pantalla por

@@ -100,55 +100,66 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ),
         ],
       ),
-      body: DesktopBodyWidth(
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: Row(
-                  children: [
-                    _TabButton(
-                      label: 'Recibidos',
-                      selected: _tabActual == 0,
-                      onTap: () => setState(() => _tabActual = 0),
-                    ),
-                    const SizedBox(width: 12),
-                    _TabButton(
-                      label: 'Enviados',
-                      selected: _tabActual == 1,
-                      onTap: () => setState(() => _tabActual = 1),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: matchesProv.cargando
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                        ),
-                      )
-                    : _tabActual == 0
-                    ? _buildLista(
-                        matchesProv.recibidos,
-                        matchesProv,
-                        miId,
-                        recibido: true,
-                      )
-                    : _buildLista(
-                        matchesProv.enviados,
-                        matchesProv,
-                        miId,
-                        recibido: false,
+      // DesktopBodyWidth NO envuelve esta pantalla: el contenido es un
+      // ListView (_buildLista) y envolverlo angosta el Scrollable mismo
+      // -- el scroll con rueda deja de responder fuera de esa franja
+      // angosta (bug real reportado por el usuario). El margen se calcula
+      // acá y se pasa como extra de padding al ListView. Ver
+      // desktop_body_width.dart.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+          return SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      _TabButton(
+                        label: 'Recibidos',
+                        selected: _tabActual == 0,
+                        onTap: () => setState(() => _tabActual = 0),
                       ),
-              ),
-            ],
-          ),
-        ),
+                      const SizedBox(width: 12),
+                      _TabButton(
+                        label: 'Enviados',
+                        selected: _tabActual == 1,
+                        onTap: () => setState(() => _tabActual = 1),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: matchesProv.cargando
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                          ),
+                        )
+                      : _tabActual == 0
+                      ? _buildLista(
+                          matchesProv.recibidos,
+                          matchesProv,
+                          miId,
+                          recibido: true,
+                          margenExtra: margen,
+                        )
+                      : _buildLista(
+                          matchesProv.enviados,
+                          matchesProv,
+                          miId,
+                          recibido: false,
+                          margenExtra: margen,
+                        ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -158,6 +169,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     MatchesProvider prov,
     int? miId, {
     required bool recibido,
+    double margenExtra = 0,
   }) {
     if (items.isEmpty) {
       return Center(
@@ -171,7 +183,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {

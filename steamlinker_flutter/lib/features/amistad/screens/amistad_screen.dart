@@ -81,45 +81,55 @@ class _AmistadScreenState extends State<AmistadScreen> {
                 ),
               ],
             ),
-      body: DesktopBodyWidth(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  _TabChip(
-                    label: 'Solicitudes (${prov.solicitudes.length})',
-                    selected: _tab == 0,
-                    onTap: () => setState(() => _tab = 0),
-                  ),
-                  const SizedBox(width: 10),
-                  _TabChip(
-                    label: 'Amigos (${prov.amigos.length})',
-                    selected: _tab == 1,
-                    onTap: () => setState(() => _tab = 1),
-                  ),
-                ],
+      // DesktopBodyWidth NO envuelve esta pantalla porque el contenido de
+      // abajo es una lista scrolleable (ListView en _buildSolicitudes/
+      // _buildAmigos) -- envolverla angosta el propio Scrollable, no solo
+      // lo que se ve, y el scroll con rueda deja de responder fuera de esa
+      // franja angosta (bug real reportado por el usuario). En vez de eso,
+      // el margen de escritorio se calcula acá y se aplica como padding
+      // DENTRO de cada ListView. Ver desktop_body_width.dart.
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16 + margen, 16, 16 + margen, 16),
+                child: Row(
+                  children: [
+                    _TabChip(
+                      label: 'Solicitudes (${prov.solicitudes.length})',
+                      selected: _tab == 0,
+                      onTap: () => setState(() => _tab = 0),
+                    ),
+                    const SizedBox(width: 10),
+                    _TabChip(
+                      label: 'Amigos (${prov.amigos.length})',
+                      selected: _tab == 1,
+                      onTap: () => setState(() => _tab = 1),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: prov.cargando
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                      ),
-                    )
-                  : _tab == 0
-                  ? _buildSolicitudes(prov)
-                  : _buildAmigos(prov),
-            ),
-          ],
-        ),
+              Expanded(
+                child: prov.cargando
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                        ),
+                      )
+                    : _tab == 0
+                    ? _buildSolicitudes(prov, margen)
+                    : _buildAmigos(prov, margen),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildSolicitudes(AmistadProvider prov) {
+  Widget _buildSolicitudes(AmistadProvider prov, double margenExtra) {
     if (prov.solicitudes.isEmpty) {
       return const Center(
         child: Text(
@@ -130,7 +140,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra),
       itemCount: prov.solicitudes.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
@@ -179,7 +189,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
     );
   }
 
-  Widget _buildAmigos(AmistadProvider prov) {
+  Widget _buildAmigos(AmistadProvider prov, double margenExtra) {
     if (prov.amigos.isEmpty) {
       return const Center(
         child: Text(
@@ -190,7 +200,7 @@ class _AmistadScreenState extends State<AmistadScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra),
       itemCount: prov.amigos.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {

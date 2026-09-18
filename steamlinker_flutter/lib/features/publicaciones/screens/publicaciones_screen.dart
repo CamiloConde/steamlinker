@@ -273,7 +273,11 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     final matchesProv = context.watch<MatchesProvider>();
     final amistadProv = context.watch<AmistadProvider>();
 
-    final feed = Column(
+    // Función en vez de widget precalculado: necesita el margen calculado
+    // más abajo con LayoutBuilder (ver DesktopBodyWidth -- envolver el
+    // ListView de _buildLista angosta el Scrollable mismo, no solo lo
+    // que se ve).
+    Widget feed(double margenExtra) => Column(
       children: [
         if (publicacionesProv.tieneFiltrosActivos)
           _FiltrosActivosBar(
@@ -292,6 +296,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
               matchesProv,
               amistadProv,
               auth.usuario?['id'] as int?,
+              margenExtra: margenExtra,
             ),
           ),
         ),
@@ -339,9 +344,17 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                   ),
                 ],
               ),
-        body: DesktopBodyWidth(
-          maxWidth: 760,
-          child: Column(
+        // DesktopBodyWidth NO envuelve esta pantalla: el contenido es un
+        // ListView (_buildLista) y envolverlo angosta el Scrollable
+        // mismo -- el scroll con rueda deja de responder fuera de esa
+        // franja angosta (bug real reportado por el usuario, "solo
+        // scrollea si el mouse está en el centro"). El margen se calcula
+        // acá y se pasa como extra de padding al ListView. Ver
+        // desktop_body_width.dart.
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 760);
+            return Column(
             children: [
               _ConmutadorTabs(
                 activo: _tabActivo,
@@ -391,11 +404,13 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                     amistadProv,
                     auth.usuario?['id'] as int?,
                     filas: filaFiltradas,
+                    margenExtra: margen,
                   ),
                 ),
               ),
             ],
-          ),
+            );
+          },
         ),
       );
     }
@@ -436,15 +451,18 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
-      body: DesktopBodyWidth(
-        child: SafeArea(
-          child: Stack(
-            children: [
-              feed,
-              ScrollToTopFab(controller: _scrollCtrl),
-            ],
-          ),
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+          return SafeArea(
+            child: Stack(
+              children: [
+                feed(margen),
+                ScrollToTopFab(controller: _scrollCtrl),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -456,6 +474,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     AmistadProvider amistadProv,
     int? miId, {
     List<dynamic>? filas,
+    double margenExtra = 0,
   }) {
     final lista = filas ?? publicacionesProv.publicaciones;
 
@@ -470,7 +489,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     if (publicacionesProv.error != null) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
         children: [
           Text(
             publicacionesProv.error!,
@@ -483,7 +502,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     if (lista.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
         children: [
           const SizedBox(height: 40),
           Center(
@@ -501,7 +520,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
 
     return ListView.separated(
       controller: _scrollCtrl,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+      padding: EdgeInsets.fromLTRB(16 + margenExtra, 16, 16 + margenExtra, 88),
       itemCount: lista.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {

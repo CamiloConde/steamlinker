@@ -169,20 +169,26 @@ class _HomeScreenState extends State<HomeScreen> {
         // sospechoso descartado del hueco de scroll reportado en Inicio.
         notificationPredicate: (n) =>
             !esEscritorio && defaultScrollNotificationPredicate(n),
-        child: DesktopBodyWidth(
-          maxWidth: 760,
-          child: SingleChildScrollView(
-            // ClampingScrollPhysics explicito (no el fisico ambiental, que
-            // en Flutter Web puede rebotar de forma elastica con rueda del
-            // mouse/trackpad): un rebote elastico sobre el tope hace que
-            // RefreshIndicator arme su hueco/indicador con solo desplazar
-            // la rueda, sin que el usuario este realmente "jalando" -- ese
-            // es el hueco intermitente reportado arriba del todo. Ver
-            // HANDOFF.md.
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: ClampingScrollPhysics(),
-            ),
-            padding: const EdgeInsets.all(16),
+        // DesktopBodyWidth va DENTRO del SingleChildScrollView (envolviendo
+        // el Column), no afuera -- si envuelve el scrollable completo, lo
+        // angosta a él también: el área donde el mouse tiene que estar
+        // para que la rueda scrollee queda más angosta que la pantalla.
+        // Bug real reportado por el usuario ("solo scrollea si el mouse
+        // está en el centro"). Ver HANDOFF.md y desktop_body_width.dart.
+        child: SingleChildScrollView(
+          // ClampingScrollPhysics explicito (no el fisico ambiental, que
+          // en Flutter Web puede rebotar de forma elastica con rueda del
+          // mouse/trackpad): un rebote elastico sobre el tope hace que
+          // RefreshIndicator arme su hueco/indicador con solo desplazar
+          // la rueda, sin que el usuario este realmente "jalando" -- ese
+          // es el hueco intermitente reportado arriba del todo. Ver
+          // HANDOFF.md.
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: ClampingScrollPhysics(),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: DesktopBodyWidth(
+            maxWidth: 760,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
