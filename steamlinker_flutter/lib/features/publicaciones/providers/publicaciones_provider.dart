@@ -116,6 +116,34 @@ class PublicacionesProvider extends ChangeNotifier {
     }
   }
 
+  // Antes no había forma de corregir una publicación ya creada -- había
+  // que borrarla y volver a hacerla. Pedido explícito del usuario.
+  Future<bool> editar({
+    required int id,
+    required String titulo,
+    String? descripcion,
+    String? pais,
+    int? cuposTotales,
+    List<Map<String, dynamic>>? juegos,
+  }) async {
+    _error = null;
+    try {
+      await ApiClient.dio.put('/publicaciones/$id/editar', data: {
+        'titulo': titulo,
+        'descripcion': descripcion,
+        'pais': pais,
+        'cupos_totales': ?cuposTotales,
+        'juegos': ?juegos,
+      });
+      await buscar();
+      return true;
+    } on DioException catch (e) {
+      _error = ApiClient.errorMessage(e, fallback: 'Error al editar publicación');
+      notifyListeners();
+      return false;
+    }
+  }
+
   Map<String, dynamic>? _detalle;
   bool _cargandoDetalle = false;
 

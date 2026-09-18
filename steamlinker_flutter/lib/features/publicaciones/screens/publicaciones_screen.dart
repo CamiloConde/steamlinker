@@ -572,6 +572,15 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                   }
                 }
               : null,
+          onEditar: esMia
+              ? () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CrearPublicacionScreen(
+                        publicacionExistente: Map<String, dynamic>.from(publicacion),
+                      ),
+                    ),
+                  )
+              : null,
         );
       },
     );

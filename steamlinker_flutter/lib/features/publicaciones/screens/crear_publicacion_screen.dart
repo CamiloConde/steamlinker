@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
@@ -13,7 +14,13 @@ import '../../perfil/providers/perfil_provider.dart';
 import '../providers/publicaciones_provider.dart';
 
 class CrearPublicacionScreen extends StatefulWidget {
-  const CrearPublicacionScreen({super.key});
+  /// Si se pasa, la pantalla entra en modo edición: precarga los campos
+  /// y guarda con PUT /editar en vez de crear una publicación nueva.
+  /// Antes no existía ninguna forma de corregir una publicación ya
+  /// creada -- pedido explícito del usuario.
+  final Map<String, dynamic>? publicacionExistente;
+
+  const CrearPublicacionScreen({super.key, this.publicacionExistente});
 
   @override
   State<CrearPublicacionScreen> createState() => _CrearPublicacionScreenState();
@@ -32,10 +39,40 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   bool _buscandoSteam = false;
   List<dynamic> _resultadosSteam = [];
 
+  bool get _editando => widget.publicacionExistente != null;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _cargarBiblioteca());
+
+    final pub = widget.publicacionExistente;
+    if (pub != null) {
+      _tituloController.text = (pub['titulo_publi'] as String?) ?? '';
+      _descripcionController.text = (pub['descrip_publi'] as String?) ?? '';
+      final cupos = pub['cupos_totales'];
+      if (cupos != null) _cuposController.text = '$cupos';
+      final tipo = pub['tipo_publi'] as String?;
+      if (tipo != null && PublicacionConstants.tipoEtiquetas.containsKey(tipo)) {
+        _tipoEtiqueta = PublicacionConstants.tipoEtiquetas[tipo]!;
+      }
+      final paisCodigo = pub['paisfiltro_publi'] as String?;
+      if (paisCodigo != null && paisCodigo.isNotEmpty) {
+        _paisEtiqueta = PaisUtil.codigoANombre(paisCodigo);
+      }
+      final juegos = pub['juegos'] as List<dynamic>?;
+      if (juegos != null) {
+        for (final j in juegos) {
+          final map = Map<String, dynamic>.from(j as Map);
+          _juegosSeleccionados.add({
+            'appid': map['appid'],
+            'nombre': map['nombre'] ?? map['nom_jg'] ?? '',
+            'headerimg': map['headerimg'] ?? map['headerimg_jg'] ?? '',
+            'capsuleimg': map['capsuleimg'] ?? map['capsuleimg_jg'] ?? '',
+          });
+        }
+      }
+    }
   }
 
   Future<void> _cargarBiblioteca() async {
@@ -111,27 +148,46 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     final cuposTotales = tipo != 'otro' && cuposTexto.isNotEmpty
         ? int.tryParse(cuposTexto)
         : null;
+    final descripcion = _descripcionController.text.trim().isEmpty
+        ? null
+        : _descripcionController.text.trim();
 
-    final exito = await context.read<PublicacionesProvider>().crear(
-      tipo: tipo,
-      titulo: titulo,
-      descripcion: _descripcionController.text.trim().isEmpty
-          ? null
-          : _descripcionController.text.trim(),
-      pais: pais,
-      cuposTotales: cuposTotales,
-      juegos: _juegosSeleccionados,
-    );
+    final prov = context.read<PublicacionesProvider>();
+    final exito = _editando
+        ? await prov.editar(
+            id: widget.publicacionExistente!['id_publi'] as int,
+            titulo: titulo,
+            descripcion: descripcion,
+            pais: pais,
+            cuposTotales: cuposTotales,
+            juegos: _juegosSeleccionados,
+          )
+        : await prov.crear(
+            tipo: tipo,
+            titulo: titulo,
+            descripcion: descripcion,
+            pais: pais,
+            cuposTotales: cuposTotales,
+            juegos: _juegosSeleccionados,
+          );
 
     if (!mounted) return;
     setState(() => _guardando = false);
 
     if (exito) {
-      showSteamToast(context, 'Publicación creada', SteamColors.green);
+      showSteamToast(
+        context,
+        _editando ? 'Publicación actualizada' : 'Publicación creada',
+        SteamColors.green,
+      );
       Navigator.of(context).pop();
     } else {
       final error = context.read<PublicacionesProvider>().error;
-      showSteamToast(context, error ?? 'No se pudo crear', Colors.red);
+      showSteamToast(
+        context,
+        error ?? (_editando ? 'No se pudo editar' : 'No se pudo crear'),
+        Colors.red,
+      );
     }
   }
 
@@ -141,7 +197,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: const SteamAppBar(title: 'NUEVA PUBLICACIÓN'),
+      appBar: SteamAppBar(title: _editando ? 'EDITAR PUBLICACIÓN' : 'NUEVA PUBLICACIÓN'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -151,11 +207,16 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // El tipo no se puede editar -- cambiar de tipo tiene
+                // efectos secundarios (requiere Steam, cupos por
+                // defecto) que no aplican a medio camino. Se deshabilita
+                // pasando onChanged null (DropdownButton ya lo pinta
+                // como inactivo solo con eso).
                 DropField(
                   label: 'Tipo',
                   value: _tipoEtiqueta,
                   items: PublicacionConstants.tiposCrearEtiquetas,
-                  onChanged: (v) => setState(() => _tipoEtiqueta = v),
+                  onChanged: _editando ? null : (v) => setState(() => _tipoEtiqueta = v),
                 ),
                 if (PublicacionConstants.requiereSteam(
                   PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
@@ -172,6 +233,11 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   TextField(
                     controller: _cuposController,
                     keyboardType: TextInputType.number,
+                    // keyboardType solo cambia el teclado en pantalla en
+                    // móvil -- en web/escritorio con teclado físico no
+                    // impide escribir letras. inputFormatters sí lo
+                    // bloquea de verdad. El usuario lo notó probando.
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(color: SteamColors.light),
                     decoration: const InputDecoration(
                       labelText: 'Cupos buscados (opcional, familia = 6 por defecto)',
@@ -334,8 +400,10 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
           ),
           const SizedBox(height: 24),
           SteamButtonPrimary(
-            label: _guardando ? 'Publicando...' : 'Publicar',
-            icon: Icons.send_rounded,
+            label: _guardando
+                ? (_editando ? 'Guardando...' : 'Publicando...')
+                : (_editando ? 'Guardar cambios' : 'Publicar'),
+            icon: _editando ? Icons.check_rounded : Icons.send_rounded,
             onTap: _guardando ? null : (_) => _publicar(),
           ),
           const SizedBox(height: 32),

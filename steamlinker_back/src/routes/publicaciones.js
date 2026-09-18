@@ -362,4 +362,85 @@ router.put('/:id/cerrar', verificarToken, async (req, res) => {
     }
 });
 
+// PUT /publicaciones/:id/editar
+// Edita una publicación propia: título, descripción, país, cupos y
+// juegos asociados. El tipo (busco_familia/busco_miembros/...) NO se
+// puede editar -- cambiar de tipo tiene efectos secundarios (requiere
+// Steam, cupos por defecto) que no tiene sentido aplicar a medio camino;
+// si alguien quiere otro tipo, crea una publicación nueva.
+router.put('/:id/editar', verificarToken, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const { titulo, descripcion, pais, juegos } = req.body;
+    let { cupos_totales: cuposTotales } = req.body;
+
+    if (!id || Number.isNaN(id)) {
+        return res.status(400).json({ error: 'ID inválido' });
+    }
+    if (!titulo) {
+        return res.status(400).json({ error: 'titulo es obligatorio' });
+    }
+
+    try {
+        const pub = await pool.query(
+            'SELECT id_usu, cupos_totales FROM publicaciones WHERE id_publi = $1',
+            [id]
+        );
+        if (pub.rows.length === 0) {
+            return res.status(404).json({ error: 'Publicación no encontrada' });
+        }
+        if (pub.rows[0].id_usu !== req.usuario.id) {
+            return res.status(403).json({ error: 'No puedes editar una publicación que no es tuya' });
+        }
+
+        if (cuposTotales !== undefined && cuposTotales !== null) {
+            cuposTotales = parseInt(cuposTotales, 10);
+            if (Number.isNaN(cuposTotales) || cuposTotales <= 0) {
+                return res.status(400).json({ error: 'cupos_totales debe ser un entero positivo' });
+            }
+            // No se puede bajar el total por debajo de lo ya ocupado --
+            // dejaría la publicación en un estado imposible (más gente
+            // aceptada de la que "caben").
+            const ocupados = await pool.query(
+                `SELECT COUNT(*)::int AS n FROM matches WHERE id_publi = $1 AND estado_match = 'Aceptada'`,
+                [id]
+            );
+            if (cuposTotales < ocupados.rows[0].n) {
+                return res.status(400).json({
+                    error: `Ya tienes ${ocupados.rows[0].n} cupos ocupados -- no puedes poner un total menor`,
+                });
+            }
+        } else if (cuposTotales === undefined) {
+            cuposTotales = pub.rows[0].cupos_totales;
+        }
+
+        const resultado = await pool.query(
+            `UPDATE publicaciones
+             SET titulo_publi = $1, descrip_publi = $2, paisfiltro_publi = $3, cupos_totales = $4
+             WHERE id_publi = $5
+             RETURNING *`,
+            [titulo, descripcion || null, pais || null, cuposTotales, id]
+        );
+
+        if (juegos !== undefined) {
+            await pool.query('DELETE FROM publicacion_juegos WHERE id_publi = $1', [id]);
+            for (const juego of juegos) {
+                await pool.query(
+                    `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
+                     VALUES ($1, $2, $3, $4)
+                     ON CONFLICT (appid) DO NOTHING`,
+                    [juego.appid, juego.nombre, juego.headerimg || null, juego.capsuleimg || null]
+                );
+                await pool.query(
+                    `INSERT INTO publicacion_juegos (id_publi, appid) VALUES ($1, $2)`,
+                    [id, juego.appid]
+                );
+            }
+        }
+
+        res.json(resultado.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

@@ -13,6 +13,7 @@ class PublicacionCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onTapAutor;
   final VoidCallback? onCerrar;
+  final VoidCallback? onEditar;
 
   const PublicacionCard({
     super.key,
@@ -22,6 +23,7 @@ class PublicacionCard extends StatelessWidget {
     this.onTap,
     this.onTapAutor,
     this.onCerrar,
+    this.onEditar,
   });
 
   @override
@@ -122,6 +124,14 @@ class PublicacionCard extends StatelessWidget {
                       ),
                     ),
                     RelacionStatusChip(relacion: relacion),
+                    if (esMia && onEditar != null)
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: SteamColors.blue, size: 20),
+                        tooltip: 'Editar publicación',
+                        onPressed: onEditar,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
                     if (esMia && onCerrar != null)
                       IconButton(
                         icon: const Icon(Icons.close, color: SteamColors.red, size: 20),

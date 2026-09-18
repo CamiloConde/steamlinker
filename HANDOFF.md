@@ -2116,7 +2116,62 @@ real.
 6. Nivel 2: optimización de velocidad (Lighthouse, una vez desplegado) —
    sin cambios esta ronda.
 7. Nivel 3: solo "botones de redes sociales" pendiente (el usuario duda
-   del valor — baja prioridad real).
+   del valor — baja prioridad real). **Aclarado con el usuario**: se
+   refiere a presencia del *proyecto* (correo/Discord en el footer), no
+   a que cada perfil de usuario muestre sus redes personales (eso sí
+   sería un tema de privacidad) — pendiente de implementar.
+7b. **Publicaciones: 3 hallazgos de una sesión de pruebas real.**
+   - [x] **Bug real: el campo "Cupos buscados" aceptaba texto libre.**
+     `keyboardType: TextInputType.number` solo cambia el teclado en
+     pantalla en móvil — en web/escritorio con teclado físico no
+     impedía escribir letras. Se agregó
+     `inputFormatters: [FilteringTextInputFormatter.digitsOnly]`, que sí
+     lo bloquea de verdad.
+   - [x] **Aclarado (no era un bug): "¿la publicación se cierra sola al
+     llenar los cupos?" — SÍ, ya estaba implementado.** El usuario
+     preguntó directamente. Revisando `matches.js` (`PUT
+     /matches/:id/responder`): al aceptar un match que hace que
+     `cupos_ocupados >= cupos_totales`, la publicación se cierra
+     automáticamente (`estado_publi = FALSE`). Ya funcionaba, solo no
+     era obvio desde la UI — podría valer la pena un texto tipo "se
+     cierra sola al llenarse" cerca del campo de cupos, pendiente de
+     decidir.
+   - [x] **Nueva función: editar una publicación ya creada.** Antes no
+     existía ninguna forma de corregir una publicación — había que
+     borrarla y volver a hacerla. Nuevo `PUT /publicaciones/:id/editar`
+     (backend): valida dueño, no permite bajar `cupos_totales` por
+     debajo de lo ya ocupado (dejaría la publicación en un estado
+     imposible), reemplaza los juegos asociados si se envían. El tipo
+     (`busco_familia`/`busco_miembros`/...) **no se puede editar** —
+     cambiar de tipo tiene efectos secundarios (requiere Steam, cupos
+     por defecto) que no tiene sentido a medio camino; si alguien quiere
+     otro tipo, crea una publicación nueva. `CrearPublicacionScreen`
+     ahora acepta un `publicacionExistente` opcional que precarga todos
+     los campos y cambia a modo edición (título "EDITAR PUBLICACIÓN",
+     tipo deshabilitado, botón "Guardar cambios"). Nuevo botón de lápiz
+     en `PublicacionCard` (junto al de cerrar, solo en tus propias
+     publicaciones) que abre el formulario en modo edición. Cubierto por
+     5 tests nuevos (`tests/publicaciones.editar.test.js`): edición
+     exitosa, título obligatorio, no puedes editar lo ajeno, 404 si no
+     existe, no se puede bajar cupos por debajo de lo ocupado. 41/41
+     tests de backend. **Verificado en vivo**: los campos precargan
+     correctamente al abrir "Editar publicación".
+   - **PENDIENTE DE DISCUTIR, no implementado a propósito — el usuario
+     pidió aclarar esto antes de tocar nada**: la UX de seleccionar
+     juegos al crear/editar una publicación. Hoy hay dos mecanismos en
+     la misma tarjeta -- una lista de checkboxes de "Tu biblioteca"
+     (marcar uno por uno) y un buscador aparte de Steam Store para
+     juegos que no estén en la biblioteca. El usuario señaló que marcar
+     uno por uno es "engorroso" si tienes muchos juegos, y preguntó
+     específicamente si para "busco_miembros" debería haber una opción
+     de "marcar todos los verificados de una". Sin resolver: falta
+     decidir si se agrega un botón "Seleccionar todos"/"Todos mis
+     verificados" (bajo esfuerzo si se decide que sí), y si el buscador
+     de Steam Store sigue teniendo sentido tal como está para el caso de
+     "busco_miembros" en particular vs. "busco_companero" (que sí
+     podría tener sentido restringir a UN juego específico en vez de
+     varios, dado que es "juega esto conmigo" no "aquí está mi
+     biblioteca completa"). Retomar cuando el usuario decida.
 8. Roadmap Nivel 4 restante: login con Google, rediseño visual del panel
    de administración. **Pagos locales (Nequi/Bancolombia) ya no está acá
    — se implementó esta ronda vía llave Bre-B**, ver arriba.
