@@ -508,7 +508,39 @@ async function importarBibliotecaSteam(idUsu, steamid) {
         imported.push(result.rows[0]);
     }
 
+    await pool.query(
+        `UPDATE perfiles_steam SET ultima_importacion_steperfil = NOW() WHERE id_usu = $1`,
+        [idUsu]
+    );
+
     return imported;
+}
+
+// Reimporta la biblioteca de TODAS las cuentas con Steam vinculado --
+// pedido explícito del usuario: antes, comprar un juego nuevo no se
+// reflejaba en la app hasta que el usuario volviera a tocar "Importar
+// biblioteca" a mano. No hay infraestructura de jobs en este backend
+// todavía, así que esto se dispara con un `setInterval` sencillo desde
+// index.js (ver INTERVALO_REIMPORTACION_MS) en vez de agregar una
+// dependencia nueva tipo node-cron -- un intervalo simple alcanza para
+// el volumen de usuarios actual.
+//
+// Cada cuenta se reimporta por separado y los errores se capturan por
+// cuenta (perfil privado, Steam caído, etc.) para que uno solo no frene
+// al resto del lote.
+async function reimportarTodasLasBibliotecas() {
+    const cuentas = await pool.query('SELECT id_usu, steam_id FROM perfiles_steam');
+    let ok = 0;
+    let fallidas = 0;
+    for (const { id_usu, steam_id } of cuentas.rows) {
+        try {
+            await importarBibliotecaSteam(id_usu, steam_id);
+            ok++;
+        } catch {
+            fallidas++;
+        }
+    }
+    return { total: cuentas.rows.length, ok, fallidas };
 }
 
 // POST /perfil/steam/importar
@@ -671,5 +703,10 @@ router.put('/privacidad', verificarToken, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// La reimportación periódica (index.js) necesita esta función además
+// del router -- un router de Express sigue siendo una función normal,
+// así que se le puede colgar una propiedad extra sin romper `app.use`.
+router.reimportarTodasLasBibliotecas = reimportarTodasLasBibliotecas;
 
 module.exports = router;

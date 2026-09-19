@@ -4,8 +4,31 @@ const os = require('os');
 const app = require('./app');
 const { isProduction } = require('./config/env');
 const { runMigrations } = require('./migrate');
+const perfilRoutes = require('./routes/perfil');
 
 const PORT = process.env.PORT || 3000;
+
+// Reimporta la biblioteca de Steam de todas las cuentas vinculadas cada
+// cierto tiempo -- antes, comprar un juego nuevo no aparecía en la app
+// hasta tocar "Importar biblioteca" a mano (pedido explícito del
+// usuario: automatizarlo). 6 horas por defecto: frecuente para que se
+// sienta automático, sin llamar a la API de Steam más de lo necesario.
+const INTERVALO_REIMPORTACION_MS =
+    Number(process.env.INTERVALO_REIMPORTACION_HORAS || 6) * 60 * 60 * 1000;
+
+function iniciarReimportacionPeriodica() {
+    setInterval(async () => {
+        try {
+            const resultado = await perfilRoutes.reimportarTodasLasBibliotecas();
+            console.log(
+                `Reimportación periódica de Steam: ${resultado.ok}/${resultado.total} cuentas ok` +
+                (resultado.fallidas > 0 ? ` (${resultado.fallidas} fallidas -- perfil privado o similar)` : '')
+            );
+        } catch (err) {
+            console.error('Error en reimportación periódica de Steam:', err.message);
+        }
+    }, INTERVALO_REIMPORTACION_MS);
+}
 
 async function start() {
     try {
@@ -37,7 +60,12 @@ async function start() {
         if (!isProduction()) {
             console.log(`Panel admin: http://localhost:${PORT}/admin/`);
         }
+        console.log(
+            `Reimportación automática de Steam: cada ${INTERVALO_REIMPORTACION_MS / 3600000}h`
+        );
     });
+
+    iniciarReimportacionPeriodica();
 
     server.on('error', (err) => {
         if (err.code === 'EADDRINUSE') {

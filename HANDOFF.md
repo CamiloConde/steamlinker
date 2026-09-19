@@ -2048,6 +2048,19 @@ real.
    sidebar). `flutter analyze` limpio.
    Archivo `Icon-512.png` entregado al usuario para descargar, a
    pedido explícito ("dámelo para descargar en caso de").
+   **Ajuste inmediato en el mismo mensaje siguiente**: el usuario dijo
+   que el resultado estaba "ok" pero mandó una captura de una opción
+   mostrada en una ronda anterior ("2b. 'SM' entrelazadas" -- las
+   letras mucho más juntas/superpuestas, casi tocándose, distinto del
+   kerning más separado que se había implementado primero) y pidió esa
+   versión específica. Reconstruido fielmente comparando contra la
+   captura: se armó una herramienta de comparación en el scratchpad
+   (varias combinaciones de tamaño de letra/superposición) y se
+   verificó visualmente cuál calzaba mejor antes de aplicar el cambio
+   final -- terminó en `fontSize = size*0.58`, `offset = size*0.16`
+   (antes 0.5 / 0.225, mucho más separado). Reaplicado en los 5
+   tamaños de ícono + los 3 SVG del panel de admin + `AppLogoMark`.
+   Nuevo archivo entregado al usuario (`Icon-512.png` actualizado).
 4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
    prisa):
    - [x] **RESUELTO — "Juegos en común" en `PublicacionCard` + tags de
@@ -2886,22 +2899,41 @@ real.
     sección ahora es solo de favoritos). Regenerado con
     `flutter gen-l10n`. Confirmado que ambas claves solo se usaban acá
     (grep), no afecta otras pantallas.
-26. **Respuesta a pregunta del usuario (no es un cambio de código):**
-    "¿la importación de biblioteca es periódica o solo una vez? si
-    compro un juego, ¿tengo que volver a darle a importar?" --
-    confirmado revisando el código real (`perfil.js`): **no hay
-    ningún job periódico/cron**, la importación (`importarBibliotecaSteam`)
-    solo se dispara (a) automáticamente una vez, justo al vincular la
-    cuenta de Steam vía OpenID, y (b) manualmente cuando el usuario
-    toca "Importar biblioteca" (`POST /perfil/steam/importar`). Sí,
-    comprar un juego nuevo requiere ese segundo clic manual para que
-    aparezca -- confirmado que el INSERT es un upsert real
-    (`ON CONFLICT ... DO UPDATE`), así que re-importar es seguro y
-    correcto, solo falta que sea automático. **No implementado
-    todavía** -- el usuario solo preguntó, no pidió el cambio; si se
-    retoma, la opción más simple sería un botón/recordatorio visible
-    en vez de un cron real (evita depender de infraestructura de jobs
-    en background que este backend no tiene todavía).
+26. [x] **RESUELTO -- reimportación periódica de biblioteca de Steam,
+    automatizada.** El usuario preguntó primero cómo funcionaba hoy
+    ("¿la importación es periódica o solo una vez? si compro un juego,
+    ¿tengo que volver a darle a importar?") -- se confirmó revisando el
+    código real (`perfil.js`) que **no había ningún job periódico**:
+    la importación solo se disparaba (a) una vez al vincular Steam por
+    OpenID, y (b) manualmente con "Importar biblioteca"
+    (`POST /perfil/steam/importar`). En el mensaje siguiente pidió
+    explícitamente automatizarlo.
+    Columna nueva `perfiles_steam.ultima_importacion_steperfil`
+    (migración `013`), estampada dentro de `importarBibliotecaSteam()`
+    cada vez que una importación termina bien (cubre ambos disparadores
+    existentes automáticamente, sin duplicar lógica).
+    Función nueva `reimportarTodasLasBibliotecas()` en `perfil.js`:
+    recorre TODAS las cuentas con Steam vinculado y reimporta cada una
+    por separado, capturando errores por cuenta (perfil privado, Steam
+    caído, etc.) para que una sola cuenta con problemas no frene el
+    resto del lote. Expuesta como propiedad extra del router
+    (`router.reimportarTodasLasBibliotecas = ...`) para que `index.js`
+    pueda usarla sin romper el uso normal del router en `app.js`.
+    `index.js` la dispara con un `setInterval` simple cada 6h
+    (configurable por `INTERVALO_REIMPORTACION_HORAS`) -- **deliberadamente
+    sin agregar una dependencia nueva tipo `node-cron`**, un intervalo
+    nativo de Node alcanza para el volumen de usuarios actual. Confirmado
+    en vivo que el servidor de desarrollo levanta el intervalo sin
+    errores (`nodemon` reinició limpio, log
+    "Reimportación automática de Steam: cada 6h").
+    El upsert de `usuarios_juegos` ya preservaba `esfav_usujg`
+    (favoritos) en cada reimportación -- confirmado que la
+    reimportación periódica no puede borrar favoritos marcados por el
+    usuario, no fue necesario tocar esa parte.
+    Test nuevo `tests/perfil.reimportacion.test.js`: confirma que el
+    lote no revienta con una cuenta Steam inválida y que esa cuenta NO
+    queda marcada como reimportada (solo se estampa la fecha si la
+    importación realmente funcionó). Suite completa: 50/50 pasando.
 
 ## 12. Cómo retomar
 

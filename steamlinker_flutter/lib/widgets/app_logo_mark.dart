@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Marca actual: monograma tipográfico "SM" -- placeholder simple
-/// mientras el usuario decide un logo definitivo (pidió explícitamente
-/// este cambio, temporal, "mientras pienso en un logo ideal"). Mismas
-/// proporciones que el favicon/íconos PWA generados (ver web/icons/ y
-/// web/favicon.png) para que la marca se vea igual en toda la app.
+/// Marca actual: monograma tipográfico "SM" entrelazadas -- placeholder
+/// simple mientras el usuario decide un logo definitivo (pidió
+/// explícitamente este concepto, el "2b" de una ronda anterior de
+/// opciones mostradas en chat: las letras bien juntas, casi
+/// superpuestas, para que se sientan más como una sola marca que como
+/// texto). Mismas proporciones que el favicon/íconos PWA generados (ver
+/// web/icons/ y web/favicon.png) para que la marca se vea igual en toda
+/// la app.
 class AppLogoMark extends StatelessWidget {
   final double size;
   final Color color;
@@ -27,8 +30,8 @@ class _AppLogoMarkPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final fontSize = size.width * 0.5;
-    final offset = size.width * 0.225;
+    final fontSize = size.width * 0.58;
+    final offset = size.width * 0.16;
     final cx = size.width / 2;
     final cy = size.height / 2 + size.height * 0.02;
 
