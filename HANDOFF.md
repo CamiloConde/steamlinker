@@ -2018,8 +2018,11 @@ real.
    Chat, Notificaciones, Amistad, legal, Contacto, admin). Ojo con
    `PublicacionConstants.etiquetaTipo()`/`PaisUtil.codigoANombre()`
    (sistemas de strings aparte que Inicio también usa).
-3. **Logo / identidad visual** — trabajo de diseño gráfico, no de código.
-   Iconos PWA (`web/icons/Icon-*.png`) siguen con el logo de Flutter.
+3. ~~Logo / identidad visual~~ **RESUELTO (por ahora) — ver puntos 13 y
+   14 más abajo.** Concepto "dos controles" elegido por el usuario,
+   implementado de verdad (`AppLogoMark`, favicon/iconos PWA
+   regenerados, panel de admin rebrandeado). Se puede cambiar más
+   adelante si el usuario decide otro concepto.
 4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
    prisa — revisado el alcance real, es más grande de lo que parecía):
    - **"Juegos en común" en `PublicacionCard`**: NO es solo un cambio de
@@ -2413,6 +2416,59 @@ real.
       mismo concepto (colores, ángulo, proporciones) o cambiar de
       concepto del todo más adelante -- no se cerró como decisión
       final e irreversible.
+14. **Rediseño de identidad del panel de admin (alcance elegido
+    explícitamente por el usuario entre 3 opciones: "solo identidad de
+    marca", sin tocar estructura/layout que ya funcionaba bien).**
+    - [x] **Bug real encontrado antes de rediseñar nada**: había DOS
+      implementaciones de `loadDashboard()`/`nav()` compitiendo -- una
+      vieja e incompleta dentro de `index.html` (con un bug real:
+      "Familias formadas" mostraba `totalPublicaciones` en vez de
+      `familiasFormadas`, y 6 de las 10 tarjetas del dashboard se
+      quedaban en "—" para siempre) y una versión nueva y completa en
+      `admin-panel.js` (parcheaba `window.loadDashboard`/`window.nav`
+      correctamente). El problema: `index.html` disparaba el primer
+      render (`nav('dashboard'); loadDashboard();`) ANTES de que
+      `admin-panel.js` terminara de cargar, así que la primera pintura
+      siempre usaba la versión vieja rota -- solo se veía bien si
+      navegabas manualmente fuera y volvías a Dashboard. Corregido
+      moviendo el trigger inicial al final de `admin-panel.js` (donde
+      `window.nav`/`window.loadDashboard` ya son las versiones
+      parcheadas) y quitando el trigger duplicado de `index.html`.
+      Verificado en vivo: recargando la página ya logueado, las 10
+      tarjetas cargan bien de una, sin tener que hacer clic a otra
+      sección y volver.
+    - [x] **Paleta de colores realineada a `SteamColors`** (antes el
+      panel tenía su propia paleta suelta sin relación con la app):
+      `--accent` de `#1b8cff` a `#3B82F6` (`SteamColors.blue`), los 5
+      tonos de fondo (`--bg0`..`--bg4`) retinteados hacia el azul
+      marino de `SteamColors.bgDeep/bgPanel/bgCard`, texto/estados
+      (`--t1`/`--t2`/`--t3`, rojo/verde/amarillo/naranja) alineados a
+      sus equivalentes de `SteamColors`. Todo pasa por variables CSS
+      en `:root`, así que un solo cambio se propaga a toda la interfaz
+      (confirmado por grep: no quedaban colores sueltos fuera de esas
+      variables, salvo los del logo nuevo).
+    - [x] **Logo + nombre**: los dos SVG de placeholder (un ícono de
+      "personas conectadas" genérico) se reemplazaron por la misma
+      marca de dos controles (`AppLogoMark`) sobre el mismo degradado
+      azul→teal, en el login y en el sidebar. "Steam*linker*" →
+      "Steam*Match*" en ambos lugares (el `<title>` ya decía
+      SteamMatch). Se agregó también un favicon propio para la pestaña
+      del panel (antes no tenía ninguno, `<link rel="icon">` con la
+      misma marca en SVG inline) -- antes de este cambio la pestaña
+      del navegador no mostraba nada.
+    - [x] De paso, bajo esfuerzo: "Steamlinker" → "SteamMatch" en los
+      últimos 3 lugares que quedaban en `admin-panel.js` (comentario de
+      cabecera, `console.info` de arranque, nombre del CSV que se
+      descarga -- ahora `steammatch-usuarios.csv`).
+    - Verificado en vivo: login, dashboard (10 tarjetas + actividad
+      reciente real) y usuarios (tabla con datos reales) -- las demás
+      secciones (Familias, Solicitudes, Reportes, Contenido, Chats,
+      Mensajes, Configuración) no se revisaron una por una en vivo
+      porque no se tenía la contraseña de admin a mano para volver a
+      loguear tras la prueba de logout, pero usan el mismo sistema de
+      variables CSS ya confirmado sin colores sueltos -- deberían
+      verse consistentes. Vale la pena que el usuario les eche un
+      vistazo rápido.
 
 ## 12. Cómo retomar
 

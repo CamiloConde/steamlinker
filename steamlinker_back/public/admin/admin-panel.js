@@ -1,4 +1,4 @@
-// Extensiones del panel admin conectadas al backend Steamlinker
+// Extensiones del panel admin conectadas al backend SteamMatch
 
 (function patchAdminPanel() {
   window.loadDashboard = async function loadDashboardPatched() {
@@ -528,7 +528,7 @@
     const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'steamlinker-usuarios.csv';
+    a.download = 'steammatch-usuarios.csv';
     a.click();
     toast('CSV descargado', 'ok');
   };
@@ -654,5 +654,17 @@
     }
   };
 
-  console.info('[Steamlinker Admin] Panel conectado al backend (extendido).');
+  console.info('[SteamMatch Admin] Panel conectado al backend (extendido).');
+
+  // El primer render del dashboard (cuando ya había una sesión guardada)
+  // pasaba ANTES de que este script terminara de cargar, así que usaba
+  // las versiones viejas/incompletas de loadDashboard/nav definidas en
+  // index.html (con bugs reales: "Familias formadas" mostraba el total
+  // de publicaciones, y varias tarjetas del dashboard se quedaban en
+  // "—" para siempre). El trigger inicial se movió a este punto -- para
+  // entonces `window.nav`/`window.loadDashboard` ya son las versiones
+  // parcheadas correctas.
+  if (typeof token !== 'undefined' && token) {
+    window.nav('dashboard');
+  }
 })();
