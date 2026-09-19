@@ -3057,18 +3057,39 @@ real.
       "publicación" es "publicaciones" (pierde el acento, no es solo
       agregar "es" -- mismo patrón que "canción"→"canciones"). Visto en
       vivo en la tarjeta de Camilo en Descubrir antes de corregirlo.
-    - **Hallazgo NO corregido, es decisión de producto, no bug --
-      reportado para que el usuario decida:** `GET /perfil/descubrir`
-      usa `JOIN publicaciones` (no `LEFT JOIN`), así que un usuario con
-      biblioteca compartida, buena reputación, etc. pero **sin ninguna
-      publicación activa** nunca aparece en Descubrir, sin importar qué
-      tan buen match sea. Confirmado en vivo: una cuenta de prueba con
-      un juego verificado en común con otra no apareció en su
-      Descubrir por no tener publicaciones. Puede ser intencional
-      (Descubrir = "gente buscando activamente ahora", coherente con
-      que la tarjeta muestra tipo/fecha de la última publicación) o un
-      límite no querido de la función "descubrir gente". **Pendiente
-      de decisión del usuario, no tocado.**
+    - [x] **RESUELTO (2026-09-19, ronda siguiente) -- el usuario pidió mi
+      recomendación sobre el hallazgo de Descubrir y la siguió.**
+      `GET /perfil/descubrir` usaba `JOIN publicaciones` (no
+      `LEFT JOIN`), así que un usuario con biblioteca compartida, buena
+      reputación, etc. pero **sin ninguna publicación activa** nunca
+      aparecía en Descubrir, sin importar qué tan buen match fuera.
+      Cambiado a `LEFT JOIN publicaciones p ON p.id_usu = u.id_usu AND
+      p.estado_publi = TRUE` -- el filtro de "activa" se mueve al `ON`,
+      no puede quedar en el `WHERE` con un LEFT JOIN o anularía el
+      cambio (`NULL = TRUE` filtra la fila igual que antes). Los
+      filtros explícitos de `tipo`/`país`/`appid` (cuando el usuario
+      SÍ los aplica) siguen exigiendo una publicación real que
+      coincida -- solo cambia el caso por defecto, sin filtros
+      activos. `total_publicaciones`, `tipo_publi_reciente`,
+      `ultima_publicacion` y `juego_reciente` caen a `0`/`null` de
+      forma natural para quien no tiene publicaciones (ya eran
+      subconsultas independientes, no hubo que tocarlas).
+      Frontend: orden "Más reciente" ahora manda los `null` al final
+      en vez de dejarlos mezclados sin criterio real entre los que sí
+      tienen fecha; el panel lateral de escritorio decía "GAMERS
+      ACTIVOS -- con publicaciones abiertas ahora", ya no era cierto,
+      cambiado a "GAMERS ENCONTRADOS -- compatibles con tu biblioteca y
+      tus filtros". La tarjeta de cada persona ya ocultaba
+      correctamente el tipo/juego reciente cuando eran `null` (no hizo
+      falta tocarla).
+      Test nuevo en `tests/perfil.descubrir.test.js` (el archivo ya
+      existía pero su comentario decía explícitamente lo contrario --
+      corregido también) confirma que alguien sin publicaciones
+      aparece con los campos en `null`/`0` y que `juegos_en_comun`
+      sigue calculándose bien. 59/59 tests backend. Verificado en vivo
+      con 2 cuentas de prueba (una sin publicar nada) Y confirmado
+      orgánicamente con un usuario real de la app ("papotico") que
+      apareció en la misma lista.
     Resto de lo probado sin problemas: envío/aceptación de match
     (notificación + chat auto-creado + auto-cierre de publicación al
     llenar cupos), control de acceso de chat (un tercero no puede leer

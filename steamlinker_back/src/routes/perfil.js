@@ -215,10 +215,9 @@ router.get('/descubrir', verificarToken, async (req, res) => {
                         LIMIT 1
                     ) jr) AS juego_reciente
             FROM usuarios u
-            JOIN publicaciones p ON p.id_usu = u.id_usu
+            LEFT JOIN publicaciones p ON p.id_usu = u.id_usu AND p.estado_publi = TRUE
             LEFT JOIN publicacion_juegos pj ON pj.id_publi = p.id_publi
-            WHERE p.estado_publi = TRUE
-              AND COALESCE(u.baneado_usu, FALSE) = FALSE
+            WHERE COALESCE(u.baneado_usu, FALSE) = FALSE
               AND COALESCE(u.perfil_publico, TRUE) = TRUE
               AND u.id_usu <> $1
         `;

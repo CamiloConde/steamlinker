@@ -308,10 +308,16 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
         );
         break;
       case _Orden.reciente:
+        // Ahora Descubrir también incluye gente sin ninguna publicación
+        // (antes se excluía por completo, ver HANDOFF.md) -- sin fecha
+        // que comparar, van al final en vez de quedar mezclados sin
+        // orden real entre los que sí tienen una.
         lista.sort((a, b) {
           final da = DateTime.tryParse('${a['ultima_publicacion']}');
           final db = DateTime.tryParse('${b['ultima_publicacion']}');
-          if (da == null || db == null) return 0;
+          if (da == null && db == null) return 0;
+          if (da == null) return 1;
+          if (db == null) return -1;
           return db.compareTo(da);
         });
         break;
@@ -1265,7 +1271,7 @@ class _PanelLateral extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'GAMERS ACTIVOS',
+                'GAMERS ENCONTRADOS',
                 style: TextStyle(
                   color: SteamColors.muted,
                   fontSize: 10,
@@ -1285,8 +1291,11 @@ class _PanelLateral extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
+          // Antes decía "Con publicaciones abiertas ahora" -- ya no es
+          // cierto: Descubrir ahora incluye a cualquiera compatible,
+          // tenga o no una publicación activa (ver HANDOFF.md).
           const Text(
-            'Con publicaciones abiertas ahora.',
+            'Compatibles con tu biblioteca y tus filtros.',
             style: TextStyle(color: SteamColors.muted, fontSize: 11),
           ),
           if (populares.isNotEmpty) ...[

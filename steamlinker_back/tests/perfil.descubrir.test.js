@@ -48,9 +48,11 @@ before(async () => {
         `UPDATE usuarios_juegos SET origen_usujg = 'steam' WHERE appid = 990991`
     );
 
-    // El otro usuario necesita una publicacion activa para aparecer en
-    // /perfil/descubrir (solo lista gente con publicaciones abiertas).
-    // Le asociamos el juego verificado para poder probar juego_reciente.
+    // Antes el otro usuario necesitaba una publicacion activa para
+    // aparecer en /perfil/descubrir -- ya no (ver test de abajo sobre
+    // gente sin publicaciones, y HANDOFF.md). Esta publicacion se crea
+    // igual, para poder probar tipo_publi_reciente/juego_reciente
+    // cuando SI hay una.
     await request(app)
         .post('/publicaciones/crear')
         .set('Authorization', `Bearer ${tokenOtro}`)
@@ -84,4 +86,42 @@ test('descubrir incluye juegos_en_comun, total_juegos y steam_vinculado', async 
     assert.equal(fila.juegos_comunes_muestra.length, 1);
     assert.equal(fila.juegos_comunes_muestra[0].appid, 990991);
     assert.equal(fila.juego_reciente.appid, 990991);
+});
+
+test('un usuario SIN ninguna publicacion tambien aparece en descubrir (bug real corregido, antes se excluia por completo)', async () => {
+    const sinPublis = usernameUnico('test_descubrir_sin_publis');
+    const resSinPublis = await request(app).post('/auth/registro').send({
+        username: sinPublis,
+        email: `${sinPublis}@example.com`,
+        password: 'Passw0rd123',
+    });
+    const tokenSinPublis = resSinPublis.body.token;
+
+    // Mismo juego verificado en comun que "yo", pero CERO publicaciones.
+    await request(app)
+        .post('/perfil/juegos/agregar')
+        .set('Authorization', `Bearer ${tokenSinPublis}`)
+        .send({ appid: 990991, nombre: 'Juego de prueba comun verificado' });
+    await pool.query(
+        `UPDATE usuarios_juegos SET origen_usujg = 'steam' WHERE id_usu = (
+            SELECT id_usu FROM usuarios WHERE username_usu = $1
+        ) AND appid = 990991`,
+        [sinPublis]
+    );
+
+    const res = await request(app)
+        .get('/perfil/descubrir')
+        .set('Authorization', `Bearer ${tokenYo}`);
+
+    assert.equal(res.status, 200);
+    const fila = res.body.usuarios.find((u) => u.username_usu === sinPublis);
+    assert.ok(fila, 'debe aparecer aunque no tenga publicaciones');
+    assert.equal(fila.total_publicaciones, 0);
+    assert.equal(fila.tipo_publi_reciente, null);
+    assert.equal(fila.ultima_publicacion, null);
+    assert.equal(fila.juego_reciente, null);
+    // Pero SI se sigue calculando bien lo que no depende de publicaciones.
+    assert.equal(fila.juegos_en_comun, 1);
+
+    await limpiarUsuario(sinPublis);
 });
