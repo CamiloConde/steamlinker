@@ -2023,6 +2023,17 @@ real.
    implementado de verdad (`AppLogoMark`, favicon/iconos PWA
    regenerados, panel de admin rebrandeado). Se puede cambiar más
    adelante si el usuario decide otro concepto.
+   **⏰ PENDIENTE EXPLÍCITO (2026-09-19), no implementar todavía:** el
+   usuario quiere cambiar el logo/favicon/íconos PWA otra vez, esta vez
+   al concepto "monograma SM tipográfico" (mostrado en chat en la
+   décima pasada, ver sección 11 punto/ronda correspondiente -- nunca
+   se implementó como asset real, solo se mostró como opción). Sus
+   palabras: "es super simple pero está bien mientras pienso en un
+   logo ideal" -- o sea, lo quiere como placeholder temporal mientras
+   decide un logo definitivo, NO es la decisión final. Marcado
+   explícitamente como NO prioritario ahora mismo ("anótalo como
+   pendiente ya que hay otras prioridades") -- no tocar hasta que el
+   usuario lo pida de nuevo.
 4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
    prisa):
    - [x] **RESUELTO — "Juegos en común" en `PublicacionCard` + tags de
@@ -2799,6 +2810,53 @@ real.
       separa "Tiene"/"Busca" con las insignias correctas, y el chip de
       Spider-Man 2 en el formulario de edición se ve distinto (estrella)
       al resto (check verde).
+24. [x] **RESUELTO -- el usuario probó todo lo anterior en su cuenta
+    real ("ya lo probé... funciona") y pidió 4 mejoras más, todas de
+    UI pura (sin cambios de backend/migraciones esta ronda).**
+    - **Agregar juego manual sin salir de "Publicar"**: antes había que
+      abandonar la pantalla de publicación, ir a Perfil, agregar el
+      juego a mano, y volver a armar la publicación de cero. El
+      buscador "Buscar en Steam" de esta pantalla resultó ser
+      literalmente el mismo mecanismo que ya usa Perfil para agregar
+      juegos manuales (`PerfilProvider.agregarJuego`, mismo endpoint)
+      -- cero backend nuevo. Se agregó un botón `Icons.library_add_outlined`
+      por resultado de búsqueda (oculto si el juego ya está en tu
+      biblioteca) que llama a ese mismo método y, si funciona, además
+      marca el juego para la publicación actual en el mismo tap --
+      antes había que buscarlo dos veces (una para agregarlo a Perfil,
+      otra para esta publicación). `crear_publicacion_screen.dart`.
+    - **Banderas por país**: `PaisUtil.codigoABandera(codigo)` nuevo --
+      convierte el código ISO 3166-1 alpha-2 que cada país ya tenía
+      guardado (ej. "CO") a su emoji de bandera vía "regional indicator
+      symbols" de Unicode, sin agregar ninguna imagen/dependencia. Se
+      muestra **junto al** nombre del país, no en su lugar (algunas
+      banderas se confunden a simple vista). Aplicado en
+      `PublicacionCard` (pie de tarjeta), `publicacion_detalle_screen.dart`
+      (país del autor) y `PaisSelectorField` (campo cerrado + cada
+      opción de la lista al elegir país).
+    - **La tarjeta no mostraba lo que el usuario busca, y la portada
+      salía de un juego elegido casi al azar**: `PublicacionCard`
+      rediseñada -- la imagen grande ("como un post") ahora solo sale
+      si hay un juego **confirmado por Steam** con carátula (la
+      representación más confiable); si no hay ninguno así, se
+      reemplaza por una fila de miniaturas (`MiniCaratula`, ya
+      existente) de lo que el autor tiene. Si la imagen grande sí
+      salió y hay más juegos "tengo" además del héroe, se agrega una
+      fila secundaria de miniaturas debajo (capada a 4 + "+N") para
+      que no queden escondidos detrás de la imagen. Si hay juegos que
+      el autor **busca**, una línea aparte con ícono de estrella
+      ("Busca: X, Y, Z") -- nunca mezclada con lo que tiene, mismo
+      criterio que ya se aplicó en el detalle. El contador "N juegos"
+      del pie se quitó por redundante (la info ya se ve arriba).
+      Verificado en vivo de punta a punta con cuenta de prueba
+      desechable (héroe con imagen real de Steam + 2 juegos manuales
+      extra + 1 juego "busco"), y de paso confirmado orgánicamente en
+      la publicación real del propio usuario (biblioteca de 62+
+      juegos, mostró correctamente el héroe, "+58" de overflow, la
+      línea "Busca" y la bandera de Colombia).
+    `flutter analyze` limpio, `flutter test` y `flutter build web` sin
+    errores. Sin cambios de backend/tests esta ronda (las 4 mejoras son
+    puramente de Flutter).
 
 ## 12. Cómo retomar
 

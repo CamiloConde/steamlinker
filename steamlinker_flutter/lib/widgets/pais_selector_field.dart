@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/constants/pais_util.dart';
 import '../theme/colors.dart';
 import '../theme/radii.dart';
 
@@ -70,15 +71,30 @@ class PaisSelectorField extends StatelessWidget {
             ),
             child: Row(
               children: [
+                if (seleccionado != PaisUtil.todos) ...[
+                  Text(
+                    PaisUtil.codigoABandera(
+                          PaisUtil.nombreACodigo(seleccionado),
+                        ) ??
+                        '',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 Expanded(
                   child: Text(
                     seleccionado,
-                    style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                    style: const TextStyle(
+                      color: SteamColors.light,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
                 Icon(
                   Icons.expand_more,
-                  color: activo ? SteamColors.muted : SteamColors.muted.withValues(alpha: 0.4),
+                  color: activo
+                      ? SteamColors.muted
+                      : SteamColors.muted.withValues(alpha: 0.4),
                   size: 18,
                 ),
               ],
@@ -124,7 +140,9 @@ class _PaisBuscadorSheetState extends State<_PaisBuscadorSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -147,7 +165,11 @@ class _PaisBuscadorSheetState extends State<_PaisBuscadorSheet> {
                 decoration: InputDecoration(
                   hintText: 'Buscar país...',
                   hintStyle: const TextStyle(color: SteamColors.muted),
-                  prefixIcon: const Icon(Icons.search, color: SteamColors.muted, size: 20),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: SteamColors.muted,
+                    size: 20,
+                  ),
                   filled: true,
                   fillColor: SteamColors.bgInput,
                   border: OutlineInputBorder(
@@ -173,17 +195,36 @@ class _PaisBuscadorSheetState extends State<_PaisBuscadorSheet> {
                       itemBuilder: (context, i) {
                         final pais = _filtrados[i];
                         final activo = pais == widget.seleccionado;
+                        final bandera = pais == PaisUtil.todos
+                            ? null
+                            : PaisUtil.codigoABandera(
+                                PaisUtil.nombreACodigo(pais),
+                              );
                         return ListTile(
+                          leading: bandera == null
+                              ? null
+                              : Text(
+                                  bandera,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                           title: Text(
                             pais,
                             style: TextStyle(
-                              color: activo ? SteamColors.blue : SteamColors.light,
-                              fontWeight: activo ? FontWeight.w700 : FontWeight.w400,
+                              color: activo
+                                  ? SteamColors.blue
+                                  : SteamColors.light,
+                              fontWeight: activo
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
                               fontSize: 13.5,
                             ),
                           ),
                           trailing: activo
-                              ? const Icon(Icons.check, color: SteamColors.blue, size: 18)
+                              ? const Icon(
+                                  Icons.check,
+                                  color: SteamColors.blue,
+                                  size: 18,
+                                )
                               : null,
                           onTap: () => Navigator.pop(context, pais),
                         );

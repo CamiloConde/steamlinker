@@ -47,7 +47,8 @@ class PaisUtil {
   static List<String> get nombres => _codigos.keys.toList(growable: false);
 
   static String nombreACodigo(String nombre) {
-    return _codigos[nombre] ?? (nombre.length <= 5 ? nombre : nombre.substring(0, 5));
+    return _codigos[nombre] ??
+        (nombre.length <= 5 ? nombre : nombre.substring(0, 5));
   }
 
   static String codigoANombre(String? code) {
@@ -57,5 +58,21 @@ class PaisUtil {
       if (entry.value == normalizado) return entry.key;
     }
     return code;
+  }
+
+  /// Emoji de bandera a partir del código ISO 3166-1 alpha-2 (ej. "CO" →
+  /// 🇨🇴). No hace falta ninguna imagen ni dependencia nueva: cada letra
+  /// A-Z tiene un "regional indicator symbol" en Unicode (U+1F1E6 = 'A'),
+  /// y dos seguidos los renderiza como bandera casi cualquier
+  /// navegador/SO moderno. Se usa junto al nombre del país, no en su
+  /// lugar -- algunas banderas se confunden a simple vista.
+  static String? codigoABandera(String? code) {
+    if (code == null || code.length != 2) return null;
+    final normalizado = code.toUpperCase();
+    if (!RegExp(r'^[A-Z]{2}$').hasMatch(normalizado)) return null;
+    const base = 0x1F1E6;
+    final primero = base + (normalizado.codeUnitAt(0) - 'A'.codeUnitAt(0));
+    final segundo = base + (normalizado.codeUnitAt(1) - 'A'.codeUnitAt(0));
+    return String.fromCharCode(primero) + String.fromCharCode(segundo);
   }
 }

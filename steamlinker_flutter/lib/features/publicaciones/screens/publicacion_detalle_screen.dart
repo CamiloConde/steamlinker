@@ -997,6 +997,21 @@ class _AutorSection extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      Builder(
+                        builder: (_) {
+                          final bandera = PaisUtil.codigoABandera(
+                            pub['pais_usu']?.toString(),
+                          );
+                          if (bandera == null) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: Text(
+                              bandera,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          );
+                        },
+                      ),
                       Text(
                         PaisUtil.codigoANombre(pub['pais_usu']?.toString()),
                         style: const TextStyle(

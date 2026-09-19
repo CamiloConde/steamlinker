@@ -214,6 +214,41 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     });
   }
 
+  // Pedido explícito del usuario: si un juego que busca resulta que
+  // también lo tiene (pero no estaba en su biblioteca todavía), antes
+  // tenía que salir de esta pantalla, ir a Perfil a agregarlo a mano, y
+  // volver a armar la publicación de nuevo. Ahora se agrega de una vez
+  // acá mismo -- mismo endpoint que ya usa Perfil, y de paso lo deja
+  // marcado para esta publicación (ya no hace falta buscarlo dos veces).
+  Future<void> _agregarABiblioteca(Map<String, dynamic> juego) async {
+    final perfilProv = context.read<PerfilProvider>();
+    final exito = await perfilProv.agregarJuego({
+      'appid': juego['appid'],
+      'nombre': juego['nombre'],
+      'headerimg': juego['headerimg'],
+      'capsuleimg': juego['capsuleimg'],
+      'horas': 0,
+      'favorito': false,
+    });
+    if (!mounted) return;
+    if (exito) {
+      showSteamToast(
+        context,
+        'Juego agregado a tu biblioteca',
+        SteamColors.green,
+      );
+      if (!_estaSeleccionado(juego['appid'])) {
+        _toggleJuego(juego);
+      }
+    } else {
+      showSteamToast(
+        context,
+        perfilProv.error ?? 'No fue posible agregar el juego',
+        Colors.red,
+      );
+    }
+  }
+
   Future<void> _publicar() async {
     final titulo = _tituloController.text.trim();
     if (titulo.isEmpty) {
@@ -673,6 +708,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                 else
                   ..._resultadosSteam.map((juego) {
                     final seleccionado = _estaSeleccionado(juego['appid']);
+                    final yaEnBiblioteca = perfilProv.juegos.any(
+                      (mio) => mio['appid'] == juego['appid'],
+                    );
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: seleccionado
@@ -691,6 +729,20 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                           fontSize: 13,
                         ),
                       ),
+                      // Si ya está en tu biblioteca no hace falta este
+                      // botón -- ya se puede marcar desde "Tu biblioteca"
+                      // arriba, y quedaría redundante.
+                      trailing: yaEnBiblioteca
+                          ? null
+                          : IconButton(
+                              icon: const Icon(
+                                Icons.library_add_outlined,
+                                color: SteamColors.teal,
+                                size: 20,
+                              ),
+                              tooltip: 'Agregar a tu biblioteca',
+                              onPressed: () => _agregarABiblioteca(juego),
+                            ),
                       onTap: () => _toggleJuego(juego),
                     );
                   }),

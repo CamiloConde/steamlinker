@@ -36,26 +36,42 @@ class PublicacionCard extends StatelessWidget {
     // La portada y los géneros representan la publicación -- deben salir
     // de un juego que el autor de verdad TIENE, nunca de uno que solo
     // busca (ej. mostrar la carátula de Spider-Man 2 como si fuera suyo
-    // cuando en realidad lo está pidiendo). Entre los que tiene, se
-    // prefiere uno confirmado por Steam si hay -- es la representación
-    // más confiable de la publicación.
+    // cuando en realidad lo está pidiendo).
     final juegosQueTiene = juegos
-        .where((j) => (j as Map)['intencion_pjg'] != 'busco')
+        .map((j) => Map<String, dynamic>.from(j as Map))
+        .where((j) => j['intencion_pjg'] != 'busco')
         .toList();
-    final juegoPortada = juegosQueTiene.isEmpty
-        ? null
-        : juegosQueTiene.firstWhere(
-            (j) => (j as Map)['origen_pjg'] == 'steam',
-            orElse: () => juegosQueTiene.first,
-          );
-    final portada = juegoPortada != null
-        ? juegoPortada['headerimg_jg'] as String?
-        : null;
-    final generos = juegoPortada != null
-        ? ((juegoPortada['generos_jg'] as List<dynamic>?) ?? [])
+    final juegosQueBusca = juegos
+        .map((j) => Map<String, dynamic>.from(j as Map))
+        .where((j) => j['intencion_pjg'] == 'busco')
+        .toList();
+    // La imagen grande ("como un post") solo sale si hay un juego
+    // confirmado por Steam con carátula -- es la representación más
+    // confiable. Si no hay ninguno verificado, se muestra en cambio una
+    // fila de miniaturas de lo que sí tiene (antes esto quedaba oculto
+    // por completo detrás de un juego elegido casi al azar).
+    Map<String, dynamic>? heroConImagen;
+    for (final j in juegosQueTiene) {
+      final header = j['headerimg_jg'] as String?;
+      if (j['origen_pjg'] == 'steam' && header != null && header.isNotEmpty) {
+        heroConImagen = j;
+        break;
+      }
+    }
+    final portada = heroConImagen?['headerimg_jg'] as String?;
+    final juegoParaGeneros =
+        heroConImagen ??
+        (juegosQueTiene.isNotEmpty ? juegosQueTiene.first : null);
+    final generos = juegoParaGeneros != null
+        ? ((juegoParaGeneros['generos_jg'] as List<dynamic>?) ?? [])
               .map((g) => g.toString())
               .toList()
         : <String>[];
+    // El resto de lo que tiene, además del héroe -- solo tiene sentido
+    // mostrarlo si el héroe ya "tapó" la vista con la imagen grande.
+    final otrosQueTiene = heroConImagen != null
+        ? juegosQueTiene.where((j) => j != heroConImagen).toList()
+        : <Map<String, dynamic>>[];
     final enComun = publicacion['juegos_en_comun'] as int?;
     final comunes =
         ((publicacion['juegos_comunes_muestra'] as List<dynamic>?) ?? [])
@@ -266,43 +282,96 @@ class PublicacionCard extends StatelessWidget {
               ],
               const SizedBox(height: 12),
               // ── Portada del juego (como un post con imagen) ─────────
-              // Solo de juegos que el autor TIENE -- ver comentario arriba.
+              // Solo de juegos que el autor TIENE y confirma Steam -- ver
+              // comentario arriba. Sin uno así, se cae a una fila de
+              // miniaturas en vez de esconder por completo la oferta.
               if (portada != null && portada.isNotEmpty)
                 AspectRatio(
                   aspectRatio: 16 / 7,
                   child: Image.network(
                     portada,
                     semanticLabel:
-                        'Carátula de ${juegoPortada?['nom_jg'] ?? 'juego'}',
+                        'Carátula de ${heroConImagen?['nom_jg'] ?? 'juego'}',
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) =>
                         Container(color: SteamColors.bgCard),
                   ),
                 )
               else if (juegosQueTiene.isNotEmpty)
-                Container(
-                  height: 56,
-                  color: SteamColors.bgCard,
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.videogame_asset_outlined,
-                        size: 18,
-                        color: SteamColors.muted,
-                      ),
-                      const SizedBox(width: 8),
+                      for (final j in juegosQueTiene.take(5)) ...[
+                        MiniCaratula(
+                          headerimg: j['headerimg_jg'] as String?,
+                          nombre: j['nom_jg'] as String?,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          juegosQueTiene
-                              .map((j) => j['nom_jg'] ?? '')
-                              .join(' · '),
+                          'Ofrece ${publicacion['total_juegos'] ?? juegosQueTiene.length} juego${juegosQueTiene.length == 1 ? '' : 's'}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: SteamColors.textSec,
-                            fontSize: 12.5,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // ── Resto de lo que tiene, si la imagen grande ya "tapó"
+              // la vista de las demás (antes solo se veía un juego, sin
+              // pista de que ofrecía más).
+              if (otrosQueTiene.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Row(
+                    children: [
+                      for (final j in otrosQueTiene.take(4)) ...[
+                        MiniCaratula(
+                          headerimg: j['headerimg_jg'] as String?,
+                          nombre: j['nom_jg'] as String?,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      if (otrosQueTiene.length > 4)
+                        Text(
+                          '+${otrosQueTiene.length - 4}',
+                          style: const TextStyle(
+                            color: SteamColors.textSec,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              // ── Lo que busca -- nunca junto a lo que tiene, para no dar
+              // a entender que ya lo posee (ej. "busca Spider-Man 2").
+              if (juegosQueBusca.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.star_outline,
+                        size: 14,
+                        color: SteamColors.muted,
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          'Busca: ${juegosQueBusca.map((j) => j['nom_jg'] ?? '').join(', ')}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: SteamColors.textSec,
+                            fontSize: 12,
                           ),
                         ),
                       ),
@@ -340,12 +409,34 @@ class PublicacionCard extends StatelessWidget {
                   ),
                 ),
               ],
-              // ── Pie: país + juegos + acción ─────────────────────────
+              // ── Pie: país + acción ───────────────────────────────────
+              // El conteo de juegos ya se comunica arriba (imagen grande +
+              // miniaturas / fila de miniaturas + "Ofrece N juegos"), no
+              // hace falta repetirlo acá.
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: Row(
                   children: [
-                    Icon(Icons.public, size: 14, color: SteamColors.muted),
+                    Builder(
+                      builder: (_) {
+                        final codigo =
+                            publicacion['paisfiltro_publi'] as String?;
+                        final bandera = codigo != null && codigo.isNotEmpty
+                            ? PaisUtil.codigoABandera(codigo)
+                            : null;
+                        if (bandera != null) {
+                          return Text(
+                            bandera,
+                            style: const TextStyle(fontSize: 13),
+                          );
+                        }
+                        return const Icon(
+                          Icons.public,
+                          size: 14,
+                          color: SteamColors.muted,
+                        );
+                      },
+                    ),
                     const SizedBox(width: 5),
                     Text(
                       publicacion['paisfiltro_publi'] != null &&
@@ -361,23 +452,6 @@ class PublicacionCard extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (juegosQueTiene.length > 1 &&
-                        (portada == null || portada.isEmpty)) ...[
-                      const SizedBox(width: 10),
-                      Icon(
-                        Icons.videogame_asset_outlined,
-                        size: 14,
-                        color: SteamColors.muted,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${publicacion['total_juegos'] ?? juegosQueTiene.length} juegos',
-                        style: const TextStyle(
-                          color: SteamColors.textSec,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
                     const Spacer(),
                     const Text(
                       'Ver detalle',
