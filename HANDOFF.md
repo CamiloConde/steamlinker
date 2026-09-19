@@ -11,6 +11,12 @@ referencia activa.
 herramientas de asistencia en autoría ni mensajes — así lo pidió explícitamente el
 dueño del proyecto. Sin footers de atribución de ningún tipo.
 
+**🌐 La app está desplegada y viva (desde 2026-09-19), no es solo localhost:**
+- **Frontend (la URL que se comparte con usuarios reales):** https://silver-cendol-e1fbc0.netlify.app
+- **Backend/API (no tiene interfaz, no es para compartir):** https://steamlinker-production.up.railway.app
+- Detalle completo del despliegue (variables de entorno, cómo se conectó todo) en
+  sección 11, Fase 6.
+
 ---
 
 ## 1. Qué es el proyecto — y qué NO es
@@ -1042,20 +1048,67 @@ rebuild, recarga una segunda vez antes de asumir que el código está mal.
       nunca debieron commitearse — ya estaba en `.gitignore` pero quedó trackeado
       desde antes; mismo patrón que el fix de `.env` en Fase 0). Los archivos siguen
       en disco, solo se sacaron del control de versiones.
-- [ ] **Despliegue de Web 1.0 — pendiente, decisión tomada, ejecución no.** El
-      usuario confirmó: **Railway** para backend + Postgres (recomendado por mí, sin
-      preferencia previa), **sin dominio propio todavía** (URL gratuita del hosting
-      tipo `algo.up.railway.app` está bien para la beta). Falta: el usuario crea la
-      cuenta de Railway y conecta el repo (no lo puedo hacer yo, requiere su cuenta),
-      luego configurar variables de entorno de producción (secrets nuevos, nunca los
-      de dev/CI), `CORS_ORIGINS` apuntando al dominio del frontend, y decidir dónde
-      queda el `flutter build web` (¿Railway también, o Vercel/Netlify para el
-      estático? — pendiente de definir en la sesión que ejecute el despliegue).
+- [x] **RESUELTO (2026-09-19) -- Web 1.0 desplegada y funcionando de
+      verdad, no solo localhost.**
+      - **Backend + Postgres en Railway**: `https://steamlinker-production.up.railway.app`.
+        El usuario creó la cuenta y conectó el repo (con `Root Directory`
+        = `steamlinker_back`, monorepo -- si no se pone esto Railway
+        intenta construir el repo completo). Primer intento crasheó por
+        variables de entorno faltantes (`DB_HOST`, `DB_NAME`, `DB_USER`,
+        `DB_PASSWORD`, `JWT_SECRET`, `STEAM_API_KEY`) -- el mensaje de
+        error del propio `validateEnv()` (sección 6) las listó exactas,
+        no hubo que adivinar. Las de base de datos se resolvieron con
+        referencias de variables de Railway al servicio de Postgres
+        (`${{Postgres.PGHOST}}`, `${{Postgres.PGPORT}}`,
+        `${{Postgres.PGDATABASE}}`, `${{Postgres.PGUSER}}`,
+        `${{Postgres.PGPASSWORD}}`) en vez de copiar valores a mano --
+        se actualizan solas si Railway cambia algo. `JWT_SECRET`/
+        `SESSION_SECRET` generados con
+        `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
+        (dos veces, un valor random distinto para cada uno).
+        `STEAM_API_KEY` es el mismo de siempre, copiado del `.env`
+        local. Migraciones corren solas al arrancar (`runMigrations()`
+        en `index.js`, sin paso manual). `PORT` no se toca, Railway lo
+        inyecta y el código ya lo respetaba.
+      - **Frontend en Netlify**: `https://silver-cendol-e1fbc0.netlify.app`
+        (URL real que se le comparte a la gente -- la de Railway es
+        solo API, sin interfaz). Compilado con
+        `flutter build web --release -o build/web-prod --dart-define=API_BASE_URL=https://steamlinker-production.up.railway.app`
+        -- **se usó `-o build/web-prod`, una carpeta de salida distinta
+        a `build/web`**, para no pisar el build apuntado a localhost
+        que se sigue usando para pruebas en esta sesión. Subido con
+        **Netlify Drop** (arrastrar la carpeta a
+        `app.netlify.com/drop`) -- sin cuenta, el sitio queda con
+        contraseña automática (protección anti-abuso); el usuario creó
+        cuenta gratis después y volvió a arrastrar la carpeta ya con
+        sesión iniciada para que quedara de su cuenta, y le dio
+        "Make public" para quitar la contraseña.
+      - **Conectar los dos**: `FRONTEND_URL` y `CORS_ORIGINS` en Railway
+        apuntando a la URL de Netlify -- sin esto el navegador bloquea
+        las llamadas por CORS (confirmado en vivo: error real de CORS
+        en consola antes de poner las variables, desaparece después).
+      - **Bug real encontrado y arreglado en el camino**: los mensajes
+        de error de conexión (`AppConfig.connectionHelpMessage`)
+        mostraban instrucciones de desarrollador ("abre una terminal,
+        ejecuta npm run dev...") a CUALQUIER usuario, sin chequear
+        `kReleaseMode` -- un usuario real de la beta con mala conexión
+        hubiera visto ese mensaje sin sentido. Ahora en release muestra
+        un mensaje genérico ("revisa tu conexión a internet"), las
+        instrucciones de desarrollador solo salen en debug/profile.
+      - **Verificado en vivo de punta a punta, en producción real**: se
+        registró una cuenta de prueba (`deploy_test_verify`) directo
+        desde el sitio de Netlify, cargó Inicio con datos reales, y la
+        sesión sobrevivió un refresh de página -- confirma que el flujo
+        completo (Netlify → Railway → Postgres → JWT → vuelta) funciona
+        de extremo a extremo, no solo que cada pieza responde por
+        separado.
 
 **Fase 7 — Lanzamiento**
-- [ ] Beta web pública, recoger feedback real antes de empaquetar formalmente
-      Android/iOS/Desktop (Flutter ya los soporta con el mismo código — ahí no hay
-      trabajo de plataforma nuevo, es empaque y QA)
+- [x] **Beta web pública -- ya está arriba**, ver Fase 6. Recoger
+      feedback real antes de empaquetar formalmente Android/iOS/Desktop
+      (Flutter ya los soporta con el mismo código -- ahí no hay trabajo
+      de plataforma nuevo, es empaque y QA) sigue pendiente, pero eso
+      es un paso posterior, no bloquea tener gente probando la web ya.
 - [x] **Auditoría real en móvil (clic por clic, no solo revisión de código) —
       pedida después de aprobar el sidebar/Descubrir/login.** El usuario
       reportó "funciones que no hacen nada", funciones "bugeadas" y pidió

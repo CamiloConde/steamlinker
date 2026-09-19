@@ -93,9 +93,20 @@ class AppConfig {
   }
 
   /// Mensaje corto para pantallas de login cuando falla la conexión.
-  static String get connectionHelpMessage =>
-      'No pudimos contactar el servidor ($apiBaseUrl).\n\n'
-      '• Abre una terminal en steamlinker_back y ejecuta: npm run dev\n'
-      '• En el navegador de tu PC prueba: http://localhost:$localPort/health\n'
-      '• Si usas un móvil físico, configura la IP de tu PC con API_BASE_URL';
+  ///
+  /// Antes esto mostraba instrucciones de desarrollador ("abre una
+  /// terminal, ejecuta npm run dev...") a CUALQUIER usuario, incluso en
+  /// producción -- un usuario real con mala conexión hubiera visto ese
+  /// mensaje sin sentido. Solo tiene sentido en desarrollo, donde el
+  /// backend de verdad corre en la máquina de quien prueba la app.
+  static String get connectionHelpMessage {
+    if (kReleaseMode) {
+      return 'No pudimos conectar con el servidor. Revisa tu conexión a '
+          'internet e inténtalo de nuevo en unos segundos.';
+    }
+    return 'No pudimos contactar el servidor ($apiBaseUrl).\n\n'
+        '• Abre una terminal en steamlinker_back y ejecuta: npm run dev\n'
+        '• En el navegador de tu PC prueba: http://localhost:$localPort/health\n'
+        '• Si usas un móvil físico, configura la IP de tu PC con API_BASE_URL';
+  }
 }
