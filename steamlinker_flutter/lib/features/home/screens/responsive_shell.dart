@@ -239,6 +239,7 @@ class _SideNav extends StatelessWidget {
     // Partición manual (no List.sort) para que el orden dentro de cada
     // grupo se mantenga estable -- List.sort no lo garantiza.
     final todos = context.watch<PerfilProvider>().juegos;
+    final hayFavoritos = todos.any((j) => j['favorito'] == true);
     final juegos = [
       ...todos.where((j) => j['favorito'] == true),
       ...todos.where((j) => j['favorito'] != true),
@@ -341,7 +342,22 @@ class _SideNav extends StatelessWidget {
                 style: const TextStyle(color: SteamColors.muted, fontSize: 12),
               ),
             )
-          else
+          else ...[
+            // Pedido explícito del usuario: no era obvio por qué salían
+            // justo esos 5 -- se aclara acá, pero solo si de verdad hay
+            // algún favorito marcado (si no, el orden es el de siempre
+            // y esta aclaración no aplicaría a nada).
+            if (hayFavoritos)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+                child: Text(
+                  'Se muestran primero tus favoritos ⭐',
+                  style: TextStyle(
+                    color: SteamColors.muted.withValues(alpha: 0.8),
+                    fontSize: 10.5,
+                  ),
+                ),
+              ),
             for (final j in juegos.take(5))
               _MiniJuegoRow(
                 juego: j,
@@ -351,6 +367,7 @@ class _SideNav extends StatelessWidget {
                   onJuegoTap(appid, j['nombre']?.toString() ?? '');
                 },
               ),
+          ],
           if (juegos.length > 5)
             Padding(
               padding: const EdgeInsets.only(left: 18, top: 4),

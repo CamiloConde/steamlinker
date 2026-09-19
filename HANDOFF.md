@@ -2615,6 +2615,55 @@ real.
     autorizados → las credenciales -- Client ID y Client Secret -- se
     las pasa a esta sesión para integrarlas en el backend). Retomar
     cuando el usuario tenga esas credenciales.
+20. [x] **RESUELTO -- dos ajustes chicos pedidos junto con la discusión
+    grande del punto 21.**
+    - `TUS JUEGOS` del sidebar: ahora aclara con un texto chico "Se
+      muestran primero tus favoritos ⭐" cuando de verdad hay al menos
+      un favorito marcado (si no hay ninguno, no se muestra el texto --
+      no aplicaría a nada y sería ruido).
+    - Nuevo buscador dentro de la lista de biblioteca al crear/editar
+      una publicación (`crear_publicacion_screen.dart`): con más de 6
+      juegos en la lista mostrada (verificados o biblioteca completa
+      según el tipo), aparece un campo "Buscar en tu biblioteca..." que
+      filtra la lista de checkboxes en vivo, sin pegarle a ningún
+      backend. Pedido explícito: con 100 juegos, ir marcando a pura
+      vista era tedioso. "Marcar todos" ahora actúa sobre la lista ya
+      filtrada (si hay una búsqueda activa, marca solo lo que coincide
+      -- comportamiento esperado, no un bug). Mensaje de "vacío" cambia
+      según si la biblioteca está vacía de verdad o si es la búsqueda
+      la que no encontró nada.
+21. **PENDIENTE DE DISCUTIR -- planteado por el usuario con ejemplos
+    reales de foro de Steam, no implementado a propósito.** El usuario
+    reconsideró el flujo de selección de juegos al publicar, con una
+    distinción importante que **ya está parcialmente resuelta** por el
+    punto 12 de esta sección (la "prueba" de la ronda anterior):
+    - **Busco miembros/familia**: la persona muestra los juegos que YA
+      TIENE (biblioteca verificada) para atraer a quien no los tenga, y
+      A VECES pide explícitamente "buscamos alguien que tenga estos
+      juegos en particular" (juegos que ELLOS no tienen, deseados en
+      quien se una). Esto último es exactamente lo que ya cubre
+      "Juegos que buscas" (el buscador libre restaurado en la ronda
+      anterior para estos tipos) -- el usuario no lo mencionó
+      explícitamente en este mensaje, pero coincide con lo que ya
+      existe. Vale la pena confirmárselo cuando se retome.
+    - **Busco compañero de juego**: el propio usuario dice que "da un
+      poco igual" -- normalmente pondrán juegos que ya tienen
+      (verificados), y el caso de querer un juego que no tienen es
+      "no predecible". No amerita cambios estructurales, tal como está
+      ya sirve.
+    - **Busco familia** (buscar unirse a una, no reclutar): la persona
+      muestra sus propios juegos verificados como "esto aporto" y en el
+      texto libre (descripción) dice qué busca en la familia -- no
+      necesita campo estructurado aparte, la descripción ya cubre esto.
+    - Lo que sí quedó sin resolver y el usuario pidió explícitamente
+      discutir: la experiencia de armar la publicación sigue sintiéndose
+      "engorrosa" con bibliotecas grandes -- el buscador dentro de la
+      lista (punto 20) ayuda, pero no se decidió si hace falta algo más
+      (ej. colapsar la lista completa por defecto y mostrar solo
+      buscador + seleccionados + "marcar todos", en vez de siempre
+      pintar todos los checkboxes expandidos). Retomar con el usuario
+      antes de tocar la estructura del formulario más allá de lo ya
+      hecho.
 
 ## 12. Cómo retomar
 

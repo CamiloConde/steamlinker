@@ -41,6 +41,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   final _busquedaController = TextEditingController();
+  final _busquedaBibliotecaController = TextEditingController();
   final _cuposController = TextEditingController();
 
   late String _tipoEtiqueta;
@@ -49,6 +50,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   bool _guardando = false;
   bool _buscandoSteam = false;
   List<dynamic> _resultadosSteam = [];
+  String _busquedaBiblioteca = '';
 
   bool get _editando => widget.publicacionExistente != null;
 
@@ -59,9 +61,20 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   // Para publicaciones que exigen Steam vinculado (familia/miembros) solo
   // se puede ofrecer lo que Steam confirma que sí tienes -- si no, la
   // "verificación" no significaría nada. Prueba pedida por el usuario.
+  //
+  // También filtra por el buscador local de biblioteca -- pedido
+  // explícito: con una biblioteca grande (100+ juegos) ir marcando uno
+  // por uno a pura vista/scroll es tedioso, esto deja escribir el nombre
+  // y saltar directo en vez de desplazarse por toda la lista.
   List<dynamic> _bibliotecaMostrada(PerfilProvider perfilProv) {
-    if (!_requiereSteam) return perfilProv.juegos;
-    return perfilProv.juegos.where((j) => j['origen'] == 'steam').toList();
+    final base = _requiereSteam
+        ? perfilProv.juegos.where((j) => j['origen'] == 'steam').toList()
+        : perfilProv.juegos;
+    if (_busquedaBiblioteca.trim().isEmpty) return base;
+    final q = _busquedaBiblioteca.trim().toLowerCase();
+    return base
+        .where((j) => (j['nombre']?.toString() ?? '').toLowerCase().contains(q))
+        .toList();
   }
 
   @override
@@ -122,6 +135,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     _tituloController.dispose();
     _descripcionController.dispose();
     _busquedaController.dispose();
+    _busquedaBibliotecaController.dispose();
     _cuposController.dispose();
     super.dispose();
   }
@@ -422,6 +436,50 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     ),
                   ),
                 ),
+                // Con una biblioteca grande, ir marcando uno por uno a pura
+                // vista era tedioso -- pedido explícito. Filtra la lista de
+                // abajo en vivo, no pega a ningún backend.
+                if ((_requiereSteam
+                        ? perfilProv.juegos
+                              .where((j) => j['origen'] == 'steam')
+                              .length
+                        : perfilProv.juegos.length) >
+                    6)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: TextField(
+                      controller: _busquedaBibliotecaController,
+                      onChanged: (v) => setState(() => _busquedaBiblioteca = v),
+                      style: const TextStyle(
+                        color: SteamColors.light,
+                        fontSize: 13,
+                      ),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: 'Buscar en tu biblioteca...',
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: SteamColors.muted,
+                          size: 18,
+                        ),
+                        suffixIcon: _busquedaBiblioteca.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: SteamColors.muted,
+                                  size: 18,
+                                ),
+                                onPressed: () {
+                                  _busquedaBibliotecaController.clear();
+                                  setState(() => _busquedaBiblioteca = '');
+                                },
+                              ),
+                        filled: true,
+                        fillColor: SteamColors.bgInput,
+                      ),
+                    ),
+                  ),
                 if (perfilProv.cargando && perfilProv.juegos.isEmpty)
                   const Center(
                     child: Padding(
@@ -433,7 +491,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   )
                 else if (_bibliotecaMostrada(perfilProv).isEmpty)
                   Text(
-                    _requiereSteam
+                    _busquedaBiblioteca.trim().isNotEmpty
+                        ? 'Ningún juego coincide con "${_busquedaBiblioteca.trim()}".'
+                        : _requiereSteam
                         ? 'No tienes juegos verificados por Steam todavía.'
                         : 'Agrega juegos a tu perfil para asociarlos a la publicación.',
                     style: const TextStyle(
