@@ -403,6 +403,14 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                             label: '★ ${(_perfil!['repu'] ?? 0).toString()}',
                             color: SteamColors.green,
                           ),
+                          // Refuerzo de confianza -- mismo criterio que ya
+                          // usa Descubrir y las tarjetas de publicaciones:
+                          // quien tiene Steam vinculado se distingue de
+                          // quien no.
+                          if (_otroSteamVinculado) ...[
+                            const SizedBox(width: 8),
+                            const _ChipInfo(label: '✓ Steam vinculado'),
+                          ],
                         ],
                       ),
                       if (!esYo) ...[

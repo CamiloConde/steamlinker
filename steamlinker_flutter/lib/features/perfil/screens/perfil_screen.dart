@@ -822,6 +822,31 @@ class _PerfilScreenState extends State<PerfilScreen> {
                               ),
                             ]
                           : [
+                              // Aclara por qué algunos juegos dicen STEAM y
+                              // otros MANUAL -- pedido explícito del
+                              // usuario: no era obvio para quien mira su
+                              // propia biblioteca. Solo se muestra si de
+                              // verdad hay algún MANUAL (si toda la
+                              // biblioteca es STEAM, no hay nada que
+                              // explicar).
+                              if (perfilProv.juegos.any(
+                                (j) => j['origen'] != 'steam',
+                              ))
+                                const Padding(
+                                  padding: EdgeInsets.only(bottom: 10),
+                                  child: Text(
+                                    'STEAM = tu cuenta de Steam lo confirma '
+                                    'directamente. MANUAL = lo agregaste tú '
+                                    '(ej. biblioteca compartida de tu '
+                                    'Familia de Steam, que la API pública '
+                                    'de Steam no puede verificar, pero '
+                                    'sigue siendo un juego real tuyo).',
+                                    style: TextStyle(
+                                      color: SteamColors.textSec,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
                               // Juegos favoritos
                               ...perfilProv.juegos
                                   .where((j) => j['favorito'] == true)

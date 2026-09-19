@@ -137,13 +137,33 @@ class PublicacionCard extends StatelessWidget {
                         children: [
                           InkWell(
                             onTap: onTapAutor,
-                            child: Text(
-                              username,
-                              style: const TextStyle(
-                                color: SteamColors.blue,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  username,
+                                  style: const TextStyle(
+                                    color: SteamColors.blue,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                // Refuerzo de confianza -- mismo criterio
+                                // que ya usaba Descubrir: quien publica
+                                // con Steam vinculado se distingue de
+                                // quien no, sobre todo importa en
+                                // Compañeros (vas a jugar con un
+                                // desconocido).
+                                if (publicacion['autor_steam_vinculado'] ==
+                                    true) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    Icons.verified_rounded,
+                                    size: 14,
+                                    color: SteamColors.blue,
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                           Row(

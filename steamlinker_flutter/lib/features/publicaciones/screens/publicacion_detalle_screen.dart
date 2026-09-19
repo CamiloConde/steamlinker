@@ -986,13 +986,25 @@ class _AutorSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    pub['username_usu'] ?? 'Autor',
-                    style: const TextStyle(
-                      color: SteamColors.light,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        pub['username_usu'] ?? 'Autor',
+                        style: const TextStyle(
+                          color: SteamColors.light,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (pub['autor_steam_vinculado'] == true) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.verified_rounded,
+                          size: 15,
+                          color: SteamColors.blue,
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -1070,12 +1082,31 @@ class _JuegosLista extends StatelessWidget {
     // los dos, se omite el subtítulo redundante (caso más común: solo
     // ofrece juegos, no pide ninguno en particular).
     final mostrarSubtitulos = tiene.isNotEmpty && busca.isNotEmpty;
+    // Si hay al menos un MANUAL entre los que tiene, vale la pena
+    // explicar por qué -- quien mira la publicación (no el dueño) no
+    // tiene el contexto de la sesión donde se decidió esto. Si todo es
+    // STEAM, no hay nada que aclarar, no se muestra.
+    final hayManual = tiene.any((j) => j['origen_pjg'] != 'steam');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (tiene.isNotEmpty) ...[
           if (mostrarSubtitulos) _SubtituloJuegos(texto: 'Tiene'),
+          // Va ANTES de la lista, no después -- con bibliotecas grandes
+          // (50+ juegos) el usuario tendría que desplazarse por toda la
+          // lista para encontrar la explicación si fuera al final.
+          if (hayManual)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'STEAM = confirmado por la cuenta de Steam del autor. '
+                'MANUAL = lo agregó él mismo (ej. biblioteca compartida de '
+                'su Familia de Steam, que la API pública no puede '
+                'verificar, pero es un juego real de todos modos).',
+                style: TextStyle(color: SteamColors.textSec, fontSize: 11),
+              ),
+            ),
           ..._filas(tiene, esBusca: false),
         ],
         if (busca.isNotEmpty) ...[

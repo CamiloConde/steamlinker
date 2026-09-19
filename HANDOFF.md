@@ -341,10 +341,16 @@ González). Confirma y afina varias cosas ya encontradas en el código:
       Nota: hay una segunda instalación de Flutter en `C:\dev\flutter` en el PATH del
       usuario, no tocada — si algo se comporta raro con versión de Flutter, revisar
       cuál de las dos está activa en el PATH.
-- [ ] Revisar si falta filtro por fecha de publicación en `GET /publicaciones/buscar`
-      (el SRS lo pide, no confirmé si ya está)
-- [ ] Pendiente (no bloqueante): mostrar insignia "verificado ✓" en perfiles/posts de
-      quien sí tiene Steam vinculado, como refuerzo de confianza en Compañeros
+- [x] **CONFIRMADO (2026-09-19) -- el filtro por fecha del SRS ya estaba.** Se
+      revisó el SRS real (`Plantilla_SRS (2).docx`, requisito #6 "Sistema de
+      filtros": país, reputación y fecha de publicación) y se comparó contra
+      la hoja de filtros de Publicaciones (`publicaciones_screen.dart`):
+      Tipo, País, Juego y **Orden** (dropdown "Más recientes" / "Mayor
+      reputación") ya cubren los 4 criterios -- "Más recientes" es
+      justamente el filtro/orden por fecha de publicación que pedía el SRS.
+      No hacía falta construir nada nuevo, solo confirmar.
+- [x] **RESUELTO (2026-09-19) -- insignia "verificado ✓" en perfiles/posts,
+      ver punto 28 más abajo.**
 
 **Fase 3 — Diseño: decidida e implementada a nivel de tokens (ver sección 9)**
 - [x] Dirección elegida: "Fiel a Steam" — Source Sans 3 (una sola familia), radio 2px,
@@ -2961,6 +2967,58 @@ real.
     `flutter analyze` limpio, `flutter build web` sin errores, 50/50
     tests backend (sin tests nuevos esta ronda -- son ajustes de
     configuración/UI sobre la función ya probada la ronda anterior).
+28. [x] **RESUELTO -- "vamos con los ítems menores", más 2 pedidos
+    concretos: insignia de verificado + aclarar a los usuarios finales
+    por qué algunos juegos son STEAM y otros MANUAL.**
+    - **Insignia "✓ verificado" en perfiles/posts** (cierra el ítem del
+      SRS pendiente desde hace varias rondas). Ya existía a medias --
+      Descubrir mostraba un ícono `Icons.verified_rounded` junto al
+      nombre cuando el usuario tenía Steam vinculado
+      (`steam_vinculado`), pero **Publicaciones y el perfil de otro
+      usuario no lo mostraban en absoluto**, aunque el dato ya se
+      calculaba en el backend para Descubrir. Extendido:
+      - Backend: `GET /publicaciones/buscar` y `GET /publicaciones/:id`
+        ahora incluyen `autor_steam_vinculado`
+        (`EXISTS(SELECT 1 FROM perfiles_steam ...)`, no se guarda nada
+        nuevo, se calcula en vivo cada vez -- a diferencia de
+        `origen_pjg`, que sí queda fijo por juego, esto refleja el
+        estado ACTUAL del autor, no el de cuando se creó la
+        publicación).
+      - `PublicacionCard` (tarjeta de Publicaciones) y `_AutorSection`
+        (detalle de publicación) -- ícono junto al nombre del autor,
+        mismo criterio visual que ya usaba Descubrir.
+      - `usuario_detalle_screen.dart` (perfil de otro usuario) ya
+        calculaba `_otroSteamVinculado` pero nunca lo pintaba en
+        pantalla -- se agregó un chip "✓ Steam vinculado" junto a los
+        de país/reputación que ya existían ahí.
+      - Test nuevo `publicaciones.buscar.test.js` ("autor_steam_vinculado
+        refleja si el autor tiene Steam vinculado") -- confirma además
+        que una publicación VIEJA del mismo autor también refleja el
+        vínculo si se vincula Steam después (no queda "congelado" al
+        momento de crear, a propósito, es un dato del autor no de la
+        publicación).
+    - **Aclarar STEAM vs. MANUAL a los usuarios finales** -- el usuario
+      pidió explícitamente esto porque hasta ahora las insignias
+      STEAM/MANUAL (agregadas hace varias rondas) se mostraban sin
+      ninguna explicación visible para quien no vivió la discusión de
+      esta sesión. Texto nuevo, condicionado a que exista al menos un
+      MANUAL (si toda la biblioteca es STEAM, no hay nada que
+      explicar):
+      - `perfil_screen.dart`: arriba de la lista de "Juegos", antes de
+        favoritos/no-favoritos.
+      - `publicacion_detalle_screen.dart`: dentro de `_JuegosLista`,
+        justo debajo del subtítulo "Tiene" y **antes** de las filas de
+        juegos -- **corregido en vivo durante la verificación**: el
+        primer intento lo puso DESPUÉS de la lista, lo cual con una
+        biblioteca de 50+ juegos (caso real del propio usuario)
+        obligaba a desplazarse por toda la lista antes de ver la
+        explicación. Movido arriba tras notarlo probando con la
+        publicación real "Holap" del usuario.
+    `flutter analyze` limpio, `flutter build web` sin errores, 51/51
+    tests backend. Verificado en vivo con cuentas de prueba desechables
+    (autor con Steam vinculado vs. sin vincular, viendo desde una
+    tercera cuenta) y confirmado además sobre publicaciones reales del
+    propio usuario en la lista pública.
 
 ## 12. Cómo retomar
 

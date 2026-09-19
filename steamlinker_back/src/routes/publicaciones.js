@@ -125,6 +125,7 @@ router.get('/buscar', async (req, res) => {
         let consulta = `
             SELECT DISTINCT p.*,
                    u.username_usu, u.repu_usu, u.pais_usu,
+                   EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = p.id_usu) AS autor_steam_vinculado,
                    COUNT(pj.appid) FILTER (WHERE pj.intencion_pjg != 'busco') as total_juegos
             FROM publicaciones p
             JOIN usuarios u ON p.id_usu = u.id_usu
@@ -354,7 +355,8 @@ router.post('/:id/comentarios', verificarToken, async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const resultado = await pool.query(
-            `SELECT p.*, u.username_usu, u.repu_usu, u.pais_usu
+            `SELECT p.*, u.username_usu, u.repu_usu, u.pais_usu,
+                    EXISTS(SELECT 1 FROM perfiles_steam ps WHERE ps.id_usu = p.id_usu) AS autor_steam_vinculado
              FROM publicaciones p
              JOIN usuarios u ON p.id_usu = u.id_usu
              WHERE p.id_publi = $1`,

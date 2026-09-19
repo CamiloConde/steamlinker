@@ -197,3 +197,57 @@ test('intencion_pjg distingue juegos que tengo (en mi biblioteca) de juegos que 
     assert.equal(jgTengo.intencion_pjg, 'tengo');
     assert.equal(jgBusco.intencion_pjg, 'busco');
 });
+
+test('autor_steam_vinculado refleja si el autor tiene Steam vinculado, en /buscar y en el detalle', async () => {
+    const resSinSteam = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ tipo: 'otro', titulo: 'Publi autor sin Steam' });
+    assert.equal(resSinSteam.status, 201);
+
+    const buscarSinSteam = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiSinSteam = buscarSinSteam.body.publicaciones.find(
+        (p) => p.titulo_publi === 'Publi autor sin Steam'
+    );
+    assert.equal(publiSinSteam.autor_steam_vinculado, false);
+
+    const detalleSinSteam = await request(app).get(`/publicaciones/${resSinSteam.body.id_publi}`);
+    assert.equal(detalleSinSteam.body.autor_steam_vinculado, false);
+
+    // Ahora se vincula Steam (fila directa, mismo patron que el resto de
+    // los tests -- el gate real de OpenID no se puede automatizar) y se
+    // crea OTRA publicacion del mismo autor.
+    const idUsu = (
+        await pool.query('SELECT id_usu FROM usuarios WHERE username_usu = $1', [username])
+    ).rows[0].id_usu;
+    await pool.query(
+        `INSERT INTO perfiles_steam (id_usu, steam_id, username_steperfil, avatar_url, perfil_url)
+         VALUES ($1, $2, 'Test Buscar', null, null)`,
+        [idUsu, `7656119${Date.now()}`.slice(0, 17)]
+    );
+
+    const resConSteam = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ tipo: 'otro', titulo: 'Publi autor con Steam' });
+    assert.equal(resConSteam.status, 201);
+
+    const buscarConSteam = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiConSteam = buscarConSteam.body.publicaciones.find(
+        (p) => p.titulo_publi === 'Publi autor con Steam'
+    );
+    assert.equal(publiConSteam.autor_steam_vinculado, true);
+
+    const detalleConSteam = await request(app).get(`/publicaciones/${resConSteam.body.id_publi}`);
+    assert.equal(detalleConSteam.body.autor_steam_vinculado, true);
+
+    // La publicacion vieja del mismo autor tambien debe reflejar el
+    // vinculo ahora -- a diferencia de origen_pjg (que queda fijo por
+    // juego), esto es un EXISTS en vivo sobre el autor, no algo que se
+    // guarde en el momento de crear la publicacion.
+    const buscarSinSteam2 = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiSinSteam2 = buscarSinSteam2.body.publicaciones.find(
+        (p) => p.titulo_publi === 'Publi autor sin Steam'
+    );
+    assert.equal(publiSinSteam2.autor_steam_vinculado, true);
+});
