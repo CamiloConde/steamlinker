@@ -21,7 +21,17 @@ class CrearPublicacionScreen extends StatefulWidget {
   /// creada -- pedido explícito del usuario.
   final Map<String, dynamic>? publicacionExistente;
 
-  const CrearPublicacionScreen({super.key, this.publicacionExistente});
+  /// Preselecciona el tipo al crear (no aplica en modo edición) -- pedido
+  /// explícito del usuario: publicar desde la pestaña "Jugar ahora" u
+  /// "Otro" del conmutador de escritorio debería arrancar ya con ese tipo
+  /// en vez de siempre el primero de la lista.
+  final String? tipoInicial;
+
+  const CrearPublicacionScreen({
+    super.key,
+    this.publicacionExistente,
+    this.tipoInicial,
+  });
 
   @override
   State<CrearPublicacionScreen> createState() => _CrearPublicacionScreenState();
@@ -33,7 +43,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   final _busquedaController = TextEditingController();
   final _cuposController = TextEditingController();
 
-  String _tipoEtiqueta = PublicacionConstants.tiposCrearEtiquetas.first;
+  late String _tipoEtiqueta;
   String _paisEtiqueta = PaisUtil.todos;
   final List<Map<String, dynamic>> _juegosSeleccionados = [];
   bool _guardando = false;
@@ -42,8 +52,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
   bool get _editando => widget.publicacionExistente != null;
 
-  bool get _requiereSteam =>
-      PublicacionConstants.requiereSteam(PublicacionConstants.valorTipoCrear(_tipoEtiqueta));
+  bool get _requiereSteam => PublicacionConstants.requiereSteam(
+    PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
+  );
 
   // Para publicaciones que exigen Steam vinculado (familia/miembros) solo
   // se puede ofrecer lo que Steam confirma que sí tienes -- si no, la
@@ -58,6 +69,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _cargarBiblioteca());
 
+    _tipoEtiqueta =
+        (widget.tipoInicial != null &&
+            PublicacionConstants.tiposCrearEtiquetas.contains(
+              widget.tipoInicial,
+            ))
+        ? widget.tipoInicial!
+        : PublicacionConstants.tiposCrearEtiquetas.first;
+
     final pub = widget.publicacionExistente;
     if (pub != null) {
       _tituloController.text = (pub['titulo_publi'] as String?) ?? '';
@@ -65,7 +84,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
       final cupos = pub['cupos_totales'];
       if (cupos != null) _cuposController.text = '$cupos';
       final tipo = pub['tipo_publi'] as String?;
-      if (tipo != null && PublicacionConstants.tipoEtiquetas.containsKey(tipo)) {
+      if (tipo != null &&
+          PublicacionConstants.tipoEtiquetas.containsKey(tipo)) {
         _tipoEtiqueta = PublicacionConstants.tipoEtiquetas[tipo]!;
       }
       final paisCodigo = pub['paisfiltro_publi'] as String?;
@@ -234,7 +254,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
-      appBar: SteamAppBar(title: _editando ? 'EDITAR PUBLICACIÓN' : 'NUEVA PUBLICACIÓN'),
+      appBar: SteamAppBar(
+        title: _editando ? 'EDITAR PUBLICACIÓN' : 'NUEVA PUBLICACIÓN',
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -253,7 +275,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   label: 'Tipo',
                   value: _tipoEtiqueta,
                   items: PublicacionConstants.tiposCrearEtiquetas,
-                  onChanged: _editando ? null : (v) => setState(() => _tipoEtiqueta = v),
+                  onChanged: _editando
+                      ? null
+                      : (v) => setState(() => _tipoEtiqueta = v),
                 ),
                 if (PublicacionConstants.requiereSteam(
                   PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
@@ -262,10 +286,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     padding: EdgeInsets.only(top: 4, bottom: 8),
                     child: Text(
                       'Necesitas tu cuenta de Steam vinculada para publicar esto.',
-                      style: TextStyle(color: SteamColors.textSec, fontSize: 11),
+                      style: TextStyle(
+                        color: SteamColors.textSec,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
-                if (PublicacionConstants.valorTipoCrear(_tipoEtiqueta) != 'otro') ...[
+                if (PublicacionConstants.valorTipoCrear(_tipoEtiqueta) !=
+                    'otro') ...[
                   const SizedBox(height: 4),
                   TextField(
                     controller: _cuposController,
@@ -278,7 +306,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     style: const TextStyle(color: SteamColors.light),
                     decoration: const InputDecoration(
                       labelText: 'Cupos buscados (opcional)',
-                      helperText: 'Si lo dejas vacío, la publicación no mostrará límite de cupos.',
+                      helperText:
+                          'Si lo dejas vacío, la publicación no mostrará límite de cupos.',
                       filled: true,
                       fillColor: SteamColors.bgInput,
                     ),
@@ -356,15 +385,18 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     ),
                     if (_bibliotecaMostrada(perfilProv).isNotEmpty)
                       TextButton(
-                        onPressed: () => _marcarTodosVerificados(_bibliotecaMostrada(perfilProv)),
+                        onPressed: () => _marcarTodosVerificados(
+                          _bibliotecaMostrada(perfilProv),
+                        ),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: Text(
-                          _bibliotecaMostrada(perfilProv)
-                                  .every((j) => _estaSeleccionado(j['appid']))
+                          _bibliotecaMostrada(
+                                perfilProv,
+                              ).every((j) => _estaSeleccionado(j['appid']))
                               ? 'Desmarcar todos'
                               : 'Marcar todos',
                           style: const TextStyle(
@@ -381,10 +413,13 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   child: Text(
                     _requiereSteam
                         ? 'Son los juegos que Steam confirma que sí tienes en tu cuenta '
-                            '(no los que agregaste a mano). Por eso solo estos se pueden ofrecer '
-                            'aquí -- le dan confianza real a quien te contacte.'
+                              '(no los que agregaste a mano). Por eso solo estos se pueden ofrecer '
+                              'aquí -- le dan confianza real a quien te contacte.'
                         : 'Elige los juegos de tu biblioteca que quieres mostrar en la publicación.',
-                    style: const TextStyle(color: SteamColors.textSec, fontSize: 11),
+                    style: const TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 11,
+                    ),
                   ),
                 ),
                 if (perfilProv.cargando && perfilProv.juegos.isEmpty)
@@ -401,7 +436,10 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     _requiereSteam
                         ? 'No tienes juegos verificados por Steam todavía.'
                         : 'Agrega juegos a tu perfil para asociarlos a la publicación.',
-                    style: const TextStyle(color: SteamColors.textSec, fontSize: 12),
+                    style: const TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 12,
+                    ),
                   )
                 else
                   ..._bibliotecaMostrada(perfilProv).map((juego) {
@@ -412,11 +450,17 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       activeColor: SteamColors.blue,
                       title: Text(
                         juego['nombre'] ?? 'Juego',
-                        style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                        style: const TextStyle(
+                          color: SteamColors.light,
+                          fontSize: 13,
+                        ),
                       ),
                       subtitle: Text(
                         '${juego['horas'] ?? 0} h jugadas',
-                        style: const TextStyle(color: SteamColors.textSec, fontSize: 11),
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontSize: 11,
+                        ),
                       ),
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
@@ -442,7 +486,10 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     padding: EdgeInsets.only(top: 4, bottom: 8),
                     child: Text(
                       'Aunque no los tengas -- sirve para indicar qué juegos buscas en quien te contacte.',
-                      style: TextStyle(color: SteamColors.textSec, fontSize: 11),
+                      style: TextStyle(
+                        color: SteamColors.textSec,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 const SizedBox(height: 8),
@@ -476,11 +523,20 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: seleccionado
-                          ? const Icon(Icons.check_circle, color: SteamColors.green)
-                          : const Icon(Icons.add_circle_outline, color: SteamColors.blue),
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: SteamColors.green,
+                            )
+                          : const Icon(
+                              Icons.add_circle_outline,
+                              color: SteamColors.blue,
+                            ),
                       title: Text(
                         juego['nombre'] ?? '',
-                        style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                        style: const TextStyle(
+                          color: SteamColors.light,
+                          fontSize: 13,
+                        ),
                       ),
                       onTap: () => _toggleJuego(juego),
                     );

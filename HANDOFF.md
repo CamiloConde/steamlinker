@@ -2565,6 +2565,21 @@ real.
       rota a propósito): los 3 lugares ahora muestran la inicial en un
       círculo con degradado en vez del hueco vacío. `flutter analyze`
       limpio, `flutter test test/widget_test.dart` pasa.
+16. [x] **RESUELTO — preseleccionar el tipo al publicar desde el
+    conmutador de escritorio de Publicaciones.** Antes, publicar desde
+    cualquiera de las 3 pestañas (Familia/Jugar ahora/Otro) abría
+    siempre el formulario con el primer tipo de la lista ("Busco
+    familia"), sin relación con la pestaña activa. `CrearPublicacionScreen`
+    ganó un parámetro opcional `tipoInicial` (solo aplica al crear, no
+    en modo edición). "Jugar ahora" → "Busco compañero de juego", "Otro"
+    → "Otro". "Familia" se deja **sin preseleccionar a propósito**
+    (pedido explícito del usuario: cubre 2 tipos reales -- busco_familia
+    y busco_miembros -- y no hay forma de adivinar cuál quiere). Solo
+    aplica al conmutador de **escritorio** -- en móvil no existe ese
+    conmutador de pestañas, solo el filtro de "Tipo" en la hoja de
+    filtros. Verificado en vivo con una cuenta de prueba: pestaña
+    "Jugar ahora" → botón "Publicar partida" → el formulario abre con
+    "Busco compañero de juego" ya seleccionado.
 
 ## 12. Cómo retomar
 

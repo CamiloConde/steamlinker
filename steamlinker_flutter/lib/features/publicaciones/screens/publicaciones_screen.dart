@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../core/constants/pais_util.dart';
@@ -58,6 +58,22 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     if (tipo == 'busco_familia' || tipo == 'busco_miembros') return 0;
     if (tipo == 'busco_companero') return 1;
     return 2;
+  }
+
+  // Pedido explícito del usuario: al publicar desde la pestaña activa
+  // (conmutador de escritorio), el tipo debería quedar preseleccionado
+  // en vez de arrancar siempre en el primero de la lista. "Familia" cubre
+  // dos tipos (busco_familia/busco_miembros) -- ahí se deja sin preseleccionar
+  // a propósito, no hay forma de adivinar cuál de los dos quiere.
+  String? _tipoInicialDeTab(int tab) {
+    switch (tab) {
+      case 1:
+        return PublicacionConstants.tipoEtiquetas['busco_companero'];
+      case 2:
+        return PublicacionConstants.tipoEtiquetas['otro'];
+      default:
+        return null;
+    }
   }
 
   @override
@@ -166,7 +182,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.close, color: SteamColors.muted),
+                          icon: const Icon(
+                            Icons.close,
+                            color: SteamColors.muted,
+                          ),
                           tooltip: 'Cerrar',
                           onPressed: () => Navigator.pop(context),
                         ),
@@ -218,7 +237,9 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                           child: ElevatedButton(
                             onPressed: () async {
                               final tipoVal =
-                                  PublicacionConstants.valorTipoFiltro(tipoEtiqueta);
+                                  PublicacionConstants.valorTipoFiltro(
+                                    tipoEtiqueta,
+                                  );
                               final paisVal = paisEtiqueta == PaisUtil.todos
                                   ? null
                                   : PaisUtil.nombreACodigo(paisEtiqueta);
@@ -227,7 +248,8 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                               String? juegoNombre;
                               if (juegoEtiqueta != 'Todos los juegos') {
                                 for (final j in perfil.juegos) {
-                                  if ((j['nombre']?.toString() ?? '') == juegoEtiqueta) {
+                                  if ((j['nombre']?.toString() ?? '') ==
+                                      juegoEtiqueta) {
                                     appid = j['appid'] as int?;
                                     juegoNombre = juegoEtiqueta;
                                     break;
@@ -354,62 +376,69 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
         // desktop_body_width.dart.
         body: LayoutBuilder(
           builder: (context, constraints) {
-            final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 760);
+            final margen = DesktopBodyWidth.margenHorizontal(
+              constraints.maxWidth,
+              760,
+            );
             return Column(
-            children: [
-              _ConmutadorTabs(
-                activo: _tabActivo,
-                conteos: conteos,
-                onTab: (i) => setState(() => _tabActivo = i),
-                trailing: IconButton(
-                  icon: Icon(
-                    Icons.tune_rounded,
-                    color: publicacionesProv.tieneFiltrosActivos
-                        ? SteamColors.blue
-                        : SteamColors.muted,
-                  ),
-                  tooltip: 'Filtros',
-                  onPressed: () => _abrirFiltros(ocultarTipo: true),
-                ),
-              ),
-              _ComposerConmutador(
-                tab: _tabActivo,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CrearPublicacionScreen()),
-                ),
-              ),
-              if (publicacionesProv.tieneFiltrosActivos)
-                _FiltrosActivosBar(
-                  prov: publicacionesProv,
-                  onEditar: () => _abrirFiltros(ocultarTipo: true),
-                  onLimpiar: () => publicacionesProv.limpiarFiltros(),
-                ),
-              Expanded(
-                child: RefreshIndicator(
-                  color: SteamColors.blue,
-                  backgroundColor: SteamColors.bgDeep,
-                  onRefresh: _recargar,
-                  // Antes esto era _TablaPublicaciones, una tabla densa
-                  // (TIPO/USUARIO/CUPOS/REP/HACE). El usuario comparó
-                  // contra el wireframe y contra Descubrir (que ya pasó
-                  // de tabla a tarjeta rica antes, por el mismo pedido) y
-                  // pidió lo mismo acá. En vez de diseñar una tarjeta
-                  // nueva, se reutiliza PublicacionCard -- ya existía y
-                  // ya se usaba en móvil, con avatar+autor+reputación,
-                  // título, descripción, portada del juego y país. Ver
-                  // HANDOFF.md.
-                  child: _buildLista(
-                    publicacionesProv,
-                    auth,
-                    matchesProv,
-                    amistadProv,
-                    auth.usuario?['id'] as int?,
-                    filas: filaFiltradas,
-                    margenExtra: margen,
+              children: [
+                _ConmutadorTabs(
+                  activo: _tabActivo,
+                  conteos: conteos,
+                  onTab: (i) => setState(() => _tabActivo = i),
+                  trailing: IconButton(
+                    icon: Icon(
+                      Icons.tune_rounded,
+                      color: publicacionesProv.tieneFiltrosActivos
+                          ? SteamColors.blue
+                          : SteamColors.muted,
+                    ),
+                    tooltip: 'Filtros',
+                    onPressed: () => _abrirFiltros(ocultarTipo: true),
                   ),
                 ),
-              ),
-            ],
+                _ComposerConmutador(
+                  tab: _tabActivo,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CrearPublicacionScreen(
+                        tipoInicial: _tipoInicialDeTab(_tabActivo),
+                      ),
+                    ),
+                  ),
+                ),
+                if (publicacionesProv.tieneFiltrosActivos)
+                  _FiltrosActivosBar(
+                    prov: publicacionesProv,
+                    onEditar: () => _abrirFiltros(ocultarTipo: true),
+                    onLimpiar: () => publicacionesProv.limpiarFiltros(),
+                  ),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: SteamColors.blue,
+                    backgroundColor: SteamColors.bgDeep,
+                    onRefresh: _recargar,
+                    // Antes esto era _TablaPublicaciones, una tabla densa
+                    // (TIPO/USUARIO/CUPOS/REP/HACE). El usuario comparó
+                    // contra el wireframe y contra Descubrir (que ya pasó
+                    // de tabla a tarjeta rica antes, por el mismo pedido) y
+                    // pidió lo mismo acá. En vez de diseñar una tarjeta
+                    // nueva, se reutiliza PublicacionCard -- ya existía y
+                    // ya se usaba en móvil, con avatar+autor+reputación,
+                    // título, descripción, portada del juego y país. Ver
+                    // HANDOFF.md.
+                    child: _buildLista(
+                      publicacionesProv,
+                      auth,
+                      matchesProv,
+                      amistadProv,
+                      auth.usuario?['id'] as int?,
+                      filas: filaFiltradas,
+                      margenExtra: margen,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -454,7 +483,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
+          final margen = DesktopBodyWidth.margenHorizontal(
+            constraints.maxWidth,
+            720,
+          );
           return SafeArea(
             child: Stack(
               children: [
@@ -490,7 +522,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     if (publicacionesProv.error != null) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16 + margenExtra,
+          vertical: 16,
+        ),
         children: [
           Text(
             publicacionesProv.error!,
@@ -503,7 +538,10 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
     if (lista.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: 16 + margenExtra, vertical: 16),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16 + margenExtra,
+          vertical: 16,
+        ),
         children: [
           const SizedBox(height: 40),
           Center(
@@ -558,7 +596,8 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                       builder: (_) => UsuarioDetalleScreen(
                         userId: autorId,
                         idPubli: publicacion['id_publi'] as int?,
-                        tituloPublicacion: publicacion['titulo_publi'] as String?,
+                        tituloPublicacion:
+                            publicacion['titulo_publi'] as String?,
                       ),
                     ),
                   );
@@ -569,18 +608,24 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                   await publicacionesProv.cerrar(publicacion['id_publi']);
                   if (!context.mounted) return;
                   if (publicacionesProv.error != null) {
-                    showSteamToast(context, publicacionesProv.error!, SteamColors.red);
+                    showSteamToast(
+                      context,
+                      publicacionesProv.error!,
+                      SteamColors.red,
+                    );
                   }
                 }
               : null,
           onEditar: esMia
               ? () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => CrearPublicacionScreen(
-                        publicacionExistente: Map<String, dynamic>.from(publicacion),
+                  MaterialPageRoute(
+                    builder: (_) => CrearPublicacionScreen(
+                      publicacionExistente: Map<String, dynamic>.from(
+                        publicacion,
                       ),
                     ),
-                  )
+                  ),
+                )
               : null,
         );
       },
@@ -794,7 +839,10 @@ class _ComposerConmutador extends StatelessWidget {
               onTap: onTap,
               borderRadius: BorderRadius.circular(SteamRadii.sm),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: SteamColors.blue,
                   borderRadius: BorderRadius.circular(SteamRadii.sm),
@@ -815,4 +863,3 @@ class _ComposerConmutador extends StatelessWidget {
     );
   }
 }
-
