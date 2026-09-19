@@ -7,13 +7,18 @@ import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/estado_familia_helper.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/app_logo_mark.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../core/auth/session_actions.dart';
+import '../../../core/navigation/app_navigator.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../contacto/screens/contacto_screen.dart';
+import '../../legal/screens/aviso_legal_screen.dart';
+import '../../legal/screens/politica_privacidad_screen.dart';
 import '../../matches/providers/matches_provider.dart';
 import '../../perfil/providers/perfil_provider.dart';
+import '../../perfil/screens/apoyar_proyecto_screen.dart';
 import '../../perfil/screens/perfil_screen.dart';
 import '../../perfil/widgets/apoyar_proyecto_card.dart';
 import '../../publicaciones/providers/publicaciones_provider.dart';
@@ -360,8 +365,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         // ya resuelve esto: en escritorio cambia de
                         // pestaña (sin pushear nada encima), en móvil
                         // sigue pusheando como antes.
-                        onTap: () =>
-                            _ir(2, const PublicacionesScreen()),
+                        onTap: () => _ir(2, const PublicacionesScreen()),
                       ),
                     ),
 
@@ -424,52 +428,161 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// Pie de página de Inicio: qué es SteamMatch y el descargo de no
-/// afiliación a Valve (pedido aparte del rediseño de wireframes, ver
-/// HANDOFF.md). Vive aquí y no en cada pantalla porque Inicio es el punto
-/// de entrada de la app.
+/// Pie de página de Inicio -- pedido explícito del usuario: "como en Steam
+/// pero con nuestro estilo", adaptado (sin las secciones/enlaces que Steam
+/// tiene y SteamMatch no: Steamworks, distribución, empleos, etc. -- solo
+/// lo que de verdad existe acá). Vive aquí y no en cada pantalla porque
+/// Inicio es el punto de entrada de la app.
 class _FooterInicio extends StatelessWidget {
   const _FooterInicio();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.only(top: 20),
       decoration: const BoxDecoration(
         border: Border(top: BorderSide(color: SteamColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'SteamMatch',
-            style: TextStyle(
-              color: SteamColors.textSec,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Conectamos gamers para armar familias de Steam y encontrar '
-            'con quién jugar, a partir de tu biblioteca verificada. '
-            'Gratis e independiente -- sin relación oficial con Steam.',
-            style: TextStyle(
-              color: SteamColors.muted,
-              fontSize: 12,
-              height: 1.5,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [SteamColors.blue, SteamColors.teal],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: const AppLogoMark(size: 12, color: SteamColors.bgDeep),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'SteamMatch',
+                style: TextStyle(
+                  color: SteamColors.textSec,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
+          const SizedBox(
+            width: 320,
+            child: Text(
+              'Conectamos gamers para armar familias de Steam y encontrar '
+              'con quién jugar, a partir de tu biblioteca verificada. '
+              'Gratis e independiente -- sin relación oficial con Steam.',
+              style: TextStyle(
+                color: SteamColors.muted,
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 48,
+            runSpacing: 16,
+            children: [
+              _FooterColumna(
+                titulo: 'Legal',
+                enlaces: [
+                  _FooterEnlace(
+                    'Aviso legal',
+                    () => pushAppScreen(context, const AvisoLegalScreen()),
+                  ),
+                  _FooterEnlace(
+                    'Privacidad',
+                    () => pushAppScreen(
+                      context,
+                      const PoliticaPrivacidadScreen(),
+                    ),
+                  ),
+                ],
+              ),
+              _FooterColumna(
+                titulo: 'Ayuda',
+                enlaces: [
+                  _FooterEnlace(
+                    'Contacto y sugerencias',
+                    () => pushAppScreen(context, const ContactoScreen()),
+                  ),
+                  _FooterEnlace(
+                    'Apoya el proyecto',
+                    () => pushAppScreen(context, const ApoyarProyectoScreen()),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Divider(color: SteamColors.border, height: 1),
+          const SizedBox(height: 12),
           const Text(
-            'No afiliados a Valve Corporation. Steam es una marca registrada '
-            'de Valve Corporation.',
+            '© 2026 SteamMatch. No afiliados a Valve Corporation. Steam es '
+            'una marca registrada de Valve Corporation.',
             style: TextStyle(color: SteamColors.muted, fontSize: 11),
           ),
         ],
       ),
     );
   }
+}
+
+class _FooterColumna extends StatelessWidget {
+  final String titulo;
+  final List<_FooterEnlace> enlaces;
+
+  const _FooterColumna({required this.titulo, required this.enlaces});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          titulo.toUpperCase(),
+          style: const TextStyle(
+            color: SteamColors.muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final e in enlaces)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: InkWell(
+              onTap: e.onTap,
+              child: Text(
+                e.texto,
+                style: const TextStyle(
+                  color: SteamColors.textSec,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _FooterEnlace {
+  final String texto;
+  final VoidCallback onTap;
+
+  const _FooterEnlace(this.texto, this.onTap);
 }
 
 /// Animación de entrada del hero (tarjeta de bienvenida): fundido + una
@@ -695,7 +808,11 @@ class _TarjetaBibliotecaVacia extends StatelessWidget {
             'Tu cuenta de Steam está vinculada, pero no pudimos leer tu '
             'biblioteca — casi siempre porque el perfil de Steam sigue en '
             'privado. Hazlo público y vuelve a importar desde Perfil.',
-            style: TextStyle(color: SteamColors.light, fontSize: 13.5, height: 1.4),
+            style: TextStyle(
+              color: SteamColors.light,
+              fontSize: 13.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -739,7 +856,11 @@ class _FeedbackCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.chat_bubble_outline_rounded, color: SteamColors.teal, size: 22),
+          const Icon(
+            Icons.chat_bubble_outline_rounded,
+            color: SteamColors.teal,
+            size: 22,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -747,7 +868,11 @@ class _FeedbackCard extends StatelessWidget {
               children: [
                 const Text(
                   '¿Se te ocurre algo o encontraste un problema?',
-                  style: TextStyle(color: SteamColors.light, fontSize: 13.5, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: SteamColors.light,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
@@ -759,9 +884,9 @@ class _FeedbackCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           OutlinedButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ContactoScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ContactoScreen())),
             style: OutlinedButton.styleFrom(
               foregroundColor: SteamColors.teal,
               side: const BorderSide(color: SteamColors.teal),

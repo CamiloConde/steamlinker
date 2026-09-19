@@ -2580,6 +2580,41 @@ real.
     filtros. Verificado en vivo con una cuenta de prueba: pestaña
     "Jugar ahora" → botón "Publicar partida" → el formulario abre con
     "Busco compañero de juego" ya seleccionado.
+17. [x] **RESUELTO — "Tus juegos" del sidebar ahora respeta favoritos.**
+    El usuario señaló que mostraba siempre los mismos 5 juegos (los
+    primeros de la biblioteca) sin que hubiera forma de elegir cuáles.
+    En vez de construir un selector nuevo, se reutilizó el sistema de
+    favoritos que ya existe en Perfil (la estrella en cada juego,
+    `esfav_usujg`): la lista del sidebar ahora muestra primero los
+    marcados como favoritos, y solo si sobra espacio (hasta completar
+    5) el resto de la biblioteca en su orden normal. Si el usuario no
+    marcó ningún favorito, el comportamiento es idéntico al de antes
+    (no rompe nada para quien no usa la función). Partición manual (no
+    `List.sort`, que no garantiza estabilidad) para no reordenar
+    dentro de cada grupo. `responsive_shell.dart`, `_SideNav`.
+18. [x] **RESUELTO — pie de página de Inicio rediseñado "como Steam,
+    pero con nuestro estilo".** Antes era solo texto (nombre + una
+    descripción + el descargo de Valve). Ahora tiene el mismo lenguaje
+    visual que el footer real de Steam pero **adaptado de verdad** --
+    nada de secciones que Steam tiene y SteamMatch no (Steamworks,
+    empleos, distribución, tarjetas de regalo, redes sociales que no
+    existen todavía): logo + nombre, la descripción de siempre, dos
+    columnas de enlaces reales de la app ("Legal": Aviso legal,
+    Privacidad -- "Ayuda": Contacto y sugerencias, Apoya el proyecto),
+    separador, y la línea de copyright/descargo de Valve al final.
+    Verificado en vivo: los 4 enlaces navegan a sus pantallas reales
+    (ya existían, solo no estaban enlazados desde acá).
+    `home_screen.dart`, `_FooterInicio`.
+19. **Pendiente, explicado al usuario pero no implementado (fuera del
+    alcance de código, decisión suya)**: cómo configurar el login con
+    Google (OAuth) -- el usuario preguntó "no tengo idea de cómo es el
+    proceso". Se le explicó en el chat el flujo real a alto nivel
+    (crear proyecto en Google Cloud Console → configurar la pantalla de
+    consentimiento OAuth → crear credenciales de tipo "ID de cliente de
+    OAuth" para app web → registrar los orígenes/URIs de redirección
+    autorizados → las credenciales -- Client ID y Client Secret -- se
+    las pasa a esta sesión para integrarlas en el backend). Retomar
+    cuando el usuario tenga esas credenciales.
 
 ## 12. Cómo retomar
 

@@ -231,7 +231,18 @@ class _SideNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final juegos = context.watch<PerfilProvider>().juegos;
+    // Antes mostraba siempre los primeros 5 de la biblioteca sin que el
+    // usuario pudiera elegir cuáles -- pedido explícito: reutiliza el
+    // sistema de favoritos que ya existe en Perfil (la estrella en cada
+    // juego) en vez de agregar un selector nuevo. Los marcados como
+    // favoritos aparecen primero; si no hay ninguno, el orden no cambia.
+    // Partición manual (no List.sort) para que el orden dentro de cada
+    // grupo se mantenga estable -- List.sort no lo garantiza.
+    final todos = context.watch<PerfilProvider>().juegos;
+    final juegos = [
+      ...todos.where((j) => j['favorito'] == true),
+      ...todos.where((j) => j['favorito'] != true),
+    ];
     final t = AppLocalizations.of(context)!;
 
     return Container(
