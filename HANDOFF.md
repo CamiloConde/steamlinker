@@ -2253,15 +2253,50 @@ real.
         (`steammatch.com`) apunta al frontend (Netlify/Vercel) y un
         subdominio (`api.steammatch.com`) al backend (Railway) — cada
         proveedor da sus propias instrucciones DNS exactas al momento.
-    - **Tier 1 — se puede hacer YA, no depende del dominio, barato**:
-      metatítulos y descripciones (`web/index.html`, ya tiene algunos
-      básicos del splash/PWA — falta revisar que la descripción sea
-      buena), texto alternativo en imágenes (ojo: Flutter Web con el
-      renderer HTML puede exponerlo vía `Semantics(label: ...)`, hay que
-      revisar caso por caso qué imágenes lo necesitan de verdad — logos
-      decorativos no, carátulas de juegos sí), contraste de colores
-      (auditoría rápida de la paleta actual contra WCAG AA), enlaces
-      rotos (auditoría dentro de la app, no depende de estar publicado).
+    - [x] **Tier 1 — RESUELTO, hecho esta ronda (no dependía del
+      dominio):**
+      - **Metatítulos/descripciones**: revisados, ya estaban bien
+        (`<title>SteamMatch</title>`, `meta name="description"` con
+        una frase concreta, `apple-mobile-web-app-title`). No hacía
+        falta tocar nada.
+      - **Texto alternativo en imágenes**: agregado `semanticLabel`/
+        `Semantics(image: true, label: ...)` en las ~11 carátulas de
+        juego y fotos de perfil que se mostraban sin ninguno
+        (`juego_card.dart`, `publicacion_card.dart`,
+        `usuario_detalle_screen.dart`, `comparar_biblioteca_screen.dart`,
+        `publicacion_detalle_screen.dart`, `descubrir_gamers_screen.dart`
+        -- `_MiniCaratula` ganó un parámetro `nombre` opcional --,
+        `perfil_screen.dart` x3, `busqueda_screen.dart`,
+        `responsive_shell.dart` x2, `steam_app_bar.dart`). La mayoría
+        son `DecorationImage` dentro de un `BoxDecoration`, que no
+        tiene forma nativa de llevar texto alternativo -- se envolvió
+        el `Container` en `Semantics(image: true, label: ...)` en esos
+        casos; los 2 `Image.network` directos usan su propio
+        `semanticLabel`. Las fotos de perfil propias llevan un label
+        genérico ("Tu foto de perfil de Steam"); las carátulas de
+        juego usan el nombre real del juego.
+      - **Contraste de colores**: auditoría real contra WCAG 2.1
+        (cálculo de luminancia relativa, no una revisión visual) de
+        todas las combinaciones fondo/texto de `SteamColors`. Resultado:
+        prácticamente todo pasa cómodo (7:1+ en la mayoría de fondo +
+        texto). **Un hallazgo real, no corregido a propósito**: texto
+        blanco sobre el azul de marca en botones primarios
+        (`SteamButtonPrimary`, 13px bold) da 3.68:1 -- por debajo del
+        4.5:1 que exige AA para texto normal (aunque sí pasa el 3:1 de
+        "componentes de UI"). No lo toqué porque el azul de marca ya
+        fue confirmado explícitamente por el usuario antes (ver
+        comentario en `colors.dart`) -- no es mi lugar cambiar un color
+        de marca ya decidido sin que lo pida. Queda anotado por si en
+        algún momento se quiere ajustar el tono del azul o usar un azul
+        más oscuro solo para fondos de botón con texto encima.
+      - **Enlaces rotos**: auditados los únicos 2 links externos reales
+        de toda la app Flutter (`AppConfig.kofiUrl` →
+        `https://ko-fi.com/camiko31`, y el enlace a
+        `https://steamcommunity.com/my/edit/settings` en Inicio) --
+        ambos cargan correctamente, verificado en vivo con el
+        navegador integrado.
+      - `flutter analyze` limpio, `flutter test test/widget_test.dart`
+        pasa, `dart format` corrido en los archivos tocados.
     - **Tier 2 — depende 100% de tener el dominio ya resuelto, pero
       simples una vez que exista**: sitemap.xml y robots.txt, Google
       Search Console (verificación de propiedad), indexación de Google.

@@ -45,9 +45,13 @@ class CompararBibliotecaScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: (esSteam ? SteamColors.teal : SteamColors.blue).withValues(alpha: 0.15),
+                    color: (esSteam ? SteamColors.teal : SteamColors.blue)
+                        .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(SteamRadii.sm),
                   ),
                   child: Text(
@@ -73,7 +77,10 @@ class CompararBibliotecaScreen extends StatelessWidget {
                   'Tu biblioteca: $totalA juegos ($pctA% coinciden)\n'
                   'Su biblioteca: $totalB juegos ($pctB% coinciden)',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: SteamColors.textSec, fontSize: 12),
+                  style: const TextStyle(
+                    color: SteamColors.textSec,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -105,18 +112,23 @@ class CompararBibliotecaScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 56,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(SteamRadii.sm),
-                        color: SteamColors.bgPanel,
-                        image: juego['headerimg']?.toString().isNotEmpty == true
-                            ? DecorationImage(
-                                image: NetworkImage(juego['headerimg']),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
+                    Semantics(
+                      image: true,
+                      label: 'Carátula de ${juego['nombre'] ?? 'juego'}',
+                      child: Container(
+                        width: 56,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(SteamRadii.sm),
+                          color: SteamColors.bgPanel,
+                          image:
+                              juego['headerimg']?.toString().isNotEmpty == true
+                              ? DecorationImage(
+                                  image: NetworkImage(juego['headerimg']),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),

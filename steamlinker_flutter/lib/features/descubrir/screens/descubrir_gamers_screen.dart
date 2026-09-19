@@ -88,7 +88,9 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
         widget.busquedaExterna.isNotEmpty) {
       setState(() => _busqueda = widget.busquedaExterna);
       _busquedaCtrl.text = _busqueda;
-      _busquedaCtrl.selection = TextSelection.collapsed(offset: _busqueda.length);
+      _busquedaCtrl.selection = TextSelection.collapsed(
+        offset: _busqueda.length,
+      );
     }
     if (widget.filtroAppidExterno != null &&
         widget.filtroAppidExterno != oldWidget.filtroAppidExterno) {
@@ -139,9 +141,7 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
   }
 
   Future<void> _recargar() async {
-    await context.read<PerfilProvider>().descubrirUsuarios(
-      appid: _filtroAppid,
-    );
+    await context.read<PerfilProvider>().descubrirUsuarios(appid: _filtroAppid);
   }
 
   Future<void> _abrirFiltros() async {
@@ -211,7 +211,9 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      final tipo = PublicacionConstants.valorTipoFiltro(tipoEtiqueta);
+                      final tipo = PublicacionConstants.valorTipoFiltro(
+                        tipoEtiqueta,
+                      );
                       final pais = paisEtiqueta == PaisUtil.todos
                           ? null
                           : PaisUtil.nombreACodigo(paisEtiqueta);
@@ -220,7 +222,8 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                       String? juegoNombre;
                       if (juegoEtiqueta != 'Todos los juegos') {
                         for (final j in perfil.juegos) {
-                          if ((j['nombre']?.toString() ?? '') == juegoEtiqueta) {
+                          if ((j['nombre']?.toString() ?? '') ==
+                              juegoEtiqueta) {
                             appid = j['appid'] as int?;
                             juegoNombre = juegoEtiqueta;
                             break;
@@ -231,12 +234,14 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                       setState(() {
                         _filtroAppid = appid;
                         _filtroJuegoNombre = juegoNombre;
-                        _filtroTipoEtiqueta = tipoEtiqueta ==
+                        _filtroTipoEtiqueta =
+                            tipoEtiqueta ==
                                 PublicacionConstants.tiposFiltroEtiquetas.first
                             ? null
                             : tipoEtiqueta;
-                        _filtroPaisEtiqueta =
-                            paisEtiqueta == PaisUtil.todos ? null : paisEtiqueta;
+                        _filtroPaisEtiqueta = paisEtiqueta == PaisUtil.todos
+                            ? null
+                            : paisEtiqueta;
                       });
 
                       Navigator.pop(context);
@@ -260,14 +265,15 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
   void _abrirUsuario(Map<String, dynamic> usuario) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => UsuarioDetalleScreen(
-          userId: usuario['id_usu'] as int,
-        ),
+        builder: (_) => UsuarioDetalleScreen(userId: usuario['id_usu'] as int),
       ),
     );
   }
 
-  List<Map<String, dynamic>> _baseFiltrada(PerfilProvider perfilProv, int? miId) {
+  List<Map<String, dynamic>> _baseFiltrada(
+    PerfilProvider perfilProv,
+    int? miId,
+  ) {
     return perfilProv.usuariosDescubrir
         .where((u) => miId == null || (u as Map)['id_usu'] != miId)
         .map((u) => Map<String, dynamic>.from(u as Map))
@@ -277,19 +283,28 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
   List<Map<String, dynamic>> _listaFiltrada(List<Map<String, dynamic>> base) {
     final q = _busqueda.trim().toLowerCase();
     var lista = base
-        .where((u) => q.isEmpty ||
-            (u['username_usu']?.toString().toLowerCase() ?? '').contains(q))
+        .where(
+          (u) =>
+              q.isEmpty ||
+              (u['username_usu']?.toString().toLowerCase() ?? '').contains(q),
+        )
         .where((u) => (u['juegos_en_comun'] as int? ?? 0) >= _minEnComun)
         .toList();
 
     switch (_orden) {
       case _Orden.enComun:
-        lista.sort((a, b) => (b['juegos_en_comun'] as int? ?? 0)
-            .compareTo(a['juegos_en_comun'] as int? ?? 0));
+        lista.sort(
+          (a, b) => (b['juegos_en_comun'] as int? ?? 0).compareTo(
+            a['juegos_en_comun'] as int? ?? 0,
+          ),
+        );
         break;
       case _Orden.reputacion:
-        lista.sort((a, b) => (double.tryParse('${b['repu_usu']}') ?? 0)
-            .compareTo(double.tryParse('${a['repu_usu']}') ?? 0));
+        lista.sort(
+          (a, b) => (double.tryParse('${b['repu_usu']}') ?? 0).compareTo(
+            double.tryParse('${a['repu_usu']}') ?? 0,
+          ),
+        );
         break;
       case _Orden.reciente:
         lista.sort((a, b) {
@@ -310,7 +325,8 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
     final miId = auth.usuario?['id'];
     final esEscritorio = MediaQuery.of(context).size.width >= _kEscritorio;
 
-    final filtrosActivos = _filtroTipoEtiqueta != null ||
+    final filtrosActivos =
+        _filtroTipoEtiqueta != null ||
         _filtroPaisEtiqueta != null ||
         _filtroJuegoNombre != null;
 
@@ -331,7 +347,10 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
               title: 'DESCUBRIR',
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.inbox_outlined, color: SteamColors.muted),
+                  icon: const Icon(
+                    Icons.inbox_outlined,
+                    color: SteamColors.muted,
+                  ),
                   tooltip: 'Mis solicitudes',
                   onPressed: () {
                     Navigator.of(context).push(
@@ -342,7 +361,9 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.tune_rounded,
-                    color: filtrosActivos ? SteamColors.blue : SteamColors.muted,
+                    color: filtrosActivos
+                        ? SteamColors.blue
+                        : SteamColors.muted,
                   ),
                   tooltip: 'Filtros de publicación',
                   onPressed: _abrirFiltros,
@@ -357,111 +378,124 @@ class _DescubrirGamersScreenState extends State<DescubrirGamersScreen> {
       body: Stack(
         children: [
           esEscritorio
-          ? _CuerpoEscritorio(
-              cargando: perfilProv.descubrirCargando,
-              base: base,
-              lista: lista,
-              busquedaCtrl: _busquedaCtrl,
-              onBusqueda: (v) => setState(() => _busqueda = v),
-              orden: _orden,
-              onOrden: (v) => setState(() => _orden = v),
-              filtroJuegoNombre: _filtroJuegoNombre,
-              filtroPaisEtiqueta: _filtroPaisEtiqueta,
-              filtroTipoEtiqueta: _filtroTipoEtiqueta,
-              minEnComun: _minEnComun,
-              onMinEnComun: (v) => setState(() => _minEnComun = v),
-              onAbrirFiltros: _abrirFiltros,
-              onLimpiarFiltros: () {
-                setState(() {
-                  _filtroAppid = null;
-                  _filtroJuegoNombre = null;
-                  _filtroTipoEtiqueta = null;
-                  _filtroPaisEtiqueta = null;
-                  _minEnComun = 0;
-                });
-                perfilProv.descubrirUsuarios();
-              },
-              onRecargar: _recargar,
-              onMisSolicitudes: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const MatchesScreen()),
-                );
-              },
-              onTap: _abrirUsuario,
-            )
-          // DesktopBodyWidth NO envuelve esta rama porque el contenido
-          // incluye un ListView (_ListaGamers) -- envolverlo angosta el
-          // Scrollable mismo, no solo lo que se ve, y el scroll con rueda
-          // deja de responder fuera de esa franja angosta (bug real
-          // reportado por el usuario). El margen se calcula acá y se pasa
-          // como extra de padding al ListView. Ver desktop_body_width.dart.
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final margen = DesktopBodyWidth.margenHorizontal(constraints.maxWidth, 720);
-                return Column(
-                children: [
-                  if (filtrosActivos)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: const BoxDecoration(
-                        color: SteamColors.bgPanel,
-                        border: Border(bottom: BorderSide(color: SteamColors.border)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  if (_filtroTipoEtiqueta != null)
-                                    _chipFiltro(_filtroTipoEtiqueta!),
-                                  if (_filtroPaisEtiqueta != null)
-                                    _chipFiltro(_filtroPaisEtiqueta!),
-                                  if (_filtroJuegoNombre != null)
-                                    _chipFiltro(_filtroJuegoNombre!),
-                                ],
+              ? _CuerpoEscritorio(
+                  cargando: perfilProv.descubrirCargando,
+                  base: base,
+                  lista: lista,
+                  busquedaCtrl: _busquedaCtrl,
+                  onBusqueda: (v) => setState(() => _busqueda = v),
+                  orden: _orden,
+                  onOrden: (v) => setState(() => _orden = v),
+                  filtroJuegoNombre: _filtroJuegoNombre,
+                  filtroPaisEtiqueta: _filtroPaisEtiqueta,
+                  filtroTipoEtiqueta: _filtroTipoEtiqueta,
+                  minEnComun: _minEnComun,
+                  onMinEnComun: (v) => setState(() => _minEnComun = v),
+                  onAbrirFiltros: _abrirFiltros,
+                  onLimpiarFiltros: () {
+                    setState(() {
+                      _filtroAppid = null;
+                      _filtroJuegoNombre = null;
+                      _filtroTipoEtiqueta = null;
+                      _filtroPaisEtiqueta = null;
+                      _minEnComun = 0;
+                    });
+                    perfilProv.descubrirUsuarios();
+                  },
+                  onRecargar: _recargar,
+                  onMisSolicitudes: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MatchesScreen()),
+                    );
+                  },
+                  onTap: _abrirUsuario,
+                )
+              // DesktopBodyWidth NO envuelve esta rama porque el contenido
+              // incluye un ListView (_ListaGamers) -- envolverlo angosta el
+              // Scrollable mismo, no solo lo que se ve, y el scroll con rueda
+              // deja de responder fuera de esa franja angosta (bug real
+              // reportado por el usuario). El margen se calcula acá y se pasa
+              // como extra de padding al ListView. Ver desktop_body_width.dart.
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final margen = DesktopBodyWidth.margenHorizontal(
+                      constraints.maxWidth,
+                      720,
+                    );
+                    return Column(
+                      children: [
+                        if (filtrosActivos)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: SteamColors.bgPanel,
+                              border: Border(
+                                bottom: BorderSide(color: SteamColors.border),
                               ),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _filtroAppid = null;
-                                _filtroJuegoNombre = null;
-                                _filtroTipoEtiqueta = null;
-                                _filtroPaisEtiqueta = null;
-                              });
-                              perfilProv.descubrirUsuarios();
-                            },
-                            child: const Text('Limpiar', style: TextStyle(fontSize: 12)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  Expanded(
-                    child: RefreshIndicator(
-                      color: SteamColors.blue,
-                      onRefresh: _recargar,
-                      child: perfilProv.descubrirCargando
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                              ),
-                            )
-                          : _ListaGamers(
-                              usuarios: lista,
-                              onTap: _abrirUsuario,
-                              controller: _scrollCtrl,
-                              margenExtra: margen,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        if (_filtroTipoEtiqueta != null)
+                                          _chipFiltro(_filtroTipoEtiqueta!),
+                                        if (_filtroPaisEtiqueta != null)
+                                          _chipFiltro(_filtroPaisEtiqueta!),
+                                        if (_filtroJuegoNombre != null)
+                                          _chipFiltro(_filtroJuegoNombre!),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _filtroAppid = null;
+                                      _filtroJuegoNombre = null;
+                                      _filtroTipoEtiqueta = null;
+                                      _filtroPaisEtiqueta = null;
+                                    });
+                                    perfilProv.descubrirUsuarios();
+                                  },
+                                  child: const Text(
+                                    'Limpiar',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ],
                             ),
-                    ),
-                  ),
-                ],
-                );
-              },
-            ),
+                          ),
+                        Expanded(
+                          child: RefreshIndicator(
+                            color: SteamColors.blue,
+                            onRefresh: _recargar,
+                            child: perfilProv.descubrirCargando
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation(
+                                        SteamColors.blue,
+                                      ),
+                                    ),
+                                  )
+                                : _ListaGamers(
+                                    usuarios: lista,
+                                    onTap: _abrirUsuario,
+                                    controller: _scrollCtrl,
+                                    margenExtra: margen,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
           ScrollToTopFab(controller: _scrollCtrl),
         ],
       ),
@@ -594,13 +628,24 @@ class _CuerpoEscritorio extends StatelessWidget {
                   children: [
                     const Text(
                       'Descubrir',
-                      style: TextStyle(color: SteamColors.light, fontSize: 24, fontWeight: FontWeight.w800),
+                      style: TextStyle(
+                        color: SteamColors.light,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const Spacer(),
                     OutlinedButton.icon(
                       onPressed: onMisSolicitudes,
-                      icon: const Icon(Icons.inbox_outlined, size: 16, color: SteamColors.muted),
-                      label: const Text('Mis solicitudes', style: TextStyle(fontSize: 12.5)),
+                      icon: const Icon(
+                        Icons.inbox_outlined,
+                        size: 16,
+                        color: SteamColors.muted,
+                      ),
+                      label: const Text(
+                        'Mis solicitudes',
+                        style: TextStyle(fontSize: 12.5),
+                      ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: SteamColors.textSec,
                         side: const BorderSide(color: SteamColors.border),
@@ -618,12 +663,19 @@ class _CuerpoEscritorio extends StatelessWidget {
                         children: [
                           Text(
                             'Jugadores buscando compañía',
-                            style: TextStyle(color: SteamColors.light, fontSize: 16, fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              color: SteamColors.light,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           SizedBox(height: 2),
                           Text(
                             'Personas reales que quieren jugar ahora mismo.',
-                            style: TextStyle(color: SteamColors.textSec, fontSize: 12.5),
+                            style: TextStyle(
+                              color: SteamColors.textSec,
+                              fontSize: 12.5,
+                            ),
                           ),
                         ],
                       ),
@@ -636,7 +688,9 @@ class _CuerpoEscritorio extends StatelessWidget {
                   child: cargando
                       ? const Center(
                           child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                            valueColor: AlwaysStoppedAnimation(
+                              SteamColors.blue,
+                            ),
                           ),
                         )
                       : RefreshIndicator(
@@ -644,16 +698,21 @@ class _CuerpoEscritorio extends StatelessWidget {
                           onRefresh: onRecargar,
                           child: lista.isEmpty
                               ? ListView(
-                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
                                   children: const [
                                     SizedBox(height: 60),
                                     Center(
                                       child: Padding(
-                                        padding: EdgeInsets.symmetric(horizontal: 24),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 24,
+                                        ),
                                         child: Text(
                                           'No hay gamers que coincidan con estos filtros.',
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(color: SteamColors.textSec),
+                                          style: TextStyle(
+                                            color: SteamColors.textSec,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -661,7 +720,8 @@ class _CuerpoEscritorio extends StatelessWidget {
                                 )
                               : ListView.separated(
                                   itemCount: lista.length,
-                                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(height: 10),
                                   itemBuilder: (context, i) => _TarjetaGamer(
                                     usuario: lista[i],
                                     onTap: () => onTap(lista[i]),
@@ -723,9 +783,15 @@ class _OrdenDropdown extends StatelessWidget {
           isDense: true,
           dropdownColor: SteamColors.bgCard,
           style: const TextStyle(color: SteamColors.light, fontSize: 12.5),
-          icon: const Icon(Icons.expand_more, color: SteamColors.muted, size: 18),
+          icon: const Icon(
+            Icons.expand_more,
+            color: SteamColors.muted,
+            size: 18,
+          ),
           items: _Orden.values
-              .map((o) => DropdownMenuItem(value: o, child: Text(_etiquetas[o]!)))
+              .map(
+                (o) => DropdownMenuItem(value: o, child: Text(_etiquetas[o]!)),
+              )
               .toList(),
           onChanged: (v) {
             if (v != null) onChanged(v);
@@ -767,9 +833,10 @@ class _TarjetaGamer extends StatelessWidget {
     final enComun = usuario['juegos_en_comun'] as int? ?? 0;
     final rep = double.tryParse('${usuario['repu_usu']}');
     final bio = usuario['descrip_usu'] as String?;
-    final comunes = ((usuario['juegos_comunes_muestra'] as List<dynamic>?) ?? [])
-        .map((j) => Map<String, dynamic>.from(j as Map))
-        .toList();
+    final comunes =
+        ((usuario['juegos_comunes_muestra'] as List<dynamic>?) ?? [])
+            .map((j) => Map<String, dynamic>.from(j as Map))
+            .toList();
     final juegoReciente = usuario['juego_reciente'] as Map<String, dynamic>?;
 
     return Material(
@@ -804,7 +871,11 @@ class _TarjetaGamer extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Text(
                       username.isNotEmpty ? username[0].toUpperCase() : '?',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -827,7 +898,11 @@ class _TarjetaGamer extends StatelessWidget {
                             ),
                             if (verificado) ...[
                               const SizedBox(width: 5),
-                              const Icon(Icons.verified_rounded, size: 14, color: SteamColors.blue),
+                              const Icon(
+                                Icons.verified_rounded,
+                                size: 14,
+                                color: SteamColors.blue,
+                              ),
                             ],
                           ],
                         ),
@@ -835,20 +910,34 @@ class _TarjetaGamer extends StatelessWidget {
                         Row(
                           children: [
                             if (pais != null && pais.isNotEmpty) ...[
-                              Icon(Icons.public, size: 11, color: SteamColors.muted),
+                              Icon(
+                                Icons.public,
+                                size: 11,
+                                color: SteamColors.muted,
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 PaisUtil.codigoANombre(pais),
-                                style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5),
+                                style: const TextStyle(
+                                  color: SteamColors.textSec,
+                                  fontSize: 11.5,
+                                ),
                               ),
                               const SizedBox(width: 8),
                             ],
                             if (rep != null) ...[
-                              const Icon(Icons.star_rounded, size: 12, color: SteamColors.yellow),
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 12,
+                                color: SteamColors.yellow,
+                              ),
                               const SizedBox(width: 2),
                               Text(
                                 rep.toStringAsFixed(1),
-                                style: const TextStyle(color: SteamColors.textSec, fontSize: 11.5),
+                                style: const TextStyle(
+                                  color: SteamColors.textSec,
+                                  fontSize: 11.5,
+                                ),
                               ),
                             ],
                           ],
@@ -858,7 +947,10 @@ class _TarjetaGamer extends StatelessWidget {
                   ),
                   Text(
                     _hace(usuario['ultima_publicacion']),
-                    style: const TextStyle(color: SteamColors.muted, fontSize: 11),
+                    style: const TextStyle(
+                      color: SteamColors.muted,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -868,20 +960,31 @@ class _TarjetaGamer extends StatelessWidget {
                   bio,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5, height: 1.4),
+                  style: const TextStyle(
+                    color: SteamColors.textSec,
+                    fontSize: 12.5,
+                    height: 1.4,
+                  ),
                 ),
               ],
               const SizedBox(height: 10),
               if (tipo != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: SteamColors.blue.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     PublicacionConstants.etiquetaTipo(tipo),
-                    style: const TextStyle(color: SteamColors.blue, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      color: SteamColors.blue,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               const SizedBox(height: 10),
@@ -891,16 +994,25 @@ class _TarjetaGamer extends StatelessWidget {
                     child: Row(
                       children: [
                         for (final j in comunes) ...[
-                          _MiniCaratula(headerimg: j['headerimg_jg'] as String?),
+                          _MiniCaratula(
+                            headerimg: j['headerimg_jg'] as String?,
+                            nombre: j['nom_jg'] as String?,
+                          ),
                           const SizedBox(width: 4),
                         ],
                         if (comunes.isNotEmpty) const SizedBox(width: 4),
                         Text(
-                          enComun > 0 ? '$enComun juego${enComun == 1 ? '' : 's'} en común' : 'Sin juegos en común',
+                          enComun > 0
+                              ? '$enComun juego${enComun == 1 ? '' : 's'} en común'
+                              : 'Sin juegos en común',
                           style: TextStyle(
-                            color: enComun > 0 ? SteamColors.teal : SteamColors.muted,
+                            color: enComun > 0
+                                ? SteamColors.teal
+                                : SteamColors.muted,
                             fontSize: 11.5,
-                            fontWeight: enComun > 0 ? FontWeight.w600 : FontWeight.w400,
+                            fontWeight: enComun > 0
+                                ? FontWeight.w600
+                                : FontWeight.w400,
                           ),
                         ),
                       ],
@@ -911,9 +1023,18 @@ class _TarjetaGamer extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: SteamColors.blue,
                       side: const BorderSide(color: SteamColors.blue),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                     ),
-                    child: const Text('Ver perfil', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Ver perfil',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -927,19 +1048,29 @@ class _TarjetaGamer extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      _MiniCaratula(headerimg: juegoReciente['headerimg_jg'] as String?),
+                      _MiniCaratula(
+                        headerimg: juegoReciente['headerimg_jg'] as String?,
+                        nombre: juegoReciente['nom_jg'] as String?,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           juegoReciente['nom_jg']?.toString() ?? 'Juego',
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: SteamColors.light, fontSize: 12.5, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: SteamColors.light,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       if (juegoReciente['horas'] != null)
                         Text(
                           '${juegoReciente['horas']} h jugadas',
-                          style: const TextStyle(color: SteamColors.muted, fontSize: 11),
+                          style: const TextStyle(
+                            color: SteamColors.muted,
+                            fontSize: 11,
+                          ),
                         ),
                     ],
                   ),
@@ -955,25 +1086,37 @@ class _TarjetaGamer extends StatelessWidget {
 
 class _MiniCaratula extends StatelessWidget {
   final String? headerimg;
+  final String? nombre;
 
-  const _MiniCaratula({required this.headerimg});
+  const _MiniCaratula({required this.headerimg, this.nombre});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: SteamColors.bgInput,
-        image: headerimg != null && headerimg!.isNotEmpty
-            ? DecorationImage(image: NetworkImage(headerimg!), fit: BoxFit.cover)
+    return Semantics(
+      image: true,
+      label: 'Carátula de ${nombre ?? 'juego'}',
+      child: Container(
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          color: SteamColors.bgInput,
+          image: headerimg != null && headerimg!.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(headerimg!),
+                  fit: BoxFit.cover,
+                )
+              : null,
+          border: Border.all(color: SteamColors.border),
+        ),
+        child: headerimg == null || headerimg!.isEmpty
+            ? const Icon(
+                Icons.videogame_asset_outlined,
+                size: 13,
+                color: SteamColors.muted,
+              )
             : null,
-        border: Border.all(color: SteamColors.border),
       ),
-      child: headerimg == null || headerimg!.isEmpty
-          ? const Icon(Icons.videogame_asset_outlined, size: 13, color: SteamColors.muted)
-          : null,
     );
   }
 }
@@ -1023,7 +1166,8 @@ class _PanelLateral extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tieneFiltros = filtroJuegoNombre != null ||
+    final tieneFiltros =
+        filtroJuegoNombre != null ||
         filtroPaisEtiqueta != null ||
         filtroTipoEtiqueta != null ||
         minEnComun > 0;
@@ -1039,8 +1183,15 @@ class _PanelLateral extends StatelessWidget {
             style: const TextStyle(color: SteamColors.light, fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Buscar por nombre…',
-              hintStyle: const TextStyle(color: SteamColors.muted, fontSize: 13),
-              prefixIcon: const Icon(Icons.search, color: SteamColors.muted, size: 18),
+              hintStyle: const TextStyle(
+                color: SteamColors.muted,
+                fontSize: 13,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: SteamColors.muted,
+                size: 18,
+              ),
               filled: true,
               fillColor: SteamColors.bgInput,
               isDense: true,
@@ -1071,8 +1222,14 @@ class _PanelLateral extends StatelessWidget {
               if (tieneFiltros)
                 TextButton(
                   onPressed: onLimpiarFiltros,
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 24)),
-                  child: const Text('Limpiar', style: TextStyle(fontSize: 11.5)),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(0, 24),
+                  ),
+                  child: const Text(
+                    'Limpiar',
+                    style: TextStyle(fontSize: 11.5),
+                  ),
                 ),
             ],
           ),
@@ -1100,17 +1257,38 @@ class _PanelLateral extends StatelessWidget {
           const SizedBox(height: 14),
           const Text(
             'JUEGOS EN COMÚN',
-            style: TextStyle(color: SteamColors.muted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+            style: TextStyle(
+              color: SteamColors.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              _ChipUmbral(label: 'Cualquiera', activo: minEnComun == 0, onTap: () => onMinEnComun(0)),
-              _ChipUmbral(label: '1+', activo: minEnComun == 1, onTap: () => onMinEnComun(1)),
-              _ChipUmbral(label: '3+', activo: minEnComun == 3, onTap: () => onMinEnComun(3)),
-              _ChipUmbral(label: '5+', activo: minEnComun == 5, onTap: () => onMinEnComun(5)),
+              _ChipUmbral(
+                label: 'Cualquiera',
+                activo: minEnComun == 0,
+                onTap: () => onMinEnComun(0),
+              ),
+              _ChipUmbral(
+                label: '1+',
+                activo: minEnComun == 1,
+                onTap: () => onMinEnComun(1),
+              ),
+              _ChipUmbral(
+                label: '3+',
+                activo: minEnComun == 3,
+                onTap: () => onMinEnComun(3),
+              ),
+              _ChipUmbral(
+                label: '5+',
+                activo: minEnComun == 5,
+                onTap: () => onMinEnComun(5),
+              ),
             ],
           ),
           const SizedBox(height: 22),
@@ -1119,11 +1297,21 @@ class _PanelLateral extends StatelessWidget {
             children: [
               const Text(
                 'GAMERS ACTIVOS',
-                style: TextStyle(color: SteamColors.muted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+                style: TextStyle(
+                  color: SteamColors.muted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
               ),
               Text(
                 '${base.length}',
-                style: const TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700, fontFamily: 'monospace'),
+                style: const TextStyle(
+                  color: SteamColors.light,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'monospace',
+                ),
               ),
             ],
           ),
@@ -1136,7 +1324,12 @@ class _PanelLateral extends StatelessWidget {
             const SizedBox(height: 22),
             const Text(
               'JUEGOS POPULARES',
-              style: TextStyle(color: SteamColors.muted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+              style: TextStyle(
+                color: SteamColors.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+              ),
             ),
             const SizedBox(height: 8),
             for (final entry in populares.entries)
@@ -1148,12 +1341,19 @@ class _PanelLateral extends StatelessWidget {
                       child: Text(
                         entry.key,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontSize: 12.5,
+                        ),
                       ),
                     ),
                     Text(
                       '${entry.value}',
-                      style: const TextStyle(color: SteamColors.muted, fontSize: 12, fontFamily: 'monospace'),
+                      style: const TextStyle(
+                        color: SteamColors.muted,
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ],
                 ),
@@ -1190,17 +1390,26 @@ class _BotonFiltro extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(SteamRadii.sm),
-            border: Border.all(color: activo ? SteamColors.blue : SteamColors.border),
+            border: Border.all(
+              color: activo ? SteamColors.blue : SteamColors.border,
+            ),
           ),
           child: Row(
             children: [
-              Icon(icon, size: 15, color: activo ? SteamColors.blue : SteamColors.muted),
+              Icon(
+                icon,
+                size: 15,
+                color: activo ? SteamColors.blue : SteamColors.muted,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: activo ? SteamColors.blue : SteamColors.textSec, fontSize: 12.5),
+                  style: TextStyle(
+                    color: activo ? SteamColors.blue : SteamColors.textSec,
+                    fontSize: 12.5,
+                  ),
                 ),
               ),
               Icon(Icons.chevron_right, size: 16, color: SteamColors.muted),
@@ -1217,7 +1426,11 @@ class _ChipUmbral extends StatelessWidget {
   final bool activo;
   final VoidCallback onTap;
 
-  const _ChipUmbral({required this.label, required this.activo, required this.onTap});
+  const _ChipUmbral({
+    required this.label,
+    required this.activo,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1231,7 +1444,9 @@ class _ChipUmbral extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(SteamRadii.sm),
-            border: Border.all(color: activo ? SteamColors.blue : SteamColors.border),
+            border: Border.all(
+              color: activo ? SteamColors.blue : SteamColors.border,
+            ),
           ),
           child: Text(
             label,

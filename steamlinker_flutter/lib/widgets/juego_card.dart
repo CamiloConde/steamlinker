@@ -38,6 +38,8 @@ class JuegoCard extends StatelessWidget {
                 ),
                 child: Image.network(
                   juego['headerimg'] ?? juego['headerimg_jg'] ?? '',
+                  semanticLabel:
+                      'Carátula de ${juego['nombre'] ?? juego['nom_jg'] ?? 'juego'}',
                   width: double.infinity,
                   height: 84,
                   fit: BoxFit.cover,

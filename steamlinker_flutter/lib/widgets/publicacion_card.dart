@@ -63,13 +63,18 @@ class PublicacionCard extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(SteamRadii.avatar),
+                          borderRadius: BorderRadius.circular(
+                            SteamRadii.avatar,
+                          ),
                           gradient: const LinearGradient(
                             colors: [SteamColors.blue, SteamColors.teal],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          border: Border.all(color: SteamColors.blue, width: 1.5),
+                          border: Border.all(
+                            color: SteamColors.blue,
+                            width: 1.5,
+                          ),
                         ),
                         child: Center(
                           child: Text(
@@ -102,7 +107,9 @@ class PublicacionCard extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                PublicacionConstants.etiquetaTipo(publicacion['tipo_publi']),
+                                PublicacionConstants.etiquetaTipo(
+                                  publicacion['tipo_publi'],
+                                ),
                                 style: const TextStyle(
                                   color: SteamColors.textSec,
                                   fontSize: 11,
@@ -110,12 +117,28 @@ class PublicacionCard extends StatelessWidget {
                                 ),
                               ),
                               if (repu != null) ...[
-                                const Text(' · ', style: TextStyle(color: SteamColors.textSec, fontSize: 11)),
-                                Icon(Icons.star_rounded, size: 12, color: SteamColors.yellow),
+                                const Text(
+                                  ' · ',
+                                  style: TextStyle(
+                                    color: SteamColors.textSec,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 12,
+                                  color: SteamColors.yellow,
+                                ),
                                 const SizedBox(width: 2),
                                 Text(
-                                  double.tryParse(repu.toString())?.toStringAsFixed(1) ?? '$repu',
-                                  style: const TextStyle(color: SteamColors.textSec, fontSize: 11),
+                                  double.tryParse(
+                                        repu.toString(),
+                                      )?.toStringAsFixed(1) ??
+                                      '$repu',
+                                  style: const TextStyle(
+                                    color: SteamColors.textSec,
+                                    fontSize: 11,
+                                  ),
                                 ),
                               ],
                             ],
@@ -126,19 +149,33 @@ class PublicacionCard extends StatelessWidget {
                     RelacionStatusChip(relacion: relacion),
                     if (esMia && onEditar != null)
                       IconButton(
-                        icon: const Icon(Icons.edit_outlined, color: SteamColors.blue, size: 20),
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: SteamColors.blue,
+                          size: 20,
+                        ),
                         tooltip: 'Editar publicación',
                         onPressed: onEditar,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                       ),
                     if (esMia && onCerrar != null)
                       IconButton(
-                        icon: const Icon(Icons.close, color: SteamColors.red, size: 20),
+                        icon: const Icon(
+                          Icons.close,
+                          color: SteamColors.red,
+                          size: 20,
+                        ),
                         tooltip: 'Cerrar publicación',
                         onPressed: onCerrar,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                       ),
                   ],
                 ),
@@ -155,7 +192,8 @@ class PublicacionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if ((publicacion['descrip_publi'] as String?)?.isNotEmpty == true) ...[
+              if ((publicacion['descrip_publi'] as String?)?.isNotEmpty ==
+                  true) ...[
                 const SizedBox(height: 6),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -163,7 +201,10 @@ class PublicacionCard extends StatelessWidget {
                     publicacion['descrip_publi'],
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: SteamColors.textSec, fontSize: 13),
+                    style: const TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               ],
@@ -174,8 +215,11 @@ class PublicacionCard extends StatelessWidget {
                   aspectRatio: 16 / 7,
                   child: Image.network(
                     portada,
+                    semanticLabel:
+                        'Carátula de ${juegos.first['nom_jg'] ?? 'juego'}',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(color: SteamColors.bgCard),
+                    errorBuilder: (_, _, _) =>
+                        Container(color: SteamColors.bgCard),
                   ),
                 )
               else if (juegos.isNotEmpty)
@@ -186,14 +230,21 @@ class PublicacionCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
-                      const Icon(Icons.videogame_asset_outlined, size: 18, color: SteamColors.muted),
+                      const Icon(
+                        Icons.videogame_asset_outlined,
+                        size: 18,
+                        color: SteamColors.muted,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           juegos.map((j) => j['nom_jg'] ?? '').join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
+                          style: const TextStyle(
+                            color: SteamColors.textSec,
+                            fontSize: 12.5,
+                          ),
                         ),
                       ),
                     ],
@@ -208,27 +259,50 @@ class PublicacionCard extends StatelessWidget {
                     const SizedBox(width: 5),
                     Text(
                       publicacion['paisfiltro_publi'] != null &&
-                              publicacion['paisfiltro_publi'].toString().isNotEmpty
-                          ? PaisUtil.codigoANombre(publicacion['paisfiltro_publi'])
+                              publicacion['paisfiltro_publi']
+                                  .toString()
+                                  .isNotEmpty
+                          ? PaisUtil.codigoANombre(
+                              publicacion['paisfiltro_publi'],
+                            )
                           : 'Todos los países',
-                      style: const TextStyle(color: SteamColors.textSec, fontSize: 12),
+                      style: const TextStyle(
+                        color: SteamColors.textSec,
+                        fontSize: 12,
+                      ),
                     ),
-                    if (juegos.length > 1 && (portada == null || portada.isEmpty)) ...[
+                    if (juegos.length > 1 &&
+                        (portada == null || portada.isEmpty)) ...[
                       const SizedBox(width: 10),
-                      Icon(Icons.videogame_asset_outlined, size: 14, color: SteamColors.muted),
+                      Icon(
+                        Icons.videogame_asset_outlined,
+                        size: 14,
+                        color: SteamColors.muted,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '${publicacion['total_juegos'] ?? juegos.length} juegos',
-                        style: const TextStyle(color: SteamColors.textSec, fontSize: 12),
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                     const Spacer(),
                     const Text(
                       'Ver detalle',
-                      style: TextStyle(color: SteamColors.blue, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        color: SteamColors.blue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(width: 2),
-                    const Icon(Icons.chevron_right, size: 16, color: SteamColors.blue),
+                    const Icon(
+                      Icons.chevron_right,
+                      size: 16,
+                      color: SteamColors.blue,
+                    ),
                   ],
                 ),
               ),

@@ -153,10 +153,7 @@ class _BusquedaScreenState extends State<BusquedaScreen> {
               else if (_resultados.isEmpty)
                 const Text(
                   'Escribe el nombre de un juego y presiona Enter para buscarlo.',
-                  style: TextStyle(
-                    color: SteamColors.textSec,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: SteamColors.textSec, fontSize: 12),
                 )
               else
                 Column(
@@ -166,21 +163,24 @@ class _BusquedaScreenState extends State<BusquedaScreen> {
                     );
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(SteamRadii.sm),
-                          image: juego['headerimg'] != null &&
-                                  juego['headerimg'].toString().isNotEmpty
-                              ? DecorationImage(
-                                  image: NetworkImage(
-                                    juego['headerimg'],
-                                  ),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: SteamColors.bgPanel,
+                      leading: Semantics(
+                        image: true,
+                        label: 'Carátula de ${juego['nombre'] ?? 'juego'}',
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(SteamRadii.sm),
+                            image:
+                                juego['headerimg'] != null &&
+                                    juego['headerimg'].toString().isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(juego['headerimg']),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                            color: SteamColors.bgPanel,
+                          ),
                         ),
                       ),
                       title: Text(

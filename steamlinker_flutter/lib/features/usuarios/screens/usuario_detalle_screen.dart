@@ -68,7 +68,9 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
     if (miId == null || miId == widget.userId) return;
 
     setState(() => _cargandoRelacion = true);
-    final data = await context.read<MatchesProvider>().consultarEstado(widget.userId);
+    final data = await context.read<MatchesProvider>().consultarEstado(
+      widget.userId,
+    );
     if (!mounted) return;
     setState(() {
       _cargandoRelacion = false;
@@ -132,10 +134,8 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
     final nombre = _perfil?['username']?.toString() ?? 'Usuario';
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => ResenasUsuarioScreen(
-          userId: widget.userId,
-          username: nombre,
-        ),
+        builder: (_) =>
+            ResenasUsuarioScreen(userId: widget.userId, username: nombre),
       ),
     );
   }
@@ -167,7 +167,11 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
     if (!mounted) return;
     setState(() => _enviandoAmistad = false);
     if (exito) {
-      showSteamToast(context, 'Solicitud de amistad enviada', SteamColors.green);
+      showSteamToast(
+        context,
+        'Solicitud de amistad enviada',
+        SteamColors.green,
+      );
       context.read<NotificacionesProvider>().cargarContador();
       await _cargarRelacion();
     } else {
@@ -181,8 +185,9 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
 
   Future<void> _compararBiblioteca() async {
     setState(() => _comparando = true);
-    final resultado =
-        await context.read<PerfilProvider>().compararBiblioteca(widget.userId);
+    final resultado = await context.read<PerfilProvider>().compararBiblioteca(
+      widget.userId,
+    );
     if (!mounted) return;
     setState(() => _comparando = false);
 
@@ -245,7 +250,10 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
     final idCalificado = miId == solicitante ? receptor : solicitante;
     final nombre = _perfil?['username'] ?? 'usuario';
 
-    final resultado = await mostrarCalificarDialog(context, nombreUsuario: nombre);
+    final resultado = await mostrarCalificarDialog(
+      context,
+      nombreUsuario: nombre,
+    );
     if (resultado == null || !mounted) return;
 
     final exito = await context.read<CalificacionesProvider>().crear(
@@ -269,14 +277,19 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
     }
   }
 
-  Map<String, dynamic>? _matchAceptadoConUsuario(MatchesProvider matches, int? miId) {
+  Map<String, dynamic>? _matchAceptadoConUsuario(
+    MatchesProvider matches,
+    int? miId,
+  ) {
     if (miId == null || _relacion?.matchAceptado != true) return null;
     final idMatch = _relacion?.idMatch;
     for (final m in [...matches.recibidos, ...matches.enviados]) {
       final map = Map<String, dynamic>.from(m as Map);
       if (map['estado_match'] != 'Aceptada') continue;
       if (idMatch != null && map['id_match'] == idMatch) return map;
-      final otro = map['id_solicitante'] == miId ? map['id_receptor'] : map['id_solicitante'];
+      final otro = map['id_solicitante'] == miId
+          ? map['id_receptor']
+          : map['id_solicitante'];
       if (otro == widget.userId) return map;
     }
     return null;
@@ -306,7 +319,10 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
                     if (v == 'reportar') _reportarUsuario();
                   },
                   itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'reportar', child: Text('Reportar usuario')),
+                    PopupMenuItem(
+                      value: 'reportar',
+                      child: Text('Reportar usuario'),
+                    ),
                   ],
                 ),
               ],
@@ -318,201 +334,248 @@ class _UsuarioDetalleScreenState extends State<UsuarioDetalleScreen> {
               ),
             )
           : _error != null
-              ? Center(
-                  child: Text(_error!, style: const TextStyle(color: SteamColors.light)),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (widget.tituloPublicacion != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: SteamColors.orange.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(SteamRadii.sm),
-                          border: Border.all(color: SteamColors.orange.withValues(alpha: 0.4)),
+          ? Center(
+              child: Text(
+                _error!,
+                style: const TextStyle(color: SteamColors.light),
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (widget.tituloPublicacion != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: SteamColors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(SteamRadii.sm),
+                      border: Border.all(
+                        color: SteamColors.orange.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.campaign_outlined,
+                          color: SteamColors.orange,
+                          size: 20,
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.campaign_outlined, color: SteamColors.orange, size: 20),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                widget.tituloPublicacion!,
-                                style: const TextStyle(color: SteamColors.light, fontSize: 13),
-                              ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            widget.tituloPublicacion!,
+                            style: const TextStyle(
+                              color: SteamColors.light,
+                              fontSize: 13,
                             ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                SteamCard(
+                  icon: Icons.person,
+                  title: _perfil!['username'] ?? 'Usuario',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        _perfil!['descrip']?.toString().isNotEmpty == true
+                            ? _perfil!['descrip']
+                            : 'Sin descripción',
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontSize: 13,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                    ],
-                    SteamCard(
-                      icon: Icons.person,
-                      title: _perfil!['username'] ?? 'Usuario',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          Text(
-                            _perfil!['descrip']?.toString().isNotEmpty == true
-                                ? _perfil!['descrip']
-                                : 'Sin descripción',
-                            style: const TextStyle(color: SteamColors.textSec, fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              _ChipInfo(
-                                label: PaisUtil.codigoANombre(_perfil!['pais']?.toString()),
-                              ),
-                              const SizedBox(width: 8),
-                              _ChipInfo(
-                                label: '★ ${(_perfil!['repu'] ?? 0).toString()}',
-                                color: SteamColors.green,
-                              ),
-                            ],
-                          ),
-                          if (!esYo) ...[
-                            const SizedBox(height: 12),
-                            if (_cargandoRelacion)
-                              const Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              )
-                            else ...[
-                              RelacionStatusRow(relacion: _relacion),
-                              const SizedBox(height: 12),
-                            ],
-                            if (puedeMatch) ...[
-                              SteamButtonPrimary(
-                                label: _enviandoMatch ? 'Enviando...' : 'Enviar match',
-                                icon: Icons.handshake_outlined,
-                                onTap: _enviandoMatch ? null : (_) => _enviarMatch(),
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                            if (puedeAmistad)
-                              SteamButtonOutline(
-                                label: _enviandoAmistad ? 'Enviando...' : 'Agregar amigo',
-                                onTap: _enviandoAmistad ? null : _enviarAmistad,
-                              )
-                            else if (_relacion?.amistadPendiente == true)
-                              SteamButtonOutline(
-                                label: _relacion!.amistadSoySolicitante
-                                    ? 'Amistad pendiente'
-                                    : 'Solicitud de amistad recibida',
-                                onTap: null,
-                              )
-                            else if (_relacion?.sonAmigos == true)
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 10),
-                                child: RelacionStatusChip(
-                                  relacion: RelacionResumen(amistadEstado: 'Aceptada'),
-                                ),
-                              ),
-                            const SizedBox(height: 10),
-                            if (_puedeComparar)
-                              SteamButtonOutline(
-                                label: _comparando
-                                    ? 'Comparando...'
-                                    : 'Comparar bibliotecas',
-                                onTap: _comparando ? null : _compararBiblioteca,
-                              )
-                            else
-                              const Text(
-                                'Comparación no disponible: este usuario ocultó su biblioteca. '
-                                'Ambos deben tener Steam vinculado para comparar en vivo.',
-                                style: TextStyle(color: SteamColors.textSec, fontSize: 11),
-                              ),
-                            const SizedBox(height: 10),
-                            SteamButtonOutline(
-                              label: 'Ver reseñas',
-                              onTap: _verResenas,
+                          _ChipInfo(
+                            label: PaisUtil.codigoANombre(
+                              _perfil!['pais']?.toString(),
                             ),
-                            if (_relacion?.matchAceptado == true ||
-                                _relacion?.sonAmigos == true) ...[
-                              const SizedBox(height: 10),
-                              SteamButtonPrimary(
-                                label: 'Abrir chat',
-                                icon: Icons.chat_bubble_outline,
-                                onTap: (_) => _abrirChat(),
-                              ),
-                            ],
-                            if (matchAceptado != null) ...[
-                              const SizedBox(height: 10),
-                              SteamButtonOutline(
-                                label: 'Calificar usuario',
-                                onTap: () => _calificarMatch(matchAceptado),
-                              ),
-                            ],
-                          ],
+                          ),
+                          const SizedBox(width: 8),
+                          _ChipInfo(
+                            label: '★ ${(_perfil!['repu'] ?? 0).toString()}',
+                            color: SteamColors.green,
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    SteamCard(
-                      icon: Icons.videogame_asset_outlined,
-                      title: _bibliotecaOculta
-                          ? 'Biblioteca oculta'
-                          : 'Biblioteca (${_juegos.length})',
-                      child: _bibliotecaOculta
-                          ? const Text(
-                              'Este usuario ocultó su biblioteca en la configuración de privacidad.',
-                              style: TextStyle(color: SteamColors.textSec, fontSize: 12),
-                            )
-                          : _juegos.isEmpty
-                          ? const Text(
-                              'Sin juegos visibles en el perfil.',
-                              style: TextStyle(color: SteamColors.textSec, fontSize: 12),
-                            )
-                          : Column(
-                              children: _juegos.take(8).map((j) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(SteamRadii.sm),
-                                          color: SteamColors.bgPanel,
-                                          image: (j['headerimg']?.toString().isNotEmpty == true)
-                                              ? DecorationImage(
-                                                  image: NetworkImage(j['headerimg']),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          j['nombre'] ?? 'Juego',
-                                          style: const TextStyle(
-                                            color: SteamColors.light,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        '${j['horas'] ?? 0}h',
-                                        style: const TextStyle(
-                                          color: SteamColors.textSec,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                      if (!esYo) ...[
+                        const SizedBox(height: 12),
+                        if (_cargandoRelacion)
+                          const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                    ),
-                  ],
+                          )
+                        else ...[
+                          RelacionStatusRow(relacion: _relacion),
+                          const SizedBox(height: 12),
+                        ],
+                        if (puedeMatch) ...[
+                          SteamButtonPrimary(
+                            label: _enviandoMatch
+                                ? 'Enviando...'
+                                : 'Enviar match',
+                            icon: Icons.handshake_outlined,
+                            onTap: _enviandoMatch
+                                ? null
+                                : (_) => _enviarMatch(),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        if (puedeAmistad)
+                          SteamButtonOutline(
+                            label: _enviandoAmistad
+                                ? 'Enviando...'
+                                : 'Agregar amigo',
+                            onTap: _enviandoAmistad ? null : _enviarAmistad,
+                          )
+                        else if (_relacion?.amistadPendiente == true)
+                          SteamButtonOutline(
+                            label: _relacion!.amistadSoySolicitante
+                                ? 'Amistad pendiente'
+                                : 'Solicitud de amistad recibida',
+                            onTap: null,
+                          )
+                        else if (_relacion?.sonAmigos == true)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 10),
+                            child: RelacionStatusChip(
+                              relacion: RelacionResumen(
+                                amistadEstado: 'Aceptada',
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 10),
+                        if (_puedeComparar)
+                          SteamButtonOutline(
+                            label: _comparando
+                                ? 'Comparando...'
+                                : 'Comparar bibliotecas',
+                            onTap: _comparando ? null : _compararBiblioteca,
+                          )
+                        else
+                          const Text(
+                            'Comparación no disponible: este usuario ocultó su biblioteca. '
+                            'Ambos deben tener Steam vinculado para comparar en vivo.',
+                            style: TextStyle(
+                              color: SteamColors.textSec,
+                              fontSize: 11,
+                            ),
+                          ),
+                        const SizedBox(height: 10),
+                        SteamButtonOutline(
+                          label: 'Ver reseñas',
+                          onTap: _verResenas,
+                        ),
+                        if (_relacion?.matchAceptado == true ||
+                            _relacion?.sonAmigos == true) ...[
+                          const SizedBox(height: 10),
+                          SteamButtonPrimary(
+                            label: 'Abrir chat',
+                            icon: Icons.chat_bubble_outline,
+                            onTap: (_) => _abrirChat(),
+                          ),
+                        ],
+                        if (matchAceptado != null) ...[
+                          const SizedBox(height: 10),
+                          SteamButtonOutline(
+                            label: 'Calificar usuario',
+                            onTap: () => _calificarMatch(matchAceptado),
+                          ),
+                        ],
+                      ],
+                    ],
+                  ),
                 ),
+                const SizedBox(height: 16),
+                SteamCard(
+                  icon: Icons.videogame_asset_outlined,
+                  title: _bibliotecaOculta
+                      ? 'Biblioteca oculta'
+                      : 'Biblioteca (${_juegos.length})',
+                  child: _bibliotecaOculta
+                      ? const Text(
+                          'Este usuario ocultó su biblioteca en la configuración de privacidad.',
+                          style: TextStyle(
+                            color: SteamColors.textSec,
+                            fontSize: 12,
+                          ),
+                        )
+                      : _juegos.isEmpty
+                      ? const Text(
+                          'Sin juegos visibles en el perfil.',
+                          style: TextStyle(
+                            color: SteamColors.textSec,
+                            fontSize: 12,
+                          ),
+                        )
+                      : Column(
+                          children: _juegos.take(8).map((j) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  Semantics(
+                                    image: true,
+                                    label:
+                                        'Carátula de ${j['nombre'] ?? 'juego'}',
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(
+                                          SteamRadii.sm,
+                                        ),
+                                        color: SteamColors.bgPanel,
+                                        image:
+                                            (j['headerimg']
+                                                    ?.toString()
+                                                    .isNotEmpty ==
+                                                true)
+                                            ? DecorationImage(
+                                                image: NetworkImage(
+                                                  j['headerimg'],
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      j['nombre'] ?? 'Juego',
+                                      style: const TextStyle(
+                                        color: SteamColors.light,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${j['horas'] ?? 0}h',
+                                    style: const TextStyle(
+                                      color: SteamColors.textSec,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -533,7 +596,11 @@ class _ChipInfo extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

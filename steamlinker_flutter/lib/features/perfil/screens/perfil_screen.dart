@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -308,7 +308,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     if (exito) {
-      showSteamToastWithMessenger(messenger, 'Horas actualizadas', SteamColors.green);
+      showSteamToastWithMessenger(
+        messenger,
+        'Horas actualizadas',
+        SteamColors.green,
+      );
     } else {
       showSteamToastWithMessenger(
         messenger,
@@ -353,7 +357,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     if (exito) {
-      showSteamToastWithMessenger(messenger, 'Juego eliminado del perfil', SteamColors.green);
+      showSteamToastWithMessenger(
+        messenger,
+        'Juego eliminado del perfil',
+        SteamColors.green,
+      );
     } else {
       showSteamToastWithMessenger(
         messenger,
@@ -368,23 +376,27 @@ class _PerfilScreenState extends State<PerfilScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(SteamRadii.sm),
-            border: juego['favorito'] == true
-                ? Border.all(color: SteamColors.red, width: 2)
-                : null,
-            image:
-                juego['headerimg'] != null &&
-                    juego['headerimg'].toString().isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(juego['headerimg']),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-            color: SteamColors.bgPanel,
+        leading: Semantics(
+          image: true,
+          label: 'Carátula de ${juego['nombre'] ?? 'juego'}',
+          child: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(SteamRadii.sm),
+              border: juego['favorito'] == true
+                  ? Border.all(color: SteamColors.red, width: 2)
+                  : null,
+              image:
+                  juego['headerimg'] != null &&
+                      juego['headerimg'].toString().isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(juego['headerimg']),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+              color: SteamColors.bgPanel,
+            ),
           ),
         ),
         title: Row(
@@ -486,7 +498,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   ? null
                   : [
                       IconButton(
-                        icon: const Icon(Icons.logout, color: SteamColors.muted),
+                        icon: const Icon(
+                          Icons.logout,
+                          color: SteamColors.muted,
+                        ),
                         tooltip: 'Cerrar sesión',
                         onPressed: () => confirmarYCerrarSesion(context),
                       ),
@@ -538,15 +553,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         if (perfil['steam'] != null) ...[
                           Row(
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundImage:
-                                    perfil['steam']['avatar_url'] != null
-                                    ? NetworkImage(
-                                        perfil['steam']['avatar_url'],
-                                      )
-                                    : null,
-                                backgroundColor: SteamColors.bgPanel,
+                              Semantics(
+                                image: true,
+                                label: 'Tu foto de perfil de Steam',
+                                child: CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage:
+                                      perfil['steam']['avatar_url'] != null
+                                      ? NetworkImage(
+                                          perfil['steam']['avatar_url'],
+                                        )
+                                      : null,
+                                  backgroundColor: SteamColors.bgPanel,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -682,13 +701,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
                           Center(
                             child: TextButton(
                               onPressed: () => setState(
-                                () => _mostrarVinculacionManual = !_mostrarVinculacionManual,
+                                () => _mostrarVinculacionManual =
+                                    !_mostrarVinculacionManual,
                               ),
                               child: Text(
                                 _mostrarVinculacionManual
                                     ? 'Ocultar vinculación manual'
                                     : '¿No funciona? Vincula pegando tu SteamID o URL',
-                                style: const TextStyle(fontSize: 12, color: SteamColors.muted),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: SteamColors.muted,
+                                ),
                               ),
                             ),
                           ),
@@ -853,38 +876,42 @@ class _PerfilHeader extends StatelessWidget {
               Positioned(
                 left: 16,
                 bottom: -32,
-                child: Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: SteamColors.bgCard, width: 4),
-                    gradient: avatarUrl == null
-                        ? const LinearGradient(
-                            colors: [SteamColors.blue, SteamColors.teal],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
-                    image: avatarUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage(avatarUrl),
-                            fit: BoxFit.cover,
+                child: Semantics(
+                  image: avatarUrl != null,
+                  label: avatarUrl != null ? 'Tu foto de perfil' : null,
+                  child: Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: SteamColors.bgCard, width: 4),
+                      gradient: avatarUrl == null
+                          ? const LinearGradient(
+                              colors: [SteamColors.blue, SteamColors.teal],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      image: avatarUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(avatarUrl),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: avatarUrl == null
+                        ? Center(
+                            child: Text(
+                              inicial,
+                              style: const TextStyle(
+                                color: SteamColors.light,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           )
                         : null,
                   ),
-                  child: avatarUrl == null
-                      ? Center(
-                          child: Text(
-                            inicial,
-                            style: const TextStyle(
-                              color: SteamColors.light,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        )
-                      : null,
                 ),
               ),
               if (steam != null)
@@ -934,7 +961,10 @@ class _PerfilHeader extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   perfil['pais'] ?? 'País no especificado',
-                  style: const TextStyle(color: SteamColors.muted, fontSize: 12),
+                  style: const TextStyle(
+                    color: SteamColors.muted,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 _StatGrid(
@@ -960,12 +990,18 @@ class _PerfilHeader extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onSalir,
                         icon: const Icon(Icons.logout, size: 15),
-                        label: const Text('Salir', style: TextStyle(fontSize: 13)),
+                        label: const Text(
+                          'Salir',
+                          style: TextStyle(fontSize: 13),
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: SteamColors.red,
                           side: const BorderSide(color: SteamColors.red),
                           minimumSize: const Size(72, 36),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                         ),
                       ),
                     ),

@@ -49,20 +49,20 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
   String? _filtroJuegoNombreDescubrir;
 
   List<Widget> get _pages => [
-        HomeScreen(onNavigateIndex: _onSelect),
-        DescubrirGamersScreen(
-          busquedaExterna: _busquedaDescubrir,
-          filtroAppidExterno: _filtroAppidDescubrir,
-          filtroJuegoNombreExterno: _filtroJuegoNombreDescubrir,
-          esPestana: true,
-        ),
-        const PublicacionesScreen(esPestana: true),
-        const AmistadScreen(esPestana: true),
-        const BusquedaScreen(),
-        const ChatScreen(),
-        const NotificationsScreen(),
-        const PerfilScreen(),
-      ];
+    HomeScreen(onNavigateIndex: _onSelect),
+    DescubrirGamersScreen(
+      busquedaExterna: _busquedaDescubrir,
+      filtroAppidExterno: _filtroAppidDescubrir,
+      filtroJuegoNombreExterno: _filtroJuegoNombreDescubrir,
+      esPestana: true,
+    ),
+    const PublicacionesScreen(esPestana: true),
+    const AmistadScreen(esPestana: true),
+    const BusquedaScreen(),
+    const ChatScreen(),
+    const NotificationsScreen(),
+    const PerfilScreen(),
+  ];
 
   bool _esEscritorio(BuildContext context) =>
       MediaQuery.of(context).size.width >= kDesktopBreakpoint;
@@ -105,7 +105,7 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
         bibliotecaImportada
             ? 'Cuenta de Steam vinculada y biblioteca importada'
             : 'Cuenta de Steam vinculada. Tu perfil de Steam debe ser público '
-                'para importar la biblioteca automáticamente — hazlo a mano desde Perfil.',
+                  'para importar la biblioteca automáticamente — hazlo a mano desde Perfil.',
         SteamColors.green,
       );
       final auth = context.read<AuthProvider>();
@@ -115,8 +115,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
       const mensajes = {
         'sesion_expirada': 'El enlace de Steam expiró. Inténtalo de nuevo.',
         'cancelado': 'Inicio de sesión con Steam cancelado.',
-        'proveedor_invalido': 'Respuesta inesperada de Steam. Inténtalo de nuevo.',
-        'firma_invalida': 'No se pudo verificar tu sesión de Steam. Inténtalo de nuevo.',
+        'proveedor_invalido':
+            'Respuesta inesperada de Steam. Inténtalo de nuevo.',
+        'firma_invalida':
+            'No se pudo verificar tu sesión de Steam. Inténtalo de nuevo.',
         'id_invalido': 'No se pudo identificar tu cuenta de Steam.',
         'error_servidor': 'Ocurrió un error al vincular tu cuenta de Steam.',
       };
@@ -162,7 +164,10 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
     }
 
     final unreadCount = context.watch<NotificacionesProvider>().noLeidas;
-    final solicitudesAmigos = context.watch<AmistadProvider>().solicitudes.length;
+    final solicitudesAmigos = context
+        .watch<AmistadProvider>()
+        .solicitudes
+        .length;
 
     return Scaffold(
       backgroundColor: SteamColors.bgDeep,
@@ -189,7 +194,11 @@ class _ResponsiveShellState extends State<ResponsiveShell> {
                   child: Stack(
                     children: [
                       IndexedStack(index: _index, children: _pages),
-                      const Positioned(right: 20, bottom: 20, child: FloatingChat()),
+                      const Positioned(
+                        right: 20,
+                        bottom: 20,
+                        child: FloatingChat(),
+                      ),
                     ],
                   ),
                 ),
@@ -246,12 +255,19 @@ class _SideNav extends StatelessWidget {
                       color: SteamColors.blue,
                       borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
-                    child: const AppLogoMark(size: 16, color: SteamColors.bgDeep),
+                    child: const AppLogoMark(
+                      size: 16,
+                      color: SteamColors.bgDeep,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   const Text(
                     'SteamMatch',
-                    style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -340,7 +356,10 @@ class _SideNav extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   minimumSize: const Size(0, 28),
                 ),
-                child: Text(t.viewAllArrow, style: const TextStyle(fontSize: 12.5)),
+                child: Text(
+                  t.viewAllArrow,
+                  style: const TextStyle(fontSize: 12.5),
+                ),
               ),
             ),
           const Spacer(),
@@ -384,7 +403,9 @@ class _SideNavItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       child: Material(
-        color: active ? SteamColors.blue.withValues(alpha: 0.12) : Colors.transparent,
+        color: active
+            ? SteamColors.blue.withValues(alpha: 0.12)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(SteamRadii.sm),
         child: InkWell(
           onTap: onTap,
@@ -393,7 +414,11 @@ class _SideNavItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Row(
               children: [
-                Icon(active ? activeIcon : icon, size: 20, color: active ? SteamColors.blue : SteamColors.muted),
+                Icon(
+                  active ? activeIcon : icon,
+                  size: 20,
+                  color: active ? SteamColors.blue : SteamColors.muted,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -407,14 +432,21 @@ class _SideNavItem extends StatelessWidget {
                 ),
                 if (badge > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: SteamColors.red,
                       borderRadius: BorderRadius.circular(SteamRadii.avatar),
                     ),
                     child: Text(
                       badge > 9 ? '9+' : '$badge',
-                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
               ],
@@ -446,17 +478,29 @@ class _ApoyarProyectoSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.favorite_border_rounded, color: SteamColors.yellow, size: 20),
+          const Icon(
+            Icons.favorite_border_rounded,
+            color: SteamColors.yellow,
+            size: 20,
+          ),
           const SizedBox(height: 8),
           const Text(
             'Apoya el proyecto',
-            style: TextStyle(color: SteamColors.light, fontSize: 13, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: SteamColors.light,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           const Text(
             'SteamMatch es gratis e independiente. Ayúdanos a seguir '
             'mejorándolo.',
-            style: TextStyle(color: SteamColors.textSec, fontSize: 11.5, height: 1.4),
+            style: TextStyle(
+              color: SteamColors.textSec,
+              fontSize: 11.5,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -468,7 +512,10 @@ class _ApoyarProyectoSidebar extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const ApoyarProyectoScreen()),
               ),
               icon: const Icon(Icons.favorite_rounded, size: 16),
-              label: const Text('Ver cómo apoyar', style: TextStyle(fontSize: 12.5)),
+              label: const Text(
+                'Ver cómo apoyar',
+                style: TextStyle(fontSize: 12.5),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: SteamColors.yellow,
                 foregroundColor: SteamColors.bgDeep,
@@ -502,29 +549,48 @@ class _MiniJuegoRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
           child: Row(
             children: [
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  color: SteamColors.bgCard,
-                  image: header != null && header.isNotEmpty
-                      ? DecorationImage(image: NetworkImage(header), fit: BoxFit.cover)
+              Semantics(
+                image: true,
+                label: 'Carátula de ${juego['nombre'] ?? 'juego'}',
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: SteamColors.bgCard,
+                    image: header != null && header.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(header),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: header == null || header.isEmpty
+                      ? const Icon(
+                          Icons.videogame_asset_outlined,
+                          size: 12,
+                          color: SteamColors.muted,
+                        )
                       : null,
                 ),
-                child: header == null || header.isEmpty
-                    ? const Icon(Icons.videogame_asset_outlined, size: 12, color: SteamColors.muted)
-                    : null,
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  juego['nombre']?.toString() ?? AppLocalizations.of(context)!.defaultGameName,
+                  juego['nombre']?.toString() ??
+                      AppLocalizations.of(context)!.defaultGameName,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: SteamColors.textSec, fontSize: 12.5),
+                  style: const TextStyle(
+                    color: SteamColors.textSec,
+                    fontSize: 12.5,
+                  ),
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 14, color: SteamColors.muted),
+              const Icon(
+                Icons.chevron_right,
+                size: 14,
+                color: SteamColors.muted,
+              ),
             ],
           ),
         ),
@@ -581,12 +647,22 @@ class _TopBarState extends State<_TopBar> {
                 controller: _controller,
                 textInputAction: TextInputAction.search,
                 onSubmitted: widget.onBuscar,
-                style: const TextStyle(color: SteamColors.light, fontSize: 13.5),
+                style: const TextStyle(
+                  color: SteamColors.light,
+                  fontSize: 13.5,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Buscar jugadores...',
-                  hintStyle: const TextStyle(color: SteamColors.muted, fontSize: 13.5),
+                  hintStyle: const TextStyle(
+                    color: SteamColors.muted,
+                    fontSize: 13.5,
+                  ),
                   prefixIcon: IconButton(
-                    icon: const Icon(Icons.search, color: SteamColors.muted, size: 20),
+                    icon: const Icon(
+                      Icons.search,
+                      color: SteamColors.muted,
+                      size: 20,
+                    ),
                     tooltip: 'Buscar',
                     onPressed: () => widget.onBuscar(_controller.text),
                   ),
@@ -643,7 +719,10 @@ class _NotifBell extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: SteamColors.muted),
+          icon: const Icon(
+            Icons.notifications_outlined,
+            color: SteamColors.muted,
+          ),
           tooltip: 'Notificaciones',
           onPressed: onTap,
         ),
@@ -659,7 +738,11 @@ class _NotifBell extends StatelessWidget {
               ),
               child: Text(
                 unreadCount > 9 ? '9+' : '$unreadCount',
-                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -682,7 +765,8 @@ class _UserBadge extends StatelessWidget {
         // Antes este badge siempre mostraba la inicial genérica, incluso
         // con Steam ya vinculado y una foto real disponible en el perfil —
         // inconsistente con la propia pantalla de Perfil, que sí la usa.
-        final avatarSteam = perfilProv.perfil?['steam']?['avatar_url'] as String?;
+        final avatarSteam =
+            perfilProv.perfil?['steam']?['avatar_url'] as String?;
         final tieneAvatarSteam = avatarSteam != null && avatarSteam.isNotEmpty;
 
         return InkWell(
@@ -692,31 +776,42 @@ class _UserBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(SteamRadii.avatar),
-                    gradient: tieneAvatarSteam
+                Semantics(
+                  image: tieneAvatarSteam,
+                  label: tieneAvatarSteam ? 'Tu foto de perfil de Steam' : null,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(SteamRadii.avatar),
+                      gradient: tieneAvatarSteam
+                          ? null
+                          : const LinearGradient(
+                              colors: [SteamColors.blue, SteamColors.teal],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      border: Border.all(color: SteamColors.blue, width: 1.5),
+                      image: tieneAvatarSteam
+                          ? DecorationImage(
+                              image: NetworkImage(avatarSteam),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: tieneAvatarSteam
                         ? null
-                        : const LinearGradient(
-                            colors: [SteamColors.blue, SteamColors.teal],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                        : Center(
+                            child: Text(
+                              inicial,
+                              style: const TextStyle(
+                                color: SteamColors.light,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
-                    border: Border.all(color: SteamColors.blue, width: 1.5),
-                    image: tieneAvatarSteam
-                        ? DecorationImage(image: NetworkImage(avatarSteam), fit: BoxFit.cover)
-                        : null,
                   ),
-                  child: tieneAvatarSteam
-                      ? null
-                      : Center(
-                          child: Text(
-                            inicial,
-                            style: const TextStyle(color: SteamColors.light, fontSize: 11, fontWeight: FontWeight.w800),
-                          ),
-                        ),
                 ),
                 const SizedBox(width: 8),
                 ConstrainedBox(
@@ -724,7 +819,11 @@ class _UserBadge extends StatelessWidget {
                   child: Text(
                     username,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: SteamColors.light, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: SteamColors.light,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
