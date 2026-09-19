@@ -188,6 +188,24 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
+  // Aclara al usuario que ya no hace falta tocar "Importar biblioteca"
+  // cada vez que compra un juego -- pedido explícito, antes no había
+  // ninguna señal en la UI de que la sincronización automática existe.
+  static String? _textoUltimaSincronizacion(dynamic fecha) {
+    if (fecha == null) return null;
+    final dt = fecha is String ? DateTime.tryParse(fecha) : null;
+    if (dt == null) return null;
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'Última sincronización: justo ahora';
+    if (diff.inMinutes < 60) {
+      return 'Última sincronización: hace ${diff.inMinutes} min';
+    }
+    if (diff.inHours < 24) {
+      return 'Última sincronización: hace ${diff.inHours} h';
+    }
+    return 'Última sincronización: hace ${diff.inDays} d';
+  }
+
   Future<void> _desvincularSteamCuenta() async {
     setState(() {
       _desvinculandoSteam = true;
@@ -652,6 +670,23 @@ class _PerfilScreenState extends State<PerfilScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 6),
+                          Builder(
+                            builder: (_) {
+                              final ultimaSync = _textoUltimaSincronizacion(
+                                perfil['steam']?['ultima_importacion_steperfil'],
+                              );
+                              return Text(
+                                ultimaSync != null
+                                    ? '$ultimaSync · se sincroniza sola cada hora, este botón es solo para hacerlo ahora mismo.'
+                                    : 'Tu biblioteca se sincroniza sola cada hora -- este botón es solo para hacerlo ahora mismo.',
+                                style: const TextStyle(
+                                  color: SteamColors.textSec,
+                                  fontSize: 11,
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           SteamButtonOutline(

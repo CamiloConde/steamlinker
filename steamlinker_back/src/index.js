@@ -11,10 +11,12 @@ const PORT = process.env.PORT || 3000;
 // Reimporta la biblioteca de Steam de todas las cuentas vinculadas cada
 // cierto tiempo -- antes, comprar un juego nuevo no aparecía en la app
 // hasta tocar "Importar biblioteca" a mano (pedido explícito del
-// usuario: automatizarlo). 6 horas por defecto: frecuente para que se
-// sienta automático, sin llamar a la API de Steam más de lo necesario.
+// usuario: automatizarlo, y después acortar el intervalo). 1 hora por
+// defecto -- la API de Steam tiene margen de sobra para esto (miles de
+// llamadas/día por key), el límite real es la cantidad de cuentas
+// vinculadas, no el intervalo.
 const INTERVALO_REIMPORTACION_MS =
-    Number(process.env.INTERVALO_REIMPORTACION_HORAS || 6) * 60 * 60 * 1000;
+    Number(process.env.INTERVALO_REIMPORTACION_HORAS || 1) * 60 * 60 * 1000;
 
 function iniciarReimportacionPeriodica() {
     setInterval(async () => {

@@ -2934,6 +2934,33 @@ real.
     lote no revienta con una cuenta Steam inválida y que esa cuenta NO
     queda marcada como reimportada (solo se estampa la fecha si la
     importación realmente funcionó). Suite completa: 50/50 pasando.
+27. [x] **RESUELTO -- dos pedidos del usuario sobre lo anterior: acortar
+    el intervalo, y avisarle al usuario final que la sincronización
+    automática existe.**
+    - **Intervalo acortado de 6h a 1h** (default de
+      `INTERVALO_REIMPORTACION_HORAS`, `index.js`) -- el usuario
+      preguntó "¿no podemos hacer el tiempo más corto?". No hay
+      ninguna razón técnica real para mantenerlo largo: el límite de
+      la API de Steam es por miles de llamadas al día por key, muy
+      lejos de lo que gasta este proyecto con pocas cuentas vinculadas
+      reimportándose cada hora. Confirmado en vivo: el log de arranque
+      del backend ahora dice "cada 1h".
+    - **Aviso en la UI, antes no existía ninguno**: en Perfil, debajo
+      del botón "Importar biblioteca", texto nuevo que aclara que la
+      biblioteca se sincroniza sola cada hora y que el botón ya es
+      opcional ("solo para hacerlo ahora mismo"). Si ya hubo una
+      sincronización (columna `ultima_importacion_steperfil`, agregada
+      la ronda anterior), muestra además hace cuánto fue ("Última
+      sincronización: hace 25 min"), con el mismo patrón de tiempo
+      relativo que ya usaba Descubrir. Backend: `GET /perfil/:id`
+      ahora incluye `ultima_importacion_steperfil` en el objeto
+      `steam` de la respuesta (antes no se exponía).
+      Verificado en vivo con cuenta de prueba desechable (fecha
+      sembrada 25 minutos atrás): el texto se ve exactamente como se
+      diseñó.
+    `flutter analyze` limpio, `flutter build web` sin errores, 50/50
+    tests backend (sin tests nuevos esta ronda -- son ajustes de
+    configuración/UI sobre la función ya probada la ronda anterior).
 
 ## 12. Cómo retomar
 

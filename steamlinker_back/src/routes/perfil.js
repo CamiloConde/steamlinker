@@ -427,7 +427,7 @@ router.get('/:id', verificarToken, async (req, res) => {
         }
 
         const steam = await pool.query(
-            `SELECT steam_id, username_steperfil, avatar_url, perfil_url
+            `SELECT steam_id, username_steperfil, avatar_url, perfil_url, ultima_importacion_steperfil
              FROM perfiles_steam WHERE id_usu = $1`,
             [req.params.id]
         );
