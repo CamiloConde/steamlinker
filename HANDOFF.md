@@ -2538,6 +2538,33 @@ real.
       yo mismo (Familias, Solicitudes, Reportes, Contenido, Chats,
       Mensajes, Configuración) las vio él directamente. Rediseño de
       identidad del panel de admin cerrado del todo.
+15. [x] **RESUELTO — bug real de avatar: "el ícono y el hueco".**
+    El usuario mandó una captura de la app real mostrando el avatar de
+    Steam (arriba a la derecha) como un círculo completamente vacío, sin
+    foto ni inicial de respaldo. Causa real: todos los avatares con foto
+    de Steam usaban `DecorationImage` dentro de un `BoxDecoration`, que
+    **no tiene forma de reaccionar si la imagen falla al cargar** (link
+    roto, CORS, lo que sea) -- si `tieneAvatarSteam` era true, el
+    gradiente y la inicial de respaldo se ponían en `null` a propósito
+    (porque "ya hay foto"), así que si la foto fallaba, no quedaba
+    NADA pintado ahí -- un círculo vacío. Reproducido a propósito con
+    una cuenta de prueba y una URL de avatar inválida (confirmado con
+    `curl -I` que devolvía 404) para confirmar el diagnóstico antes de
+    tocar código.
+    - [x] Nuevo widget compartido `lib/widgets/avatar_foto.dart`
+      (`AvatarFoto`): pinta SIEMPRE el degradado azul→teal + la inicial
+      como capa de base, y la foto real se dibuja ENCIMA solo si carga
+      bien (`Image.network` con `errorBuilder` que no tapa nada si
+      falla). Si la foto falla, simplemente se ve la inicial -- nunca
+      un hueco. Reemplaza los 4 lugares que armaban esto a mano con
+      `DecorationImage`: `steam_app_bar.dart` (`_UserActions`),
+      `responsive_shell.dart` (`_UserBadge`, la barra superior de
+      escritorio), y `perfil_screen.dart` (el avatar grande del banner
+      de Perfil + el avatar chico de la tarjeta "Steam conectado").
+    - Verificado en vivo con la misma cuenta de prueba (URL de avatar
+      rota a propósito): los 3 lugares ahora muestran la inicial en un
+      círculo con degradado en vez del hueco vacío. `flutter analyze`
+      limpio, `flutter test test/widget_test.dart` pasa.
 
 ## 12. Cómo retomar
 

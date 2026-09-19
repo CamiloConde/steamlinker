@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/app_logo_mark.dart';
+import '../../../widgets/avatar_foto.dart';
 import '../../../widgets/steam_toast.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../amistad/screens/amistad_screen.dart';
@@ -776,42 +777,13 @@ class _UserBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
               children: [
-                Semantics(
-                  image: tieneAvatarSteam,
-                  label: tieneAvatarSteam ? 'Tu foto de perfil de Steam' : null,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(SteamRadii.avatar),
-                      gradient: tieneAvatarSteam
-                          ? null
-                          : const LinearGradient(
-                              colors: [SteamColors.blue, SteamColors.teal],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                      border: Border.all(color: SteamColors.blue, width: 1.5),
-                      image: tieneAvatarSteam
-                          ? DecorationImage(
-                              image: NetworkImage(avatarSteam),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: tieneAvatarSteam
-                        ? null
-                        : Center(
-                            child: Text(
-                              inicial,
-                              style: const TextStyle(
-                                color: SteamColors.light,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                  ),
+                AvatarFoto(
+                  size: 28,
+                  fotoUrl: avatarSteam,
+                  inicial: inicial,
+                  semanticLabel: tieneAvatarSteam
+                      ? 'Tu foto de perfil de Steam'
+                      : null,
                 ),
                 const SizedBox(width: 8),
                 ConstrainedBox(

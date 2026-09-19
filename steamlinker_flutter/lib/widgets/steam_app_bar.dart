@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/colors.dart';
-import '../theme/radii.dart';
 import 'app_logo_mark.dart';
+import 'avatar_foto.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/perfil/providers/perfil_provider.dart';
 
@@ -173,42 +173,14 @@ class _UserActions extends StatelessWidget {
 
         return Padding(
           padding: const EdgeInsets.only(right: 4),
-          child: Semantics(
-            image: tieneAvatarSteam,
-            label: tieneAvatarSteam ? 'Tu foto de perfil de Steam' : null,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(SteamRadii.sm),
-                gradient: tieneAvatarSteam
-                    ? null
-                    : const LinearGradient(
-                        colors: [SteamColors.blue, SteamColors.teal],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                border: Border.all(color: SteamColors.blue, width: 1.5),
-                image: tieneAvatarSteam
-                    ? DecorationImage(
-                        image: NetworkImage(avatarSteam),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: tieneAvatarSteam
-                  ? null
-                  : Center(
-                      child: Text(
-                        inicial,
-                        style: const TextStyle(
-                          color: SteamColors.light,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-            ),
+          child: AvatarFoto(
+            size: 32,
+            circular: false,
+            fotoUrl: avatarSteam,
+            inicial: inicial,
+            semanticLabel: tieneAvatarSteam
+                ? 'Tu foto de perfil de Steam'
+                : null,
           ),
         );
       },

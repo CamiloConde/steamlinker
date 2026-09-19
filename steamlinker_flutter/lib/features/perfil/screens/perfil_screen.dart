@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/avatar_foto.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_card.dart';
 import '../../../widgets/steam_toast.dart';
@@ -553,19 +554,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         if (perfil['steam'] != null) ...[
                           Row(
                             children: [
-                              Semantics(
-                                image: true,
-                                label: 'Tu foto de perfil de Steam',
-                                child: CircleAvatar(
-                                  radius: 24,
-                                  backgroundImage:
-                                      perfil['steam']['avatar_url'] != null
-                                      ? NetworkImage(
-                                          perfil['steam']['avatar_url'],
-                                        )
-                                      : null,
-                                  backgroundColor: SteamColors.bgPanel,
-                                ),
+                              AvatarFoto(
+                                size: 48,
+                                fotoUrl:
+                                    perfil['steam']['avatar_url'] as String?,
+                                inicial:
+                                    ((perfil['username'] as String?)
+                                            ?.isNotEmpty ==
+                                        true)
+                                    ? (perfil['username'] as String)[0]
+                                          .toUpperCase()
+                                    : '?',
+                                semanticLabel: 'Tu foto de perfil de Steam',
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -876,42 +876,13 @@ class _PerfilHeader extends StatelessWidget {
               Positioned(
                 left: 16,
                 bottom: -32,
-                child: Semantics(
-                  image: avatarUrl != null,
-                  label: avatarUrl != null ? 'Tu foto de perfil' : null,
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: SteamColors.bgCard, width: 4),
-                      gradient: avatarUrl == null
-                          ? const LinearGradient(
-                              colors: [SteamColors.blue, SteamColors.teal],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            )
-                          : null,
-                      image: avatarUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(avatarUrl),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: avatarUrl == null
-                        ? Center(
-                            child: Text(
-                              inicial,
-                              style: const TextStyle(
-                                color: SteamColors.light,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
+                child: AvatarFoto(
+                  size: 68,
+                  fotoUrl: avatarUrl,
+                  inicial: inicial,
+                  borderColor: SteamColors.bgCard,
+                  borderWidth: 4,
+                  semanticLabel: avatarUrl != null ? 'Tu foto de perfil' : null,
                 ),
               ),
               if (steam != null)
