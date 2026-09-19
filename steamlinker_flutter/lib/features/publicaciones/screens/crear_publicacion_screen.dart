@@ -422,62 +422,69 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       contentPadding: EdgeInsets.zero,
                     );
                   }),
-                // Prueba pedida por el usuario: la búsqueda libre en Steam
-                // permitía ofrecer juegos que ni siquiera están en tu
-                // cuenta, lo cual no tiene sentido para publicaciones que
-                // ya exigen Steam vinculado (integridad de la biblioteca).
-                if (!_requiereSteam) ...[
-                  const Divider(color: SteamColors.border, height: 24),
-                  const Text(
-                    'Buscar en Steam',
-                    style: TextStyle(
-                      color: SteamColors.textSec,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
+                const Divider(color: SteamColors.border, height: 24),
+                Text(
+                  _requiereSteam ? 'Juegos que buscas' : 'Buscar en Steam',
+                  style: const TextStyle(
+                    color: SteamColors.textSec,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+                // El usuario aclaró el caso real: buscando miembros/familia
+                // muchas veces el punto es justo pedir un juego que TÚ no
+                // tienes (ej. "busco a alguien con Baldur's Gate 3"), no
+                // solo ofrecer tu biblioteca verificada -- por eso este
+                // buscador libre se mantiene para todos los tipos.
+                if (_requiereSteam)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4, bottom: 8),
+                    child: Text(
+                      'Aunque no los tengas -- sirve para indicar qué juegos buscas en quien te contacte.',
+                      style: TextStyle(color: SteamColors.textSec, fontSize: 11),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _busquedaController,
-                    style: const TextStyle(color: SteamColors.light),
-                    textInputAction: TextInputAction.search,
-                    onSubmitted: (_) => _buscarEnSteam(),
-                    decoration: InputDecoration(
-                      hintText: 'Nombre del juego',
-                      filled: true,
-                      fillColor: SteamColors.bgInput,
-                      suffixIcon: IconButton(
-                        icon: const Icon(Icons.search, color: SteamColors.muted),
-                        onPressed: _buscarEnSteam,
-                      ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _busquedaController,
+                  style: const TextStyle(color: SteamColors.light),
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: (_) => _buscarEnSteam(),
+                  decoration: InputDecoration(
+                    hintText: 'Nombre del juego',
+                    filled: true,
+                    fillColor: SteamColors.bgInput,
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search, color: SteamColors.muted),
+                      onPressed: _buscarEnSteam,
                     ),
                   ),
-                  if (_buscandoSteam)
-                    const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
-                        ),
+                ),
+                if (_buscandoSteam)
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(SteamColors.blue),
                       ),
-                    )
-                  else
-                    ..._resultadosSteam.map((juego) {
-                      final seleccionado = _estaSeleccionado(juego['appid']);
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: seleccionado
-                            ? const Icon(Icons.check_circle, color: SteamColors.green)
-                            : const Icon(Icons.add_circle_outline, color: SteamColors.blue),
-                        title: Text(
-                          juego['nombre'] ?? '',
-                          style: const TextStyle(color: SteamColors.light, fontSize: 13),
-                        ),
-                        onTap: () => _toggleJuego(juego),
-                      );
-                    }),
-                ],
+                    ),
+                  )
+                else
+                  ..._resultadosSteam.map((juego) {
+                    final seleccionado = _estaSeleccionado(juego['appid']);
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: seleccionado
+                          ? const Icon(Icons.check_circle, color: SteamColors.green)
+                          : const Icon(Icons.add_circle_outline, color: SteamColors.blue),
+                      title: Text(
+                        juego['nombre'] ?? '',
+                        style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                      ),
+                      onTap: () => _toggleJuego(juego),
+                    );
+                  }),
               ],
             ),
           ),

@@ -2359,6 +2359,61 @@ real.
       las rondas 1-2 (donde ya había mostrado preferencia por "Chispa
       de Match" para el logo grande y "Monograma S" para el favicon).
 
+12. **Corrección sobre la marcha, pedida explícitamente tras probar el
+    punto 11**: el usuario aclaró que ocultar "Buscar en Steam" para
+    `busco_familia`/`busco_miembros` (implementado como prueba en el
+    punto anterior) estaba mal pensado. Ejemplo real que dio: si buscas
+    miembros y NO tienes Baldur's Gate 3, pero quieres encontrar a
+    alguien que sí lo tenga, necesitas poder buscarlo aunque no esté en
+    tu biblioteca verificada -- la sección no es solo "ofrece lo tuyo",
+    también es "indica qué buscas en el otro". **Revertido**: el
+    buscador libre de Steam Store vuelve a estar disponible para los 4
+    tipos de publicación. Para `busco_familia`/`busco_miembros` ahora
+    tiene un texto aclaratorio nuevo ("Aunque no los tengas -- sirve
+    para indicar qué juegos buscas en quien te contacte") y el
+    encabezado cambia a "Juegos que buscas" en vez de "Buscar en
+    Steam". La sección de "Juegos verificados" (biblioteca filtrada a
+    `origen == 'steam'` + botón "Marcar todos") se queda igual que
+    antes -- ese mecanismo sigue teniendo sentido para ofrecer lo que
+    de verdad tienes, el error estaba solo en quitar el buscador libre.
+    `crear_publicacion_screen.dart`, `flutter analyze` limpio.
+13. **Logo finalizado (por ahora): concepto "1b. Dos controles"
+    elegido explícitamente por el usuario** ("dos controles casi
+    tocándose -- vamos a jugar juntos, más literal"), con la aclaración
+    de que se puede cambiar más adelante -- esto no cierra el tema para
+    siempre, solo destraba tener un logo real en vez del ícono
+    genérico de Material Design que había de placeholder.
+    - [x] Nuevo widget reutilizable `AppLogoMark`
+      (`lib/widgets/app_logo_mark.dart`): `CustomPainter` que dibuja
+      las dos siluetas de control (sin depender de ningún paquete de
+      SVG externo, coherente con el resto del proyecto) con un
+      parámetro `color` para adaptarse a cada contexto. Reemplaza
+      `Icon(Icons.sports_esports, ...)` en los 3 lugares donde estaba
+      de placeholder: `steam_app_bar.dart` (chip circular con borde
+      azul), `responsive_shell.dart` (chip cuadrado azul del sidebar
+      de escritorio) y `login_screen.dart` (círculo con degradado
+      azul→teal). Verificado en vivo en los 3 contextos.
+    - [x] **Favicon y los 4 íconos PWA regenerados de verdad** (antes
+      eran genéricos/placeholder): `web/favicon.png` (16×16),
+      `web/icons/Icon-192.png`, `Icon-512.png`, `Icon-maskable-192.png`,
+      `Icon-maskable-512.png`. Fondo: cuadrado a sangre completa (sin
+      esquinas redondeadas en el archivo -- el redondeo lo aplica el
+      SO/navegador) con degradado diagonal azul→teal (los mismos
+      colores de marca, `SteamColors.blue`/`teal`). Marca: mismas dos
+      siluetas de control que `AppLogoMark`, en `SteamColors.bgDeep`.
+      Las versiones "maskable" llevan la marca más chica (escala 0.96
+      contra 1.3 de las normales) para no salirse de la zona segura que
+      recortan Android/iOS al aplicarles máscara de forma. Generados
+      dibujando el SVG en un `<canvas>` dentro del navegador integrado
+      (`canvas.toDataURL('image/png')`) y guardados a disco vía un
+      pequeño servidor HTTP local temporal (evita mandar strings base64
+      de cientos de KB como salida de herramienta) -- proceso ad hoc,
+      no quedó ningún script permanente en el repo.
+    - Pendiente, no bloqueante: el usuario puede pedir variantes del
+      mismo concepto (colores, ángulo, proporciones) o cambiar de
+      concepto del todo más adelante -- no se cerró como decisión
+      final e irreversible.
+
 ## 12. Cómo retomar
 
 1. Sigue el checklist de la sección 11 en orden — Fases 1, 2 y 3 (a nivel de tokens)

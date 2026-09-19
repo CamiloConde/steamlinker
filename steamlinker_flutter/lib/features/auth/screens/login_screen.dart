@@ -12,6 +12,7 @@ import '../../legal/screens/aviso_legal_screen.dart';
 import '../../legal/screens/politica_privacidad_screen.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/login_dev_server_chip.dart';
+import '../../../widgets/app_logo_mark.dart';
 import '../../../widgets/steam_toast.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -124,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: const Icon(Icons.sports_esports, color: Colors.white, size: 32),
+                  child: const AppLogoMark(size: 32, color: Colors.white),
                 ),
                 const SizedBox(height: 16),
                 const Text(

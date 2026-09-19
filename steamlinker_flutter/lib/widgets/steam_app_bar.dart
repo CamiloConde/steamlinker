@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../theme/colors.dart';
 import '../theme/radii.dart';
+import 'app_logo_mark.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/perfil/providers/perfil_provider.dart';
 
@@ -136,7 +137,7 @@ class _LogoLeading extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: SteamColors.blue, width: 1.5),
         ),
-        child: const Icon(Icons.sports_esports, size: 16, color: SteamColors.blue),
+        child: const AppLogoMark(size: 16, color: SteamColors.blue),
       ),
     );
   }

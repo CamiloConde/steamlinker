@@ -11,6 +11,7 @@ import '../../../core/auth/session_actions.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/app_logo_mark.dart';
 import '../../../widgets/steam_toast.dart';
 import '../../amistad/providers/amistad_provider.dart';
 import '../../amistad/screens/amistad_screen.dart';
@@ -245,7 +246,7 @@ class _SideNav extends StatelessWidget {
                       color: SteamColors.blue,
                       borderRadius: BorderRadius.circular(SteamRadii.sm),
                     ),
-                    child: const Icon(Icons.sports_esports, size: 16, color: SteamColors.bgDeep),
+                    child: const AppLogoMark(size: 16, color: SteamColors.bgDeep),
                   ),
                   const SizedBox(width: 10),
                   const Text(
