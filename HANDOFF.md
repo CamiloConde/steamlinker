@@ -2655,15 +2655,23 @@ real.
       muestra sus propios juegos verificados como "esto aporto" y en el
       texto libre (descripción) dice qué busca en la familia -- no
       necesita campo estructurado aparte, la descripción ya cubre esto.
-    - Lo que sí quedó sin resolver y el usuario pidió explícitamente
-      discutir: la experiencia de armar la publicación sigue sintiéndose
-      "engorrosa" con bibliotecas grandes -- el buscador dentro de la
-      lista (punto 20) ayuda, pero no se decidió si hace falta algo más
-      (ej. colapsar la lista completa por defecto y mostrar solo
-      buscador + seleccionados + "marcar todos", en vez de siempre
-      pintar todos los checkboxes expandidos). Retomar con el usuario
-      antes de tocar la estructura del formulario más allá de lo ya
-      hecho.
+    - [x] **RESUELTO -- el usuario confirmó la recomendación ("si , me
+      hace sentido hazlo").** La lista de biblioteca ahora está
+      **colapsada por defecto** cuando hay más de 6 juegos: en vez de
+      pintar todos los checkboxes, se muestra solo el buscador +
+      "Marcar todos" + un enlace "Ver toda tu biblioteca (N) ⌄". La
+      lista completa de checkboxes solo aparece si el usuario escribe
+      algo en el buscador (se auto-expande) o toca ese enlace
+      explícitamente (con un "Ocultar lista" para volver a colapsar).
+      Esto corta la mayor parte del scroll para llegar al botón
+      "Publicar" con bibliotecas grandes. `_bibliotecaExpandida` nuevo
+      estado en `crear_publicacion_screen.dart`. **Verificado en vivo
+      de punta a punta** con una cuenta de prueba de 8 juegos: tipo
+      "Otro" (sin Steam) → biblioteca colapsada mostrando solo el
+      buscador + "Ver toda tu biblioteca (8)" → clic lo expande →
+      escribir "sek" filtra a solo "Sekiro" (auto-expandido) → marcar
+      el checkbox agrega el chip "Sekiro" y cambia "JUEGOS (0)" a
+      "JUEGOS (1)". `flutter analyze` limpio.
 
 ## 12. Cómo retomar
 

@@ -52,6 +52,12 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   List<dynamic> _resultadosSteam = [];
   String _busquedaBiblioteca = '';
 
+  // Pedido explícito del usuario: con una biblioteca grande, pintar
+  // siempre todos los checkboxes obligaba a bajar mucho para llegar al
+  // botón de publicar. Colapsada por defecto -- se expande sola al
+  // escribir algo en el buscador, o si el usuario toca "Ver todos".
+  bool _bibliotecaExpandida = false;
+
   bool get _editando => widget.publicacionExistente != null;
 
   bool get _requiereSteam => PublicacionConstants.requiereSteam(
@@ -66,10 +72,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   // explícito: con una biblioteca grande (100+ juegos) ir marcando uno
   // por uno a pura vista/scroll es tedioso, esto deja escribir el nombre
   // y saltar directo en vez de desplazarse por toda la lista.
-  List<dynamic> _bibliotecaMostrada(PerfilProvider perfilProv) {
-    final base = _requiereSteam
+  List<dynamic> _bibliotecaBase(PerfilProvider perfilProv) {
+    return _requiereSteam
         ? perfilProv.juegos.where((j) => j['origen'] == 'steam').toList()
         : perfilProv.juegos;
+  }
+
+  List<dynamic> _bibliotecaMostrada(PerfilProvider perfilProv) {
+    final base = _bibliotecaBase(perfilProv);
     if (_busquedaBiblioteca.trim().isEmpty) return base;
     final q = _busquedaBiblioteca.trim().toLowerCase();
     return base
@@ -439,12 +449,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                 // Con una biblioteca grande, ir marcando uno por uno a pura
                 // vista era tedioso -- pedido explícito. Filtra la lista de
                 // abajo en vivo, no pega a ningún backend.
-                if ((_requiereSteam
-                        ? perfilProv.juegos
-                              .where((j) => j['origen'] == 'steam')
-                              .length
-                        : perfilProv.juegos.length) >
-                    6)
+                if (_bibliotecaBase(perfilProv).length > 6)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: TextField(
@@ -489,11 +494,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       ),
                     ),
                   )
-                else if (_bibliotecaMostrada(perfilProv).isEmpty)
+                else if (_bibliotecaBase(perfilProv).isEmpty)
                   Text(
-                    _busquedaBiblioteca.trim().isNotEmpty
-                        ? 'Ningún juego coincide con "${_busquedaBiblioteca.trim()}".'
-                        : _requiereSteam
+                    _requiereSteam
                         ? 'No tienes juegos verificados por Steam todavía.'
                         : 'Agrega juegos a tu perfil para asociarlos a la publicación.',
                     style: const TextStyle(
@@ -501,7 +504,70 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       fontSize: 12,
                     ),
                   )
-                else
+                else if (_busquedaBiblioteca.trim().isEmpty &&
+                    !_bibliotecaExpandida &&
+                    _bibliotecaBase(perfilProv).length > 6)
+                  // Colapsada por defecto -- pedido explícito del usuario:
+                  // pintar siempre todos los checkboxes de una biblioteca
+                  // grande obligaba a bajar mucho para llegar a publicar.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: InkWell(
+                      onTap: () => setState(() => _bibliotecaExpandida = true),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Ver toda tu biblioteca (${_bibliotecaBase(perfilProv).length})',
+                            style: const TextStyle(
+                              color: SteamColors.blue,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Icon(
+                            Icons.expand_more,
+                            color: SteamColors.blue,
+                            size: 18,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (_bibliotecaMostrada(perfilProv).isEmpty)
+                  Text(
+                    'Ningún juego coincide con "${_busquedaBiblioteca.trim()}".',
+                    style: const TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 12,
+                    ),
+                  )
+                else ...[
+                  if (_bibliotecaExpandida &&
+                      _busquedaBiblioteca.trim().isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: InkWell(
+                        onTap: () =>
+                            setState(() => _bibliotecaExpandida = false),
+                        child: const Row(
+                          children: [
+                            Text(
+                              'Ocultar lista',
+                              style: TextStyle(
+                                color: SteamColors.blue,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Icon(
+                              Icons.expand_less,
+                              color: SteamColors.blue,
+                              size: 18,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ..._bibliotecaMostrada(perfilProv).map((juego) {
                     final seleccionado = _estaSeleccionado(juego['appid']);
                     return CheckboxListTile(
@@ -526,6 +592,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       contentPadding: EdgeInsets.zero,
                     );
                   }),
+                ],
                 const Divider(color: SteamColors.border, height: 24),
                 Text(
                   _requiereSteam ? 'Juegos que buscas' : 'Buscar en Steam',
