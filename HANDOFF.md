@@ -2738,6 +2738,67 @@ real.
       la publicación muestra la misma insignia MANUAL al juego.
       `flutter build web` y `flutter test test/widget_test.dart` sin
       errores.
+23. [x] **RESUELTO -- el usuario detectó dos problemas reales viendo su
+    propia publicación de prueba: la tarjeta compacta elegía la
+    carátula "a lo que caiga", y "Juegos de la publicación" mezclaba
+    lo que tiene con lo que busca sin ninguna distinción.**
+    - **Tarjeta con carátula arbitraria**: `PublicacionCard` pintaba
+      `juegos.first` (el primer juego en el orden que devolviera
+      Postgres, sin `ORDER BY`) como la imagen/género representativo
+      de toda la publicación -- con varios juegos igual de válidos, cuál
+      salía primero era esencialmente aleatorio. Ahora la portada sale
+      solo de juegos que el autor **tiene** (nunca uno que busca),
+      prefiriendo uno confirmado por Steam si existe, si no el primero
+      de ese grupo -- ya no vale la pena resolver el "cuál de varios
+      tengo" más allá de eso.
+    - **"Tengo" y "busco" mezclados sin distinción real**: el
+      formulario ya tenía dos secciones visuales ("Tu biblioteca" /
+      "Buscar en Steam" o "Juegos que buscas"), pero ambas alimentaban
+      la MISMA lista (`_juegosSeleccionados`) sin recordar de cuál
+      vino cada juego -- se guardaban todos igual en
+      `publicacion_juegos`. Resultado real reportado por el usuario:
+      publicó "busco familia, tengo Elden Ring/Nightreign/Arc Raiders,
+      busco alguien con Spider-Man 2" y el detalle mostraba Spider-Man
+      2 igual que los que sí tiene, como si fuera suyo.
+      **Solución**: columna nueva `publicacion_juegos.intencion_pjg`
+      (`'tengo'` | `'busco'`, default `'tengo'`, migración `012`).
+      Igual que `origen_pjg`, el backend la calcula solo -- no confía
+      en lo que mande el cliente: un juego cuenta como "tengo" si está
+      en `usuarios_juegos` del usuario (verificado o manual), y como
+      "busco" si no está en absoluto. Esto además significa que el
+      frontend no tuvo que cambiar cómo arma la lista al publicar --
+      un juego elegido de "Tu biblioteca" siempre está en
+      `usuarios_juegos` (tengo), uno del buscador libre normalmente no
+      (busco), calculado con la misma fuente de verdad de siempre.
+      Función `obtenerOrigenJuego` renombrada a
+      `obtenerInfoJuegoUsuario` en `juegosService.js`, devuelve
+      `{tiene, origen}` en vez de solo el origen.
+      `publicacion_detalle_screen.dart`: `_JuegosLista` ahora separa
+      en dos grupos con subtítulo ("Tiene" / "Busca") -- el subtítulo
+      solo aparece si hay AMBOS grupos, para no meter ruido visual en
+      el caso más común (solo ofrece juegos). Los de "Busca" no llevan
+      insignia STEAM/MANUAL (no aplica, no los tiene), llevan un
+      ícono de estrella en su lugar. También se corrigió `tieneJuego`
+      (la caja "tú también tienes este juego" que ve un visitante) para
+      que solo compare contra juegos que el autor tiene, nunca contra
+      los que busca.
+      `crear_publicacion_screen.dart`: los chips de resumen ("Juegos
+      (N)") ahora muestran un ícono distinto por chip (check verde si
+      está en tu biblioteca, estrella si no) -- previsualiza la misma
+      regla que aplica el backend, antes de publicar.
+      `total_juegos` (contador usado en `/buscar` y en la tarjeta) se
+      ajustó a `COUNT(...) FILTER (WHERE intencion_pjg != 'busco')`
+      para no inflar el conteo con juegos que solo se piden.
+      Test nuevo: `publicaciones.buscar.test.js` ("intencion_pjg
+      distingue juegos que tengo de juegos que busco"). Suite
+      completa: 49/49 pasando. `flutter analyze` limpio. Verificado en
+      vivo de punta a punta reproduciendo el caso exacto del usuario
+      (Elden Ring + Elden Ring Nightreign + Arc Raiders como "tengo",
+      Spider-Man 2 como "busco" vía cuenta de prueba desechable): la
+      tarjeta muestra la carátula de un juego que sí tiene, el detalle
+      separa "Tiene"/"Busca" con las insignias correctas, y el chip de
+      Spider-Man 2 en el formulario de edición se ve distinto (estrella)
+      al resto (check verde).
 
 ## 12. Cómo retomar
 

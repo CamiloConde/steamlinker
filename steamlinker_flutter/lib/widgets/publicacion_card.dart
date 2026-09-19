@@ -33,11 +33,26 @@ class PublicacionCard extends StatelessWidget {
     final repu = publicacion['repu_usu'];
     final username = (publicacion['username_usu'] as String?) ?? 'Autor';
     final inicial = username.isNotEmpty ? username[0].toUpperCase() : '?';
-    final portada = juegos.isNotEmpty
-        ? juegos.first['headerimg_jg'] as String?
+    // La portada y los géneros representan la publicación -- deben salir
+    // de un juego que el autor de verdad TIENE, nunca de uno que solo
+    // busca (ej. mostrar la carátula de Spider-Man 2 como si fuera suyo
+    // cuando en realidad lo está pidiendo). Entre los que tiene, se
+    // prefiere uno confirmado por Steam si hay -- es la representación
+    // más confiable de la publicación.
+    final juegosQueTiene = juegos
+        .where((j) => (j as Map)['intencion_pjg'] != 'busco')
+        .toList();
+    final juegoPortada = juegosQueTiene.isEmpty
+        ? null
+        : juegosQueTiene.firstWhere(
+            (j) => (j as Map)['origen_pjg'] == 'steam',
+            orElse: () => juegosQueTiene.first,
+          );
+    final portada = juegoPortada != null
+        ? juegoPortada['headerimg_jg'] as String?
         : null;
-    final generos = juegos.isNotEmpty
-        ? ((juegos.first['generos_jg'] as List<dynamic>?) ?? [])
+    final generos = juegoPortada != null
+        ? ((juegoPortada['generos_jg'] as List<dynamic>?) ?? [])
               .map((g) => g.toString())
               .toList()
         : <String>[];
@@ -250,20 +265,21 @@ class PublicacionCard extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 12),
-              // ── Portada del juego (como un post con imagen) ────────
+              // ── Portada del juego (como un post con imagen) ─────────
+              // Solo de juegos que el autor TIENE -- ver comentario arriba.
               if (portada != null && portada.isNotEmpty)
                 AspectRatio(
                   aspectRatio: 16 / 7,
                   child: Image.network(
                     portada,
                     semanticLabel:
-                        'Carátula de ${juegos.first['nom_jg'] ?? 'juego'}',
+                        'Carátula de ${juegoPortada?['nom_jg'] ?? 'juego'}',
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) =>
                         Container(color: SteamColors.bgCard),
                   ),
                 )
-              else if (juegos.isNotEmpty)
+              else if (juegosQueTiene.isNotEmpty)
                 Container(
                   height: 56,
                   color: SteamColors.bgCard,
@@ -279,7 +295,9 @@ class PublicacionCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          juegos.map((j) => j['nom_jg'] ?? '').join(' · '),
+                          juegosQueTiene
+                              .map((j) => j['nom_jg'] ?? '')
+                              .join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -343,7 +361,7 @@ class PublicacionCard extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (juegos.length > 1 &&
+                    if (juegosQueTiene.length > 1 &&
                         (portada == null || portada.isEmpty)) ...[
                       const SizedBox(width: 10),
                       Icon(
@@ -353,7 +371,7 @@ class PublicacionCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${publicacion['total_juegos'] ?? juegos.length} juegos',
+                        '${publicacion['total_juegos'] ?? juegosQueTiene.length} juegos',
                         style: const TextStyle(
                           color: SteamColors.textSec,
                           fontSize: 12,

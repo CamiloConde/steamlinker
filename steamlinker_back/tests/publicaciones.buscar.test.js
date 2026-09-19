@@ -163,3 +163,37 @@ test('juegos de la publicacion traen origen_pjg real (no lo que mande el cliente
     const publiManual2 = buscarManual2.body.publicaciones.find((p) => p.titulo_publi === 'Publi origen manual');
     assert.equal(publiManual2.juegos[0].origen_pjg, 'manual');
 });
+
+test('intencion_pjg distingue juegos que tengo (en mi biblioteca) de juegos que busco (no los tengo)', async () => {
+    const appidTengo = 992300;
+    const appidBusco = 992301;
+
+    // Solo se agrega a la biblioteca el que "tengo" -- el que "busco" nunca
+    // pasa por /perfil/juegos/agregar, solo se manda directo al crear la
+    // publicacion (asi es como llega un juego elegido del buscador libre
+    // "Juegos que buscas", que no implica que el usuario lo posea).
+    await request(app)
+        .post('/perfil/juegos/agregar')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ appid: appidTengo, nombre: 'Juego que tengo' });
+
+    const res = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+            tipo: 'otro',
+            titulo: 'Publi intencion test',
+            juegos: [
+                { appid: appidTengo, nombre: 'Juego que tengo' },
+                { appid: appidBusco, nombre: 'Juego que busco' },
+            ],
+        });
+    assert.equal(res.status, 201);
+
+    const buscar = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publi = buscar.body.publicaciones.find((p) => p.titulo_publi === 'Publi intencion test');
+    const jgTengo = publi.juegos.find((j) => j.appid === appidTengo);
+    const jgBusco = publi.juegos.find((j) => j.appid === appidBusco);
+    assert.equal(jgTengo.intencion_pjg, 'tengo');
+    assert.equal(jgBusco.intencion_pjg, 'busco');
+});

@@ -197,7 +197,13 @@ class _PublicacionDetalleScreenState extends State<PublicacionDetalleScreen> {
         pub != null &&
         !esMia &&
         (pub['juegos'] as List<dynamic>? ?? []).any((j) {
-          final appid = (j as Map)['appid'];
+          final map = j as Map;
+          // Solo cuenta juegos que el autor de verdad tiene -- uno que
+          // solo está buscando (intencion_pjg == 'busco') no es un punto
+          // en común real, sería engañoso decirle al usuario "tú también
+          // tienes X" sobre un juego que el autor ni siquiera posee.
+          if (map['intencion_pjg'] == 'busco') return false;
+          final appid = map['appid'];
           // Solo cuenta si el juego viene de la biblioteca de Steam de
           // verdad -- uno agregado a mano no deberia mostrarse como
           // "verificado" (ver HANDOFF.md).
@@ -1035,64 +1041,130 @@ class _JuegosLista extends StatelessWidget {
       );
     }
 
+    final mapas = juegos
+        .map((j) => Map<String, dynamic>.from(j as Map))
+        .toList();
+    final tiene = mapas.where((j) => j['intencion_pjg'] != 'busco').toList();
+    final busca = mapas.where((j) => j['intencion_pjg'] == 'busco').toList();
+
+    // Antes esta pantalla mostraba "lo que tengo" y "lo que busco" mezclados
+    // en una sola lista sin distinción -- el usuario reportó que un juego
+    // que pedía (ej. Spider-Man 2, marcado como preferido, no algo suyo)
+    // aparecía igual que los que sí tiene, dando a entender que era parte
+    // de su biblioteca. Ahora se separan en dos grupos; si solo hay uno de
+    // los dos, se omite el subtítulo redundante (caso más común: solo
+    // ofrece juegos, no pide ninguno en particular).
+    final mostrarSubtitulos = tiene.isNotEmpty && busca.isNotEmpty;
+
     return Column(
-      children: juegos.map((j) {
-        final map = Map<String, dynamic>.from(j as Map);
-        final header = map['headerimg_jg']?.toString();
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: SteamColors.bgPanel,
-              borderRadius: BorderRadius.circular(SteamRadii.sm),
-              border: Border.all(color: SteamColors.border),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (tiene.isNotEmpty) ...[
+          if (mostrarSubtitulos) _SubtituloJuegos(texto: 'Tiene'),
+          ..._filas(tiene, esBusca: false),
+        ],
+        if (busca.isNotEmpty) ...[
+          if (mostrarSubtitulos)
+            Padding(
+              padding: EdgeInsets.only(top: tiene.isNotEmpty ? 8 : 0),
+              child: _SubtituloJuegos(texto: 'Busca'),
             ),
-            child: Row(
-              children: [
-                Semantics(
-                  image: true,
-                  label: 'Carátula de ${map['nom_jg'] ?? 'juego'}',
-                  child: Container(
-                    width: 56,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(SteamRadii.sm),
-                      color: SteamColors.bgCard,
-                      image: header != null && header.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(header),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: header == null || header.isEmpty
-                        ? const Icon(
-                            Icons.videogame_asset,
-                            color: SteamColors.muted,
-                            size: 18,
+          ..._filas(busca, esBusca: true),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _filas(
+    List<Map<String, dynamic>> lista, {
+    required bool esBusca,
+  }) {
+    return lista.map((map) {
+      final header = map['headerimg_jg']?.toString();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: SteamColors.bgPanel,
+            borderRadius: BorderRadius.circular(SteamRadii.sm),
+            border: Border.all(color: SteamColors.border),
+          ),
+          child: Row(
+            children: [
+              Semantics(
+                image: true,
+                label: 'Carátula de ${map['nom_jg'] ?? 'juego'}',
+                child: Container(
+                  width: 56,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(SteamRadii.sm),
+                    color: SteamColors.bgCard,
+                    image: header != null && header.isNotEmpty
+                        ? DecorationImage(
+                            image: NetworkImage(header),
+                            fit: BoxFit.cover,
                           )
                         : null,
                   ),
+                  child: header == null || header.isEmpty
+                      ? const Icon(
+                          Icons.videogame_asset,
+                          color: SteamColors.muted,
+                          size: 18,
+                        )
+                      : null,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    map['nom_jg'] ?? 'Juego',
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: SteamColors.light,
-                      fontSize: 13,
-                    ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  map['nom_jg'] ?? 'Juego',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: SteamColors.light,
+                    fontSize: 13,
                   ),
                 ),
-                const SizedBox(width: 8),
+              ),
+              const SizedBox(width: 8),
+              // "Busca" no tiene insignia STEAM/MANUAL -- no aplica, el
+              // usuario no lo tiene. Ícono de preferencia en su lugar.
+              if (esBusca)
+                const Icon(
+                  Icons.star_outline,
+                  color: SteamColors.muted,
+                  size: 16,
+                )
+              else
                 BadgeOrigenJuego(esSteam: map['origen_pjg'] == 'steam'),
-              ],
-            ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      );
+    }).toList();
+  }
+}
+
+class _SubtituloJuegos extends StatelessWidget {
+  final String texto;
+
+  const _SubtituloJuegos({required this.texto});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          color: SteamColors.textSec,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1,
+        ),
+      ),
     );
   }
 }

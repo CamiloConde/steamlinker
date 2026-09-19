@@ -36,21 +36,29 @@ async function guardarJuego({ appid, nombre, headerimg, capsuleimg }) {
 }
 
 /**
- * Origen real de un juego en la biblioteca del usuario ('steam' si Steam
- * lo confirma, 'manual' si lo agregó a mano o no está en su biblioteca
- * en absoluto). Se consulta acá -- no se confía en lo que mande el
- * cliente -- para que un usuario no pueda marcar como "verificado" un
- * juego que no es. Fuente de verdad real: `usuarios_juegos.origen_usujg`.
+ * Info real de un juego respecto a la biblioteca del usuario -- se
+ * consulta acá, no se confía en lo que mande el cliente, para que un
+ * usuario no pueda marcar como "verificado" un juego que no es, ni hacer
+ * pasar como "lo tengo" un juego que en realidad solo está buscando.
+ * Fuente de verdad real: `usuarios_juegos`.
+ *
+ * `tiene` distingue "juego que tengo" (está en tu biblioteca, verificada
+ * o manual) de "juego que busco" (no está en tu biblioteca en absoluto --
+ * lo agregaste desde el buscador libre de la Steam Store al publicar,
+ * indicando qué buscas en quien te contacte, no algo que ya tengas).
  * @param {number} idUsu
  * @param {number} appid
- * @returns {Promise<'steam'|'manual'>}
+ * @returns {Promise<{tiene: boolean, origen: 'steam'|'manual'}>}
  */
-async function obtenerOrigenJuego(idUsu, appid) {
+async function obtenerInfoJuegoUsuario(idUsu, appid) {
   const resultado = await pool.query(
     `SELECT origen_usujg FROM usuarios_juegos WHERE id_usu = $1 AND appid = $2`,
     [idUsu, appid]
   );
-  return resultado.rows[0]?.origen_usujg === "steam" ? "steam" : "manual";
+  if (resultado.rows.length === 0) {
+    return { tiene: false, origen: "manual" };
+  }
+  return { tiene: true, origen: resultado.rows[0].origen_usujg === "steam" ? "steam" : "manual" };
 }
 
-module.exports = { guardarJuego, obtenerOrigenJuego };
+module.exports = { guardarJuego, obtenerInfoJuegoUsuario };

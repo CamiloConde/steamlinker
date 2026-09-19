@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const { crearNotificacion, usernameDe } = require('../services/notificacionesService');
-const { guardarJuego, obtenerOrigenJuego } = require('../services/juegosService');
+const { guardarJuego, obtenerInfoJuegoUsuario } = require('../services/juegosService');
 const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verificacion');
 
 const router = express.Router();
@@ -89,16 +89,19 @@ router.post('/crear', verificarToken, async (req, res) => {
                 });
 
                 // Asociar el juego a la publicacion, con su origen real
-                // (verificado/manual) -- no lo que mande el cliente, se
-                // consulta la biblioteca real del usuario. Así, quien vea
-                // la publicación después puede ver cuáles son de verdad
-                // confirmados por Steam y cuáles no (ej. biblioteca
-                // compartida de Familia de Steam, que la API pública no
-                // puede confirmar pero sí es un juego real del usuario).
-                const origen = await obtenerOrigenJuego(req.usuario.id, juego.appid);
+                // (verificado/manual) e intención real (lo tengo / lo
+                // busco) -- no lo que mande el cliente, se consulta la
+                // biblioteca real del usuario. "Tengo" es cualquier juego
+                // que esté en tu biblioteca (verificado o manual, ej.
+                // Family Sharing de Steam); "busco" es un juego que NO
+                // tienes -- lo agregaste desde el buscador libre para
+                // indicar qué te interesa en quien te contacte, no algo
+                // que ya poseas. Así, quien vea la publicación después
+                // sabe cuáles juegos te ofrecen y cuáles solo pides.
+                const { tiene, origen } = await obtenerInfoJuegoUsuario(req.usuario.id, juego.appid);
                 await pool.query(
-                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg) VALUES ($1, $2, $3)`,
-                    [publicacion.id_publi, juego.appid, origen]
+                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg, intencion_pjg) VALUES ($1, $2, $3, $4)`,
+                    [publicacion.id_publi, juego.appid, origen, tiene ? 'tengo' : 'busco']
                 );
             }
         }
@@ -120,9 +123,9 @@ router.get('/buscar', async (req, res) => {
     try {
         // Construir la consulta dinamicamente segun los filtros
         let consulta = `
-            SELECT DISTINCT p.*, 
+            SELECT DISTINCT p.*,
                    u.username_usu, u.repu_usu, u.pais_usu,
-                   COUNT(pj.appid) as total_juegos
+                   COUNT(pj.appid) FILTER (WHERE pj.intencion_pjg != 'busco') as total_juegos
             FROM publicaciones p
             JOIN usuarios u ON p.id_usu = u.id_usu
             LEFT JOIN publicacion_juegos pj ON p.id_publi = pj.id_publi
@@ -171,7 +174,7 @@ router.get('/buscar', async (req, res) => {
         const publicaciones = await Promise.all(
             resultado.rows.map(async (pub) => {
                 const juegos = await pool.query(
-                    `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.generos_jg, pj.origen_pjg
+                    `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.generos_jg, pj.origen_pjg, pj.intencion_pjg
                      FROM publicacion_juegos pj
                      JOIN juegos j ON pj.appid = j.appid
                      WHERE pj.id_publi = $1`,
@@ -363,7 +366,7 @@ router.get('/:id', async (req, res) => {
         }
 
         const juegos = await pool.query(
-            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, j.generos_jg, pj.origen_pjg
+            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, j.generos_jg, pj.origen_pjg, pj.intencion_pjg
              FROM publicacion_juegos pj
              JOIN juegos j ON pj.appid = j.appid
              WHERE pj.id_publi = $1`,
@@ -487,10 +490,10 @@ router.put('/:id/editar', verificarToken, async (req, res) => {
                     headerimg: juego.headerimg,
                     capsuleimg: juego.capsuleimg,
                 });
-                const origen = await obtenerOrigenJuego(req.usuario.id, juego.appid);
+                const { tiene, origen } = await obtenerInfoJuegoUsuario(req.usuario.id, juego.appid);
                 await pool.query(
-                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg) VALUES ($1, $2, $3)`,
-                    [id, juego.appid, origen]
+                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg, intencion_pjg) VALUES ($1, $2, $3, $4)`,
+                    [id, juego.appid, origen, tiene ? 'tengo' : 'busco']
                 );
             }
         }

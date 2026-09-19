@@ -391,7 +391,23 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: _juegosSeleccionados.map((j) {
+                      // El backend calcula "tengo"/"busco" solo, según si
+                      // el juego está en tu biblioteca -- acá se
+                      // previsualiza con la misma regla, para que quede
+                      // claro antes de publicar cómo se va a mostrar cada
+                      // chip (evita el caso que reportó el usuario: un
+                      // juego que solo pide aparecía como si lo tuviera).
+                      final tengo = perfilProv.juegos.any(
+                        (mio) => mio['appid'] == j['appid'],
+                      );
                       return InputChip(
+                        avatar: Icon(
+                          tengo
+                              ? Icons.check_circle_outline
+                              : Icons.star_outline,
+                          size: 16,
+                          color: tengo ? SteamColors.teal : SteamColors.muted,
+                        ),
                         label: Text(
                           j['nombre'] ?? 'Juego',
                           style: const TextStyle(color: SteamColors.light),
