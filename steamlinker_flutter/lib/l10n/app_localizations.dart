@@ -311,13 +311,13 @@ abstract class AppLocalizations {
   /// No description provided for @yourGamesSection.
   ///
   /// In es, this message translates to:
-  /// **'TUS JUEGOS'**
+  /// **'TUS FAVORITOS'**
   String get yourGamesSection;
 
   /// No description provided for @noGamesYet.
   ///
   /// In es, this message translates to:
-  /// **'Aún no agregas juegos.'**
+  /// **'Marca juegos como favoritos en tu perfil.'**
   String get noGamesYet;
 
   /// No description provided for @viewAllArrow.

@@ -2018,22 +2018,36 @@ real.
    Chat, Notificaciones, Amistad, legal, Contacto, admin). Ojo con
    `PublicacionConstants.etiquetaTipo()`/`PaisUtil.codigoANombre()`
    (sistemas de strings aparte que Inicio también usa).
-3. ~~Logo / identidad visual~~ **RESUELTO (por ahora) — ver puntos 13 y
-   14 más abajo.** Concepto "dos controles" elegido por el usuario,
-   implementado de verdad (`AppLogoMark`, favicon/iconos PWA
-   regenerados, panel de admin rebrandeado). Se puede cambiar más
-   adelante si el usuario decide otro concepto.
-   **⏰ PENDIENTE EXPLÍCITO (2026-09-19), no implementar todavía:** el
-   usuario quiere cambiar el logo/favicon/íconos PWA otra vez, esta vez
-   al concepto "monograma SM tipográfico" (mostrado en chat en la
-   décima pasada, ver sección 11 punto/ronda correspondiente -- nunca
-   se implementó como asset real, solo se mostró como opción). Sus
-   palabras: "es super simple pero está bien mientras pienso en un
-   logo ideal" -- o sea, lo quiere como placeholder temporal mientras
-   decide un logo definitivo, NO es la decisión final. Marcado
-   explícitamente como NO prioritario ahora mismo ("anótalo como
-   pendiente ya que hay otras prioridades") -- no tocar hasta que el
-   usuario lo pida de nuevo.
+3. ~~Logo / identidad visual~~ **RESUELTO (por ahora, otra vez) —
+   cambiado 2026-09-19 al concepto "monograma SM tipográfico".** El
+   concepto anterior ("dos controles") ya había sido reemplazado una
+   vez; el usuario pidió este segundo cambio explícitamente como
+   **placeholder temporal** mientras piensa un logo definitivo ("es
+   super simple pero está bien mientras pienso en un logo ideal") --
+   condicionado a que no chocara con otras prioridades ("si el orden
+   de roadmap y prioridades lo permite"), y se implementó en la misma
+   ronda por ser de bajo riesgo/esfuerzo.
+   `AppLogoMark` (`lib/widgets/app_logo_mark.dart`) reescrito: en vez
+   de un `CustomPainter` dibujando dos siluetas de control, ahora
+   dibuja las letras "S" y "M" con `TextPainter` (peso 800, kerning
+   apretado a mano -- las dos letras se posicionan por separado, no
+   como un solo string, para que se sientan como monograma y no como
+   texto suelto). Mismo fondo degradado azul→teal que ya tenía la
+   identidad visual.
+   Favicon/íconos PWA regenerados con el mismo diseño (herramienta
+   ad-hoc en el scratchpad de la sesión: un canvas HTML que dibuja
+   cada tamaño y los sube a un `save_server.js` local para evitar
+   mandar los PNG en base64 por el chat) -- `web/favicon.png` (16px),
+   `web/icons/Icon-192.png`, `Icon-512.png`, `Icon-maskable-192.png`,
+   `Icon-maskable-512.png`. Panel de admin (`public/admin/index.html`)
+   actualizado en los 3 lugares que tenían el SVG del logo viejo
+   incrustado (favicon inline en `<link rel="icon">`, logo de login
+   32×32, logo de sidebar 22×22) -- mismo criterio de mantener
+   proporciones consistentes entre todos los tamaños.
+   Verificado en vivo: login de la app, panel de admin (login +
+   sidebar). `flutter analyze` limpio.
+   Archivo `Icon-512.png` entregado al usuario para descargar, a
+   pedido explícito ("dámelo para descargar en caso de").
 4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
    prisa):
    - [x] **RESUELTO — "Juegos en común" en `PublicacionCard` + tags de
@@ -2857,6 +2871,37 @@ real.
     `flutter analyze` limpio, `flutter test` y `flutter build web` sin
     errores. Sin cambios de backend/tests esta ronda (las 4 mejoras son
     puramente de Flutter).
+25. [x] **RESUELTO -- sidebar de escritorio ahora es "Tus favoritos" de
+    verdad, no "tus juegos con favoritos primero".** Pedido explícito:
+    "en la parte de tus juegos del sidebar solo quiero que salgan tus
+    favoritos, y que se llame ahora tus favoritos". `_SideNav` en
+    `responsive_shell.dart` filtra `juegos` a solo
+    `favorito == true` (antes: favoritos primero + el resto detrás,
+    cortado a 5). Se quitó el texto aclaratorio "Se muestran primero
+    tus favoritos ⭐" (ya no aplica, no hay "resto" que aclarar). Título
+    de la sección y mensaje de vacío cambiados vía `AppLocalizations`
+    (`yourGamesSection`: "TUS JUEGOS"→"TUS FAVORITOS",
+    "YOUR GAMES"→"YOUR FAVORITES"; `noGamesYet` cambia a un mensaje que
+    invita a marcar favoritos en vez de "agrega juegos", ya que la
+    sección ahora es solo de favoritos). Regenerado con
+    `flutter gen-l10n`. Confirmado que ambas claves solo se usaban acá
+    (grep), no afecta otras pantallas.
+26. **Respuesta a pregunta del usuario (no es un cambio de código):**
+    "¿la importación de biblioteca es periódica o solo una vez? si
+    compro un juego, ¿tengo que volver a darle a importar?" --
+    confirmado revisando el código real (`perfil.js`): **no hay
+    ningún job periódico/cron**, la importación (`importarBibliotecaSteam`)
+    solo se dispara (a) automáticamente una vez, justo al vincular la
+    cuenta de Steam vía OpenID, y (b) manualmente cuando el usuario
+    toca "Importar biblioteca" (`POST /perfil/steam/importar`). Sí,
+    comprar un juego nuevo requiere ese segundo clic manual para que
+    aparezca -- confirmado que el INSERT es un upsert real
+    (`ON CONFLICT ... DO UPDATE`), así que re-importar es seguro y
+    correcto, solo falta que sea automático. **No implementado
+    todavía** -- el usuario solo preguntó, no pidió el cambio; si se
+    retoma, la opción más simple sería un botón/recordatorio visible
+    en vez de un cron real (evita depender de infraestructura de jobs
+    en background que este backend no tiene todavía).
 
 ## 12. Cómo retomar
 

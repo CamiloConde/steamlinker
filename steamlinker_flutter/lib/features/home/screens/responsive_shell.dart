@@ -231,19 +231,13 @@ class _SideNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Antes mostraba siempre los primeros 5 de la biblioteca sin que el
-    // usuario pudiera elegir cuáles -- pedido explícito: reutiliza el
+    // Antes mostraba siempre los primeros 5 de la biblioteca (favoritos
+    // primero, el resto detrás) -- pedido explícito del usuario: ahora
+    // esta sección es solo de favoritos, nada más. Reutiliza el mismo
     // sistema de favoritos que ya existe en Perfil (la estrella en cada
-    // juego) en vez de agregar un selector nuevo. Los marcados como
-    // favoritos aparecen primero; si no hay ninguno, el orden no cambia.
-    // Partición manual (no List.sort) para que el orden dentro de cada
-    // grupo se mantenga estable -- List.sort no lo garantiza.
+    // juego), no hace falta un selector nuevo.
     final todos = context.watch<PerfilProvider>().juegos;
-    final hayFavoritos = todos.any((j) => j['favorito'] == true);
-    final juegos = [
-      ...todos.where((j) => j['favorito'] == true),
-      ...todos.where((j) => j['favorito'] != true),
-    ];
+    final juegos = todos.where((j) => j['favorito'] == true).toList();
     final t = AppLocalizations.of(context)!;
 
     return Container(
@@ -343,21 +337,6 @@ class _SideNav extends StatelessWidget {
               ),
             )
           else ...[
-            // Pedido explícito del usuario: no era obvio por qué salían
-            // justo esos 5 -- se aclara acá, pero solo si de verdad hay
-            // algún favorito marcado (si no, el orden es el de siempre
-            // y esta aclaración no aplicaría a nada).
-            if (hayFavoritos)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
-                child: Text(
-                  'Se muestran primero tus favoritos ⭐',
-                  style: TextStyle(
-                    color: SteamColors.muted.withValues(alpha: 0.8),
-                    fontSize: 10.5,
-                  ),
-                ),
-              ),
             for (final j in juegos.take(5))
               _MiniJuegoRow(
                 juego: j,

@@ -117,10 +117,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get navPublicaciones => 'Publicaciones';
 
   @override
-  String get yourGamesSection => 'TUS JUEGOS';
+  String get yourGamesSection => 'TUS FAVORITOS';
 
   @override
-  String get noGamesYet => 'Aún no agregas juegos.';
+  String get noGamesYet => 'Marca juegos como favoritos en tu perfil.';
 
   @override
   String get viewAllArrow => 'Ver todos →';
