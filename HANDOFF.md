@@ -2505,15 +2505,11 @@ real.
       últimos 3 lugares que quedaban en `admin-panel.js` (comentario de
       cabecera, `console.info` de arranque, nombre del CSV que se
       descarga -- ahora `steammatch-usuarios.csv`).
-    - Verificado en vivo: login, dashboard (10 tarjetas + actividad
-      reciente real) y usuarios (tabla con datos reales) -- las demás
-      secciones (Familias, Solicitudes, Reportes, Contenido, Chats,
-      Mensajes, Configuración) no se revisaron una por una en vivo
-      porque no se tenía la contraseña de admin a mano para volver a
-      loguear tras la prueba de logout, pero usan el mismo sistema de
-      variables CSS ya confirmado sin colores sueltos -- deberían
-      verse consistentes. Vale la pena que el usuario les eche un
-      vistazo rápido.
+    - [x] **Confirmado por el usuario en vivo (2026-09-19): "ya entré
+      al panel, todo se ve bien"** -- las secciones que no pude revisar
+      yo mismo (Familias, Solicitudes, Reportes, Contenido, Chats,
+      Mensajes, Configuración) las vio él directamente. Rediseño de
+      identidad del panel de admin cerrado del todo.
 
 ## 12. Cómo retomar
 
