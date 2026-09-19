@@ -2156,22 +2156,12 @@ real.
      existe, no se puede bajar cupos por debajo de lo ocupado. 41/41
      tests de backend. **Verificado en vivo**: los campos precargan
      correctamente al abrir "Editar publicación".
-   - **PENDIENTE DE DISCUTIR, no implementado a propósito — el usuario
-     pidió aclarar esto antes de tocar nada**: la UX de seleccionar
-     juegos al crear/editar una publicación. Hoy hay dos mecanismos en
-     la misma tarjeta -- una lista de checkboxes de "Tu biblioteca"
-     (marcar uno por uno) y un buscador aparte de Steam Store para
-     juegos que no estén en la biblioteca. El usuario señaló que marcar
-     uno por uno es "engorroso" si tienes muchos juegos, y preguntó
-     específicamente si para "busco_miembros" debería haber una opción
-     de "marcar todos los verificados de una". Sin resolver: falta
-     decidir si se agrega un botón "Seleccionar todos"/"Todos mis
-     verificados" (bajo esfuerzo si se decide que sí), y si el buscador
-     de Steam Store sigue teniendo sentido tal como está para el caso de
-     "busco_miembros" en particular vs. "busco_companero" (que sí
-     podría tener sentido restringir a UN juego específico en vez de
-     varios, dado que es "juega esto conmigo" no "aquí está mi
-     biblioteca completa"). Retomar cuando el usuario decida.
+   - [x] **RESUELTO — decidido y probado como "prueba" a pedido
+     explícito del usuario ("hagamos una prueba de esas recomendaciones
+     para ver").** Ver detalle completo en el punto 11 (ronda de
+     UX de publicaciones/país) más abajo: botón "Marcar todos" +
+     restricción de "Buscar en Steam" para tipos que exigen Steam
+     (familia/miembros).
 8. Roadmap Nivel 4 restante: login con Google, rediseño visual del panel
    de administración. **Pagos locales (Nequi/Bancolombia) ya no está acá
    — se implementó esta ronda vía llave Bre-B**, ver arriba.
@@ -2278,6 +2268,96 @@ real.
         web`), pero medirla de verdad con Lighthouse solo tiene sentido
         una vez desplegado — ya estaba anotado así en el Nivel 2 de
         arriba, no es un ítem nuevo.
+
+11. **Ronda de UX en publicaciones + país (pedido explícito del
+    usuario, todo implementado y verificado en vivo).**
+    - **⏰ PENDIENTE GENERAL, anotado a pedido explícito**: "debemos
+      trabajar más en el UX" — el usuario lo dijo en general, sin
+      apuntar a una pantalla específica más allá de lo que se resolvió
+      esta ronda. Tenerlo presente para futuras rondas de revisión
+      visual/interacción, no hay un ítem concreto más que anotar.
+    - [x] **`PaisUtil` ampliado de 5 a 28 países**, con Latinoamérica
+      completa (Colombia, México, Argentina, Chile, Perú, Ecuador,
+      Venezuela, Bolivia, Paraguay, Uruguay, Costa Rica, Panamá,
+      Guatemala, Honduras, El Salvador, Nicaragua, República
+      Dominicana, Puerto Rico, Cuba) primero en la lista, más España,
+      EE.UU., Canadá, Brasil, Reino Unido, Alemania, Francia, Italia,
+      Portugal. Refactorizado a un solo mapa nombre↔código (antes eran
+      dos switch duplicados). `account_settings_screen.dart` tenía su
+      **propia lista hardcodeada de 5 países duplicada** (con su propio
+      switch nombre↔código) completamente desincronizada de
+      `PaisUtil` — se eliminó y ahora usa `PaisUtil` directamente.
+    - [x] **Nuevo widget `PaisSelectorField`**
+      (`lib/widgets/pais_selector_field.dart`) reemplazando `DropField`
+      específicamente para país (no para "Tipo", que sigue con solo 4
+      opciones y no lo necesita). Con 28 países un dropdown plano
+      obligaba a desplazarse uno por uno — pedido explícito del
+      usuario de simplificar eso. Se ve igual que `DropField` pero al
+      tocarlo abre una hoja modal con un buscador de texto arriba que
+      filtra la lista en vivo. Aplicado en los 3 lugares reales donde
+      se elige país: `account_settings_screen.dart`,
+      `descubrir_gamers_screen.dart` (filtro), `crear_publicacion_screen.dart`
+      y `publicaciones_screen.dart` (filtro). Verificado en vivo:
+      buscar "bra" filtra correctamente a solo "Brasil".
+    - [x] **Botón "Marcar todos" en la biblioteca de
+      `crear_publicacion_screen.dart`**, pedido explícito del usuario.
+      Alterna entre marcar/desmarcar todos los juegos de la lista
+      mostrada. Además se agregó texto aclaratorio explicando qué
+      significa "juegos verificados" — pedido explícito, el usuario
+      dijo que esa sección no dejaba claro qué era.
+    - [x] **Prueba de mi recomendación anterior, aceptada explícitamente
+      por el usuario para probar**: para tipos que exigen Steam
+      (`busco_familia`/`busco_miembros`), la sección de biblioteca ahora
+      se filtra a **solo juegos con `origen == 'steam'`** (los
+      realmente verificados, no los agregados a mano) y se renombra a
+      "Juegos verificados"; el buscador libre "Buscar en Steam" se
+      **oculta por completo** para esos dos tipos (ya no tiene sentido
+      ofrecer un juego que ni siquiera está en tu cuenta cuando el tipo
+      exige justamente esa verificación). Para `busco_companero`/`otro`
+      todo sigue igual que antes (biblioteca completa + buscador
+      libre), porque esos tipos no exigen Steam y no hay problema de
+      integridad. Es una prueba, no una decisión cerrada — si el
+      usuario la prueba y no le convence, es fácil revertir
+      (`_requiereSteam`/`_bibliotecaMostrada` en
+      `crear_publicacion_screen.dart`).
+    - [x] **Cupos: eliminado el default silencioso de 6 para
+      familia/miembros cuando se deja vacío — pedido explícito.** Antes
+      el backend (`POST /publicaciones/crear`) ponía `cupos_totales = 6`
+      automáticamente para `busco_familia`/`busco_miembros` si el
+      usuario no elegía nada. El usuario pidió que si no se elige nada,
+      la publicación **no muestre ningún límite de cupos** (ya el panel
+      de detalle solo se renderiza `if (pub['cupos_totales'] != null)`,
+      así que con `cupos_totales` en `null` de verdad desaparece del
+      todo). Se quitó la constante `CUPOS_DEFAULT_FAMILIA` y la rama que
+      la usaba; ahora simplemente queda `null` si no se especifica,
+      para cualquier tipo. Revisado que ningún otro lugar de la UI
+      asuma un valor no nulo (`chat_context_banner.dart`,
+      `home_screen.dart`, `estado_familia_helper.dart` — todos ya
+      manejaban `int?` y ya eran condicionales en `!= null`, así que no
+      hubo que tocar nada más). El texto del campo cambió de "opcional,
+      familia = 6 por defecto" a "opcional" + un `helperText` explicando
+      la consecuencia de dejarlo vacío. Actualizado
+      `tests/publicaciones.gate.test.js` (el test que verificaba el
+      default viejo ya no aplica, se agregó uno nuevo que confirma que
+      queda en `null`). 42/42 tests de backend, `flutter analyze`
+      limpio, build web verificado en vivo (edición de una publicación
+      real "busco_miembros" mostrando correctamente cupos, país,
+      "Juegos verificados" con "Marcar todos" y el texto aclaratorio).
+    - [x] **Ronda 3 de conceptos de logo**, pedida explícitamente:
+      "figura en sí o tipografía, que no tenga que ver con controles,
+      concéntrate en la parte de Match". Mostrados 4 conceptos nuevos
+      (sin controles, como las rondas 1 y 2 sí tenían) enfocados en la
+      idea de conexión/coincidencia: "Enlace de cadena" (dos anillos
+      alargados superpuestos), "Pulso conectado" (dos puntos unidos por
+      una línea tipo electrocardiograma que hace un pico al centro),
+      "Monograma SM" tipográfico (S en azul + M en teal fundidas por
+      kerning negativo), y "Lente/intersección" (dos círculos
+      superpuestos tipo Venn con el área de traslape rellena — lectura
+      literal de "match = coincidencia"). Solo mostrados en el chat
+      (`mcp__visualize__show_widget`), no son archivos del repo —
+      pendiente que el usuario elija entre estos y las 6 opciones de
+      las rondas 1-2 (donde ya había mostrado preferencia por "Chispa
+      de Match" para el logo grande y "Monograma S" para el favicon).
 
 ## 12. Cómo retomar
 

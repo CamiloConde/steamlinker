@@ -8,6 +8,7 @@ import '../../../core/utils/relacion_helper.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/drop_field.dart';
+import '../../../widgets/pais_selector_field.dart';
 import '../../../widgets/publicacion_card.dart';
 import '../../../widgets/scroll_to_top_fab.dart';
 import '../../../widgets/steam_app_bar.dart';
@@ -178,7 +179,7 @@ class _PublicacionesScreenState extends State<PublicacionesScreen> {
                         items: PublicacionConstants.tiposFiltroEtiquetas,
                         onChanged: (v) => setSheetState(() => tipoEtiqueta = v),
                       ),
-                    DropField(
+                    PaisSelectorField(
                       label: 'País',
                       value: paisEtiqueta,
                       items: [PaisUtil.todos, ...PaisUtil.nombres],

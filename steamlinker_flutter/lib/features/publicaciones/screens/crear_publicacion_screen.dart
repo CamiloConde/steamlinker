@@ -5,6 +5,7 @@ import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../theme/colors.dart';
 import '../../../widgets/drop_field.dart';
+import '../../../widgets/pais_selector_field.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_buttons.dart';
 import '../../../widgets/steam_card.dart';
@@ -40,6 +41,17 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   List<dynamic> _resultadosSteam = [];
 
   bool get _editando => widget.publicacionExistente != null;
+
+  bool get _requiereSteam =>
+      PublicacionConstants.requiereSteam(PublicacionConstants.valorTipoCrear(_tipoEtiqueta));
+
+  // Para publicaciones que exigen Steam vinculado (familia/miembros) solo
+  // se puede ofrecer lo que Steam confirma que sí tienes -- si no, la
+  // "verificación" no significaría nada. Prueba pedida por el usuario.
+  List<dynamic> _bibliotecaMostrada(PerfilProvider perfilProv) {
+    if (!_requiereSteam) return perfilProv.juegos;
+    return perfilProv.juegos.where((j) => j['origen'] == 'steam').toList();
+  }
 
   @override
   void initState() {
@@ -109,6 +121,31 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
           'headerimg': juego['headerimg'] ?? juego['headerimg_jg'] ?? '',
           'capsuleimg': juego['capsuleimg'] ?? juego['capsuleimg_jg'] ?? '',
         });
+      }
+    });
+  }
+
+  // Pedido explícito del usuario: marcar uno por uno era tedioso, sobre
+  // todo para quien busca miembros/familia y quiere ofrecer toda su
+  // biblioteca verificada.
+  void _marcarTodosVerificados(List<dynamic> juegos) {
+    setState(() {
+      final todosMarcados = juegos.every((j) => _estaSeleccionado(j['appid']));
+      if (todosMarcados) {
+        for (final j in juegos) {
+          _juegosSeleccionados.removeWhere((s) => s['appid'] == j['appid']);
+        }
+      } else {
+        for (final j in juegos) {
+          if (!_estaSeleccionado(j['appid'])) {
+            _juegosSeleccionados.add({
+              'appid': j['appid'],
+              'nombre': j['nombre'] ?? j['nom_jg'] ?? '',
+              'headerimg': j['headerimg'] ?? j['headerimg_jg'] ?? '',
+              'capsuleimg': j['capsuleimg'] ?? j['capsuleimg_jg'] ?? '',
+            });
+          }
+        }
       }
     });
   }
@@ -240,7 +277,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     style: const TextStyle(color: SteamColors.light),
                     decoration: const InputDecoration(
-                      labelText: 'Cupos buscados (opcional, familia = 6 por defecto)',
+                      labelText: 'Cupos buscados (opcional)',
+                      helperText: 'Si lo dejas vacío, la publicación no mostrará límite de cupos.',
                       filled: true,
                       fillColor: SteamColors.bgInput,
                     ),
@@ -269,7 +307,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                DropField(
+                PaisSelectorField(
                   label: 'País objetivo (opcional)',
                   value: _paisEtiqueta,
                   items: [PaisUtil.todos, ...PaisUtil.nombres],
@@ -302,16 +340,53 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     }).toList(),
                   ),
                 if (_juegosSeleccionados.isNotEmpty) const SizedBox(height: 12),
-                const Text(
-                  'Tu biblioteca',
-                  style: TextStyle(
-                    color: SteamColors.textSec,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _requiereSteam ? 'Juegos verificados' : 'Tu biblioteca',
+                        style: const TextStyle(
+                          color: SteamColors.textSec,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                    if (_bibliotecaMostrada(perfilProv).isNotEmpty)
+                      TextButton(
+                        onPressed: () => _marcarTodosVerificados(_bibliotecaMostrada(perfilProv)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          _bibliotecaMostrada(perfilProv)
+                                  .every((j) => _estaSeleccionado(j['appid']))
+                              ? 'Desmarcar todos'
+                              : 'Marcar todos',
+                          style: const TextStyle(
+                            color: SteamColors.blue,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _requiereSteam
+                        ? 'Son los juegos que Steam confirma que sí tienes en tu cuenta '
+                            '(no los que agregaste a mano). Por eso solo estos se pueden ofrecer '
+                            'aquí -- le dan confianza real a quien te contacte.'
+                        : 'Elige los juegos de tu biblioteca que quieres mostrar en la publicación.',
+                    style: const TextStyle(color: SteamColors.textSec, fontSize: 11),
                   ),
                 ),
-                const SizedBox(height: 8),
                 if (perfilProv.cargando && perfilProv.juegos.isEmpty)
                   const Center(
                     child: Padding(
@@ -321,13 +396,15 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       ),
                     ),
                   )
-                else if (perfilProv.juegos.isEmpty)
-                  const Text(
-                    'Agrega juegos a tu perfil para asociarlos a la publicación.',
-                    style: TextStyle(color: SteamColors.textSec, fontSize: 12),
+                else if (_bibliotecaMostrada(perfilProv).isEmpty)
+                  Text(
+                    _requiereSteam
+                        ? 'No tienes juegos verificados por Steam todavía.'
+                        : 'Agrega juegos a tu perfil para asociarlos a la publicación.',
+                    style: const TextStyle(color: SteamColors.textSec, fontSize: 12),
                   )
                 else
-                  ...perfilProv.juegos.map((juego) {
+                  ..._bibliotecaMostrada(perfilProv).map((juego) {
                     final seleccionado = _estaSeleccionado(juego['appid']);
                     return CheckboxListTile(
                       value: seleccionado,
@@ -345,56 +422,62 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       contentPadding: EdgeInsets.zero,
                     );
                   }),
-                const Divider(color: SteamColors.border, height: 24),
-                const Text(
-                  'Buscar en Steam',
-                  style: TextStyle(
-                    color: SteamColors.textSec,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _busquedaController,
-                  style: const TextStyle(color: SteamColors.light),
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => _buscarEnSteam(),
-                  decoration: InputDecoration(
-                    hintText: 'Nombre del juego',
-                    filled: true,
-                    fillColor: SteamColors.bgInput,
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search, color: SteamColors.muted),
-                      onPressed: _buscarEnSteam,
+                // Prueba pedida por el usuario: la búsqueda libre en Steam
+                // permitía ofrecer juegos que ni siquiera están en tu
+                // cuenta, lo cual no tiene sentido para publicaciones que
+                // ya exigen Steam vinculado (integridad de la biblioteca).
+                if (!_requiereSteam) ...[
+                  const Divider(color: SteamColors.border, height: 24),
+                  const Text(
+                    'Buscar en Steam',
+                    style: TextStyle(
+                      color: SteamColors.textSec,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
                     ),
                   ),
-                ),
-                if (_buscandoSteam)
-                  const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _busquedaController,
+                    style: const TextStyle(color: SteamColors.light),
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _buscarEnSteam(),
+                    decoration: InputDecoration(
+                      hintText: 'Nombre del juego',
+                      filled: true,
+                      fillColor: SteamColors.bgInput,
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.search, color: SteamColors.muted),
+                        onPressed: _buscarEnSteam,
                       ),
                     ),
-                  )
-                else
-                  ..._resultadosSteam.map((juego) {
-                    final seleccionado = _estaSeleccionado(juego['appid']);
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: seleccionado
-                          ? const Icon(Icons.check_circle, color: SteamColors.green)
-                          : const Icon(Icons.add_circle_outline, color: SteamColors.blue),
-                      title: Text(
-                        juego['nombre'] ?? '',
-                        style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                  ),
+                  if (_buscandoSteam)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation(SteamColors.blue),
+                        ),
                       ),
-                      onTap: () => _toggleJuego(juego),
-                    );
-                  }),
+                    )
+                  else
+                    ..._resultadosSteam.map((juego) {
+                      final seleccionado = _estaSeleccionado(juego['appid']);
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: seleccionado
+                            ? const Icon(Icons.check_circle, color: SteamColors.green)
+                            : const Icon(Icons.add_circle_outline, color: SteamColors.blue),
+                        title: Text(
+                          juego['nombre'] ?? '',
+                          style: const TextStyle(color: SteamColors.light, fontSize: 13),
+                        ),
+                        onTap: () => _toggleJuego(juego),
+                      );
+                    }),
+                ],
               ],
             ),
           ),

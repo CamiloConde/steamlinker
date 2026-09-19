@@ -10,7 +10,6 @@ const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verific
 const router = express.Router();
 
 const TIPOS_VALIDOS = ['busco_familia', 'busco_miembros', 'busco_companero', 'otro'];
-const CUPOS_DEFAULT_FAMILIA = 6; // tamano real de una Familia de Steam
 
 // POST /publicaciones/crear
 // Crea una nueva publicacion con sus juegos asociados
@@ -33,13 +32,14 @@ router.post('/crear', verificarToken, async (req, res) => {
         });
     }
 
+    // Antes se ponía un default de 6 cupos para familia/miembros aunque el
+    // usuario no eligiera nada -- pedido explícito del usuario: si no se
+    // elige, no debe aparecer ningún límite de cupos en la publicación.
     if (cuposTotales != null) {
         cuposTotales = parseInt(cuposTotales, 10);
         if (Number.isNaN(cuposTotales) || cuposTotales <= 0) {
             return res.status(400).json({ error: 'cupos_totales debe ser un entero positivo' });
         }
-    } else if (TIPOS_REQUIEREN_STEAM.includes(tipo)) {
-        cuposTotales = CUPOS_DEFAULT_FAMILIA;
     } else {
         cuposTotales = null;
     }

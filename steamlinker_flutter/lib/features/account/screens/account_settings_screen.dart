@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/pais_util.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/colors.dart';
@@ -9,7 +10,7 @@ import '../../../widgets/steam_card.dart';
 import '../../../widgets/strength_bar.dart';
 import '../../../widgets/steam_buttons.dart';
 import '../../../widgets/toggle_row.dart';
-import '../../../widgets/drop_field.dart';
+import '../../../widgets/pais_selector_field.dart';
 import '../../../widgets/steam_toast.dart';
 import '../../../core/auth/session_actions.dart';
 import '../../../core/navigation/app_navigator.dart';
@@ -27,14 +28,6 @@ class AccountSettingsScreen extends StatefulWidget {
 }
 
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
-  static const List<String> _paises = [
-    'Colombia',
-    'México',
-    'Argentina',
-    'España',
-    'EE.UU.',
-  ];
-
   final _descripcionController = TextEditingController();
 
   String _pais = 'Colombia';
@@ -65,10 +58,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     if (raw == null) return 'Colombia';
     final s = raw.toString().trim();
     if (s.isEmpty) return 'Colombia';
-    if (_paises.contains(s)) return s;
+    if (PaisUtil.nombres.contains(s)) return s;
     if (s.length <= 3) {
-      final nombre = _codeToPais(s);
-      if (_paises.contains(nombre)) return nombre;
+      final nombre = PaisUtil.codigoANombre(s);
+      if (PaisUtil.nombres.contains(nombre)) return nombre;
     }
     return 'Colombia';
   }
@@ -125,40 +118,6 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     }
   }
 
-  String _paisToCode(String nombre) {
-    switch (nombre) {
-      case 'Colombia':
-        return 'CO';
-      case 'México':
-        return 'MX';
-      case 'Argentina':
-        return 'AR';
-      case 'España':
-        return 'ES';
-      case 'EE.UU.':
-        return 'US';
-      default:
-        return nombre.length <= 5 ? nombre : nombre.substring(0, 5);
-    }
-  }
-
-  String _codeToPais(String code) {
-    switch (code.toUpperCase()) {
-      case 'CO':
-        return 'Colombia';
-      case 'MX':
-        return 'México';
-      case 'AR':
-        return 'Argentina';
-      case 'ES':
-        return 'España';
-      case 'US':
-        return 'EE.UU.';
-      default:
-        return _paises.contains(code) ? code : 'Colombia';
-    }
-  }
-
   void _marcarCambio([bool valor = true]) {
     if (_tieneCambios != valor) {
       setState(() => _tieneCambios = valor);
@@ -178,7 +137,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     setState(() => _guardando = true);
     final exito = await perfilProv.editarPerfil(
       descripcion: _descripcionController.text.trim(),
-      pais: _paisToCode(_pais),
+      pais: PaisUtil.nombreACodigo(_pais),
     );
     if (!mounted) return;
 
@@ -367,10 +326,10 @@ class _ProfileCard extends StatelessWidget {
             style: const TextStyle(color: SteamColors.light),
           ),
           const SizedBox(height: 12),
-          DropField(
+          PaisSelectorField(
             label: 'País',
             value: pais,
-            items: _AccountSettingsScreenState._paises,
+            items: PaisUtil.nombres,
             onChanged: onPaisChanged,
           ),
           const Divider(color: SteamColors.border, height: 1),

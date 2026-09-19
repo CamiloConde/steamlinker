@@ -55,16 +55,27 @@ test('busco_companero sin Steam vinculado se crea normalmente (201)', async () =
     assert.equal(res.body.cupos_totales, 3);
 });
 
-test('busco_familia sin cupos_totales usa el default de 6 (tamano real de una Familia Steam)', async () => {
-    // Este caso especifico seguira dando 403 por el gateo de Steam, pero
-    // confirma que la validacion de tipo ocurre antes y no revienta con
-    // otro error si faltan cupos_totales.
+test('busco_familia sin cupos_totales no revienta con otro error antes del gateo de Steam', async () => {
+    // Ya no hay default de cupos -- si no se eligen, queda en null (no
+    // debe mostrarse limite alguno). Este caso especifico seguira dando
+    // 403 por el gateo de Steam, pero confirma que la validacion de tipo
+    // ocurre antes y no revienta con otro error si faltan cupos_totales.
     const res = await request(app)
         .post('/publicaciones/crear')
         .set('Authorization', `Bearer ${token}`)
         .send({ tipo: 'busco_familia', titulo: 'Sin cupos explicitos' });
 
     assert.equal(res.status, 403);
+});
+
+test('busco_companero sin cupos_totales queda en null (sin limite mostrado)', async () => {
+    const res = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ tipo: 'busco_companero', titulo: 'Sin cupos explicitos, tipo sin Steam' });
+
+    assert.equal(res.status, 201);
+    assert.equal(res.body.cupos_totales, null);
 });
 
 test('tipo invalido devuelve 400', async () => {
