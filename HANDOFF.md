@@ -3019,6 +3019,65 @@ real.
     (autor con Steam vinculado vs. sin vincular, viendo desde una
     tercera cuenta) y confirmado además sobre publicaciones reales del
     propio usuario en la lista pública.
+29. [x] **RESUELTO -- QA completo mientras el usuario configuraba Railway
+    en paralelo ("sigamos con código... haz unas pruebas de todas las
+    funcionalidades").** Descubrir, Publicaciones, Match, Amigos, Chat,
+    Notificaciones y Calificaciones probados de punta a punta (API +
+    en vivo con 3 cuentas de prueba desechables). Se encontraron y
+    corrigieron 3 problemas reales:
+    - **🔒 Vulnerabilidad real de integridad -- `POST
+      /calificaciones/crear` no validaba `id_calificado` contra los
+      participantes reales del match citado.** Cualquier usuario podía
+      citar un match propio ya aceptado (con cualquier otra persona) y
+      calificar a un TERCERO totalmente ajeno -- o autocalificarse --
+      manipulando la reputación de cualquier cuenta del sistema sin
+      relación real con esa calificación. Confirmado explotándolo en
+      vivo antes de arreglar (y revirtiendo el dato fabricado después).
+      Fix: se calcula el otro participante real del match
+      (`id_solicitante`/`id_receptor`) y se rechaza con 403 si
+      `id_calificado` no coincide. Tests nuevos
+      `tests/calificaciones.test.js` (4 casos: tercero ajeno bloqueado,
+      autocalificación bloqueada, calificar al participante real
+      funciona y actualiza reputación, doble calificación en el mismo
+      match bloqueada) -- este archivo no existía, la ruta no tenía
+      NINGÚN test antes.
+    - **Bug real -- `POST /amistad/enviar` bloqueaba reenviar una
+      solicitud de amistad PARA SIEMPRE después de un rechazo.** El
+      chequeo de duplicados no filtraba por `estado_amistad`, a
+      diferencia de `matches.js` (que sí escopea el suyo a
+      `'Pendiente'`) -- una vez rechazado, no había forma de volver a
+      pedir amistad a esa persona, ni años después. Fix: el chequeo
+      ahora solo bloquea si ya hay una solicitud `Pendiente` o
+      `Aceptada` (ya son amigos), dejando pasar un reintento tras
+      `Rechazada`. Tests nuevos `tests/amistad.test.js` (3 casos,
+      tampoco existía ningún test de este archivo antes).
+    - **Typo real -- "publicaciónes" (con tilde mal puesta) en
+      Descubrir.** `descubrir_gamers_screen.dart` armaba el plural
+      concatenando `'publicación' + 'es'`, pero en español el plural de
+      "publicación" es "publicaciones" (pierde el acento, no es solo
+      agregar "es" -- mismo patrón que "canción"→"canciones"). Visto en
+      vivo en la tarjeta de Camilo en Descubrir antes de corregirlo.
+    - **Hallazgo NO corregido, es decisión de producto, no bug --
+      reportado para que el usuario decida:** `GET /perfil/descubrir`
+      usa `JOIN publicaciones` (no `LEFT JOIN`), así que un usuario con
+      biblioteca compartida, buena reputación, etc. pero **sin ninguna
+      publicación activa** nunca aparece en Descubrir, sin importar qué
+      tan buen match sea. Confirmado en vivo: una cuenta de prueba con
+      un juego verificado en común con otra no apareció en su
+      Descubrir por no tener publicaciones. Puede ser intencional
+      (Descubrir = "gente buscando activamente ahora", coherente con
+      que la tarjeta muestra tipo/fecha de la última publicación) o un
+      límite no querido de la función "descubrir gente". **Pendiente
+      de decisión del usuario, no tocado.**
+    Resto de lo probado sin problemas: envío/aceptación de match
+    (notificación + chat auto-creado + auto-cierre de publicación al
+    llenar cupos), control de acceso de chat (un tercero no puede leer
+    ni escribir en un chat ajeno, 403), comentarios en publicaciones
+    (con notificación al autor y a quien responde, sin duplicar si son
+    la misma persona), cierre/edición de publicaciones, notificaciones
+    (marcar leída, tocar navega a la pantalla correcta).
+    58/58 tests backend (+7 desde la ronda anterior), `flutter analyze`
+    limpio, `flutter build web` sin errores.
 
 ## 12. Cómo retomar
 

@@ -563,7 +563,12 @@ class _ListaGamers extends StatelessWidget {
           usuario: u,
           subtitulo: u['descrip_usu']?.toString().isNotEmpty == true
               ? u['descrip_usu']
-              : '$total publicación${total == 1 ? '' : 'es'} activa${total == 1 ? '' : 's'}',
+              // "publicación" -> "publicaciones" en plural pierde el
+              // acento (no es solo agregar "es") -- antes esto
+              // concatenaba mal y mostraba "publicaciónes".
+              : total == 1
+              ? '1 publicación activa'
+              : '$total publicaciones activas',
           onTap: () => onTap(u),
         );
       },

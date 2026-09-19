@@ -19,10 +19,16 @@ router.post('/enviar', verificarToken, async (req, res) => {
     }
 
     try {
+        // Solo bloquea si ya hay una solicitud pendiente o ya son amigos --
+        // una rechazada NO debe bloquear para siempre (antes sí lo hacía,
+        // bug real: rechazar a alguien lo dejaba imposibilitado de volver
+        // a pedir amistad, sin importar cuánto tiempo pasara). Mismo
+        // criterio que ya usa matches.js para solicitudes de match.
         const existe = await pool.query(
             `SELECT id_amistad FROM amistad
-             WHERE (id_solicitante = $1 AND id_receptor = $2)
-             OR (id_solicitante = $2 AND id_receptor = $1)`,
+             WHERE ((id_solicitante = $1 AND id_receptor = $2)
+                OR (id_solicitante = $2 AND id_receptor = $1))
+             AND estado_amistad IN ('Pendiente', 'Aceptada')`,
             [req.usuario.id, id_receptor]
         );
 

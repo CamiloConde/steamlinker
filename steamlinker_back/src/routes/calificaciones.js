@@ -26,7 +26,21 @@ router.post('/crear', verificarToken, async (req, res) => {
 
         if (match.rows.length === 0) {
             return res.status(403).json({ error: 'Match no encontrado o no esta aceptado' });
-        }   
+        }
+
+        // id_calificado tiene que ser EL OTRO participante de este match --
+        // no se puede confiar en lo que mande el cliente. Sin esto, cualquiera
+        // podia citar un match propio aceptado y calificar a un tercero
+        // arbitrario (o a si mismo), inflando o dañando la reputacion de
+        // cualquier usuario del sistema.
+        const otroParticipante =
+            match.rows[0].id_solicitante === req.usuario.id
+                ? match.rows[0].id_receptor
+                : match.rows[0].id_solicitante;
+
+        if (parseInt(id_calificado, 10) !== otroParticipante) {
+            return res.status(403).json({ error: 'Solo puedes calificar al otro participante de este match' });
+        }
 
         // Verificar que no haya calificado ya a este usuario en este match
         const yacalifico = await pool.query(
