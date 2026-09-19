@@ -110,3 +110,56 @@ test('con token, juegos_en_comun solo cuenta biblioteca verificada del autor vs 
 
     await limpiarUsuario(viewer);
 });
+
+test('juegos de la publicacion traen origen_pjg real (no lo que mande el cliente)', async () => {
+    const appid = 992200;
+    await request(app)
+        .post('/perfil/juegos/agregar')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ appid, nombre: 'Juego origen test' });
+
+    // Manual todavia -- una publicacion creada ahora debe guardar 'manual'
+    // sin importar si el cliente mandara otra cosa (no se manda nada, el
+    // backend lo calcula solo).
+    const resManual = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+            tipo: 'otro',
+            titulo: 'Publi origen manual',
+            juegos: [{ appid, nombre: 'Juego origen test' }],
+        });
+    assert.equal(resManual.status, 201);
+
+    const buscarManual = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiManual = buscarManual.body.publicaciones.find((p) => p.titulo_publi === 'Publi origen manual');
+    assert.equal(publiManual.juegos[0].origen_pjg, 'manual');
+
+    // Ahora se "verifica" (simula import real de Steam) y se crea OTRA
+    // publicacion con el mismo juego -- debe guardar 'steam' esta vez,
+    // sin tocar la publicacion anterior (el origen queda fijo al momento
+    // de asociarlo, no se recalcula despues).
+    await pool.query(`UPDATE usuarios_juegos SET origen_usujg = 'steam' WHERE id_usu = $1 AND appid = $2`, [
+        (await pool.query('SELECT id_usu FROM usuarios WHERE username_usu = $1', [username])).rows[0].id_usu,
+        appid,
+    ]);
+
+    const resSteam = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+            tipo: 'otro',
+            titulo: 'Publi origen steam',
+            juegos: [{ appid, nombre: 'Juego origen test' }],
+        });
+    assert.equal(resSteam.status, 201);
+
+    const buscarSteam = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiSteam = buscarSteam.body.publicaciones.find((p) => p.titulo_publi === 'Publi origen steam');
+    assert.equal(publiSteam.juegos[0].origen_pjg, 'steam');
+
+    // La publicacion vieja no cambia retroactivamente.
+    const buscarManual2 = await request(app).get('/publicaciones/buscar').query({ tipo: 'otro' });
+    const publiManual2 = buscarManual2.body.publicaciones.find((p) => p.titulo_publi === 'Publi origen manual');
+    assert.equal(publiManual2.juegos[0].origen_pjg, 'manual');
+});

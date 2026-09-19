@@ -78,6 +78,31 @@ test('busco_companero sin cupos_totales queda en null (sin limite mostrado)', as
     assert.equal(res.body.cupos_totales, null);
 });
 
+test('busco_familia ignora cupos_totales aunque se manden -- no tiene sentido ahi (quien publica es 1 persona buscando unirse, no reclutando)', async () => {
+    const steamUser = usernameUnico('test_gate_steam');
+    const reg = await request(app).post('/auth/registro').send({
+        username: steamUser,
+        email: `${steamUser}@example.com`,
+        password: 'Passw0rd123',
+    });
+    const steamToken = reg.body.token;
+    await pool.query(
+        `INSERT INTO perfiles_steam (id_usu, steam_id, username_steperfil, avatar_url, perfil_url)
+         VALUES ($1, $2, 'Test', null, null)`,
+        [reg.body.usuario.id, `7656119${Date.now()}`.slice(0, 17)]
+    );
+
+    const res = await request(app)
+        .post('/publicaciones/crear')
+        .set('Authorization', `Bearer ${steamToken}`)
+        .send({ tipo: 'busco_familia', titulo: 'Busco familia', cupos_totales: 4 });
+
+    assert.equal(res.status, 201);
+    assert.equal(res.body.cupos_totales, null);
+
+    await limpiarUsuario(steamUser);
+});
+
 test('tipo invalido devuelve 400', async () => {
     const res = await request(app)
         .post('/publicaciones/crear')

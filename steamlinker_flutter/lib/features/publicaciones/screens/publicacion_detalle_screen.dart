@@ -5,6 +5,7 @@ import '../../../core/constants/publicacion_constants.dart';
 import '../../../core/utils/relacion_helper.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
+import '../../../widgets/badge_origen_juego.dart';
 import '../../../widgets/relacion_status_chip.dart'
     show RelacionStatusChip, RelacionStatusRow;
 import '../../../widgets/steam_app_bar.dart';
@@ -1078,12 +1079,15 @@ class _JuegosLista extends StatelessWidget {
                 Expanded(
                   child: Text(
                     map['nom_jg'] ?? 'Juego',
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: SteamColors.light,
                       fontSize: 13,
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                BadgeOrigenJuego(esSteam: map['origen_pjg'] == 'steam'),
               ],
             ),
           ),

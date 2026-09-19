@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/avatar_foto.dart';
+import '../../../widgets/badge_origen_juego.dart';
 import '../../../widgets/steam_app_bar.dart';
 import '../../../widgets/steam_card.dart';
 import '../../../widgets/steam_toast.dart';
@@ -413,7 +414,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               ),
             ),
             const SizedBox(width: 6),
-            _BadgeOrigenJuego(esSteam: juego['origen'] == 'steam'),
+            BadgeOrigenJuego(esSteam: juego['origen'] == 'steam'),
           ],
         ),
         subtitle: Text(
@@ -1108,49 +1109,6 @@ class _StatCell extends StatelessWidget {
                     ),
                   ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Distingue un juego importado de verdad desde la API de Steam (origen
-/// confiable) de uno agregado a mano con el buscador (el usuario puede
-/// escribir cualquier juego ahi sin poseerlo realmente). Antes de esto
-/// ambos se veian identicos y el conteo de "Juegos verificados" los
-/// mezclaba -- ver HANDOFF.md.
-class _BadgeOrigenJuego extends StatelessWidget {
-  final bool esSteam;
-  const _BadgeOrigenJuego({required this.esSteam});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = esSteam ? SteamColors.teal : SteamColors.muted;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withAlpha(31),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withAlpha(102)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            esSteam ? Icons.verified : Icons.edit_outlined,
-            size: 11,
-            color: color,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            esSteam ? 'STEAM' : 'MANUAL',
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.4,
             ),
           ),
         ],

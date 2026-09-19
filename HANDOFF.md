@@ -2672,6 +2672,72 @@ real.
       escribir "sek" filtra a solo "Sekiro" (auto-expandido) → marcar
       el checkbox agrega el chip "Sekiro" y cambia "JUEGOS (0)" a
       "JUEGOS (1)". `flutter analyze` limpio.
+22. [x] **RESUELTO -- dos problemas reales que el usuario detectó usando
+    su propia cuenta de Steam.**
+    - **Cupos sin sentido en "Busco familia"**: el campo "cupos"
+      (cuántos lugares tiene la publicación) se mostraba y validaba
+      para TODOS los tipos salvo "Otro" -- pero "Busco familia" es una
+      sola persona buscando UNIRSE a una familia, no reclutando gente,
+      así que "cupos" no significa nada ahí. Se ocultó el campo en el
+      formulario (`crear_publicacion_screen.dart`) para
+      `busco_familia` igual que para `otro`, y el backend lo fuerza a
+      `null` de forma defensiva en `/publicaciones/crear` y
+      `/publicaciones/:id/editar` (`publicaciones.js`) sin importar lo
+      que mande el cliente. Test nuevo:
+      `publicaciones.gate.test.js` ("busco_familia ignora
+      cupos_totales aunque se manden").
+    - **Juegos de biblioteca compartida (Family Sharing) invisibles al
+      publicar**: el usuario tiene juegos reales en su cuenta (ej. la
+      trilogía de Batman Arkham) que Steam comparte vía Family Sharing
+      pero que la API pública (`GetOwnedGames`) nunca reporta -- así
+      que esos juegos NUNCA podían quedar "verificados" (ver punto 5,
+      límite ya documentado de la API de Steam), y la checklist de
+      "Busco familia/Busco miembros" los excluía por completo al
+      filtrar solo por `origen == 'steam'`. Resultado: el usuario no
+      podía mostrar ni ofrecer esos juegos al buscar familia, aunque
+      los tenga de verdad.
+      **Solución (no es un gate de verificación, es honestidad de
+      etiqueta):** la checklist ahora muestra TODA la biblioteca del
+      usuario (verificada + agregada a mano), cada juego con una
+      insignia **STEAM/MANUAL** (`BadgeOrigenJuego`,
+      `lib/widgets/badge_origen_juego.dart`, extraída de una clase
+      privada que ya existía en `perfil_screen.dart`). Texto aclaratorio
+      nuevo explica ambas etiquetas, incluyendo el caso de Family
+      Sharing explícitamente.
+      Lo importante: ese origen ahora se **persiste por publicación**,
+      no es solo un detalle visual transitorio del creador -- así
+      cualquiera que vea la publicación después también sabe qué
+      juegos confirma Steam directamente y cuáles son autodeclarados.
+      Migración nueva `011_add_origen_publicacion_juegos.sql` agrega
+      `publicacion_juegos.origen_pjg` (`'steam'` | `'manual'`, default
+      `'manual'`), aplicada a las bases `steamlinker` y
+      `steamlinker_test`. Función nueva `obtenerOrigenJuego(idUsu,
+      appid)` en `juegosService.js` consulta
+      `usuarios_juegos.origen_usujg` del propio usuario -- **el backend
+      no confía en lo que mande el cliente**, calcula el origen él
+      mismo al momento de asociar el juego a la publicación (en
+      `/crear` y `/:id/editar`). El origen queda fijo en ese momento:
+      si el usuario verifica el juego por Steam después, las
+      publicaciones viejas NO se actualizan retroactivamente (test
+      cubre este caso). `GET /publicaciones/buscar` y `GET
+      /publicaciones/:id` devuelven `origen_pjg` por juego.
+      `publicacion_detalle_screen.dart` muestra la insignia junto a
+      cada juego (import agregado, `flutter analyze` limpio).
+      `juegos_en_comun` (comparación automática entre dos usuarios en
+      `/buscar`) se dejó **sin cambios**, sigue exigiendo
+      `origen_usujg='steam'` en ambos lados a propósito -- es una señal
+      de confianza automática entre desconocidos, distinta de la lista
+      de juegos autodeclarada de la propia publicación.
+      Tests nuevos: `publicaciones.buscar.test.js` ("juegos de la
+      publicacion traen origen_pjg real"). Suite completa: 48/48
+      pasando. Verificado en vivo de punta a punta con una cuenta de
+      prueba (Steam vinculado simulado por fila directa en
+      `perfiles_steam`, juego manual "Batman: Arkham Knight"): la
+      checklist al crear muestra el juego con insignia MANUAL, la
+      publicación se crea con `cupos_totales: null`, y el detalle de
+      la publicación muestra la misma insignia MANUAL al juego.
+      `flutter build web` y `flutter test test/widget_test.dart` sin
+      errores.
 
 ## 12. Cómo retomar
 

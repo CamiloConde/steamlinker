@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const { crearNotificacion, usernameDe } = require('../services/notificacionesService');
-const { guardarJuego } = require('../services/juegosService');
+const { guardarJuego, obtenerOrigenJuego } = require('../services/juegosService');
 const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verificacion');
 
 const router = express.Router();
@@ -50,7 +50,14 @@ router.post('/crear', verificarToken, async (req, res) => {
     // Antes se ponía un default de 6 cupos para familia/miembros aunque el
     // usuario no eligiera nada -- pedido explícito del usuario: si no se
     // elige, no debe aparecer ningún límite de cupos en la publicación.
-    if (cuposTotales != null) {
+    //
+    // busco_familia tampoco usa cupos -- ahí publica UNA persona buscando
+    // unirse a una familia, no reclutando gente, así que "cuántos cupos"
+    // no tiene sentido. El frontend ya no lo pide para este tipo; esto es
+    // una segunda barrera por si llega algo directo a la API.
+    if (tipo === 'busco_familia') {
+        cuposTotales = null;
+    } else if (cuposTotales != null) {
         cuposTotales = parseInt(cuposTotales, 10);
         if (Number.isNaN(cuposTotales) || cuposTotales <= 0) {
             return res.status(400).json({ error: 'cupos_totales debe ser un entero positivo' });
@@ -81,10 +88,17 @@ router.post('/crear', verificarToken, async (req, res) => {
                     capsuleimg: juego.capsuleimg,
                 });
 
-                // Asociar el juego a la publicacion
+                // Asociar el juego a la publicacion, con su origen real
+                // (verificado/manual) -- no lo que mande el cliente, se
+                // consulta la biblioteca real del usuario. Así, quien vea
+                // la publicación después puede ver cuáles son de verdad
+                // confirmados por Steam y cuáles no (ej. biblioteca
+                // compartida de Familia de Steam, que la API pública no
+                // puede confirmar pero sí es un juego real del usuario).
+                const origen = await obtenerOrigenJuego(req.usuario.id, juego.appid);
                 await pool.query(
-                    `INSERT INTO publicacion_juegos (id_publi, appid) VALUES ($1, $2)`,
-                    [publicacion.id_publi, juego.appid]
+                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg) VALUES ($1, $2, $3)`,
+                    [publicacion.id_publi, juego.appid, origen]
                 );
             }
         }
@@ -157,7 +171,7 @@ router.get('/buscar', async (req, res) => {
         const publicaciones = await Promise.all(
             resultado.rows.map(async (pub) => {
                 const juegos = await pool.query(
-                    `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.generos_jg
+                    `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.generos_jg, pj.origen_pjg
                      FROM publicacion_juegos pj
                      JOIN juegos j ON pj.appid = j.appid
                      WHERE pj.id_publi = $1`,
@@ -349,7 +363,7 @@ router.get('/:id', async (req, res) => {
         }
 
         const juegos = await pool.query(
-            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, j.generos_jg
+            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, j.generos_jg, pj.origen_pjg
              FROM publicacion_juegos pj
              JOIN juegos j ON pj.appid = j.appid
              WHERE pj.id_publi = $1`,
@@ -422,7 +436,7 @@ router.put('/:id/editar', verificarToken, async (req, res) => {
 
     try {
         const pub = await pool.query(
-            'SELECT id_usu, cupos_totales FROM publicaciones WHERE id_publi = $1',
+            'SELECT id_usu, cupos_totales, tipo_publi FROM publicaciones WHERE id_publi = $1',
             [id]
         );
         if (pub.rows.length === 0) {
@@ -432,7 +446,10 @@ router.put('/:id/editar', verificarToken, async (req, res) => {
             return res.status(403).json({ error: 'No puedes editar una publicación que no es tuya' });
         }
 
-        if (cuposTotales !== undefined && cuposTotales !== null) {
+        // busco_familia no usa cupos (ver /crear) -- ni al editar.
+        if (pub.rows[0].tipo_publi === 'busco_familia') {
+            cuposTotales = null;
+        } else if (cuposTotales !== undefined && cuposTotales !== null) {
             cuposTotales = parseInt(cuposTotales, 10);
             if (Number.isNaN(cuposTotales) || cuposTotales <= 0) {
                 return res.status(400).json({ error: 'cupos_totales debe ser un entero positivo' });
@@ -470,9 +487,10 @@ router.put('/:id/editar', verificarToken, async (req, res) => {
                     headerimg: juego.headerimg,
                     capsuleimg: juego.capsuleimg,
                 });
+                const origen = await obtenerOrigenJuego(req.usuario.id, juego.appid);
                 await pool.query(
-                    `INSERT INTO publicacion_juegos (id_publi, appid) VALUES ($1, $2)`,
-                    [id, juego.appid]
+                    `INSERT INTO publicacion_juegos (id_publi, appid, origen_pjg) VALUES ($1, $2, $3)`,
+                    [id, juego.appid, origen]
                 );
             }
         }

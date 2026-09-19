@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/pais_util.dart';
 import '../../../core/constants/publicacion_constants.dart';
 import '../../../theme/colors.dart';
+import '../../../widgets/badge_origen_juego.dart';
 import '../../../widgets/drop_field.dart';
 import '../../../widgets/pais_selector_field.dart';
 import '../../../widgets/steam_app_bar.dart';
@@ -64,19 +65,21 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
   );
 
-  // Para publicaciones que exigen Steam vinculado (familia/miembros) solo
-  // se puede ofrecer lo que Steam confirma que sí tienes -- si no, la
-  // "verificación" no significaría nada. Prueba pedida por el usuario.
+  // Antes esto se filtraba a solo juegos verificados por Steam para
+  // familia/miembros -- pero el usuario reportó un caso real: tiene
+  // juegos de verdad (ej. biblioteca compartida de su Familia de Steam)
+  // que la API pública de Steam no puede confirmar, así que nunca
+  // aparecían acá y no podía ofrecerlos. Ahora se muestra toda la
+  // biblioteca (verificada + manual) para cualquier tipo, cada juego con
+  // su insignia STEAM/MANUAL -- el backend guarda ese origen real por
+  // publicación (no lo que mande el cliente), así que la insignia sigue
+  // siendo confiable para quien vea la publicación después.
   //
   // También filtra por el buscador local de biblioteca -- pedido
   // explícito: con una biblioteca grande (100+ juegos) ir marcando uno
   // por uno a pura vista/scroll es tedioso, esto deja escribir el nombre
   // y saltar directo en vez de desplazarse por toda la lista.
-  List<dynamic> _bibliotecaBase(PerfilProvider perfilProv) {
-    return _requiereSteam
-        ? perfilProv.juegos.where((j) => j['origen'] == 'steam').toList()
-        : perfilProv.juegos;
-  }
+  List<dynamic> _bibliotecaBase(PerfilProvider perfilProv) => perfilProv.juegos;
 
   List<dynamic> _bibliotecaMostrada(PerfilProvider perfilProv) {
     final base = _bibliotecaBase(perfilProv);
@@ -226,7 +229,8 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
     final tipo = PublicacionConstants.valorTipoCrear(_tipoEtiqueta);
     final cuposTexto = _cuposController.text.trim();
-    final cuposTotales = tipo != 'otro' && cuposTexto.isNotEmpty
+    final cuposTotales =
+        tipo != 'otro' && tipo != 'busco_familia' && cuposTexto.isNotEmpty
         ? int.tryParse(cuposTexto)
         : null;
     final descripcion = _descripcionController.text.trim().isEmpty
@@ -316,8 +320,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       ),
                     ),
                   ),
-                if (PublicacionConstants.valorTipoCrear(_tipoEtiqueta) !=
-                    'otro') ...[
+                // "Cupos" no tiene sentido semántico en busco_familia: ahí
+                // quien publica es UNA persona buscando unirse a una
+                // familia, no reclutando gente -- no hay "cuántos cupos"
+                // que ofrecer. Pedido explícito del usuario al notar que
+                // el campo aparecía igual ahí sin ningún propósito real.
+                if (!['otro', 'busco_familia'].contains(
+                  PublicacionConstants.valorTipoCrear(_tipoEtiqueta),
+                )) ...[
                   const SizedBox(height: 4),
                   TextField(
                     controller: _cuposController,
@@ -396,10 +406,10 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: Text(
-                        _requiereSteam ? 'Juegos verificados' : 'Tu biblioteca',
-                        style: const TextStyle(
+                        'Tu biblioteca',
+                        style: TextStyle(
                           color: SteamColors.textSec,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -432,18 +442,14 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
                   child: Text(
-                    _requiereSteam
-                        ? 'Son los juegos que Steam confirma que sí tienes en tu cuenta '
-                              '(no los que agregaste a mano). Por eso solo estos se pueden ofrecer '
-                              'aquí -- le dan confianza real a quien te contacte.'
-                        : 'Elige los juegos de tu biblioteca que quieres mostrar en la publicación.',
-                    style: const TextStyle(
-                      color: SteamColors.textSec,
-                      fontSize: 11,
-                    ),
+                    'Elige los juegos que quieres mostrar. Los marcados '
+                    'STEAM los confirma tu cuenta directamente; los MANUAL '
+                    'los agregaste tú (por ejemplo, biblioteca compartida de '
+                    'tu Familia de Steam, que no se puede verificar por API).',
+                    style: TextStyle(color: SteamColors.textSec, fontSize: 11),
                   ),
                 ),
                 // Con una biblioteca grande, ir marcando uno por uno a pura
@@ -495,14 +501,9 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                     ),
                   )
                 else if (_bibliotecaBase(perfilProv).isEmpty)
-                  Text(
-                    _requiereSteam
-                        ? 'No tienes juegos verificados por Steam todavía.'
-                        : 'Agrega juegos a tu perfil para asociarlos a la publicación.',
-                    style: const TextStyle(
-                      color: SteamColors.textSec,
-                      fontSize: 12,
-                    ),
+                  const Text(
+                    'Agrega juegos a tu perfil para asociarlos a la publicación.',
+                    style: TextStyle(color: SteamColors.textSec, fontSize: 12),
                   )
                 else if (_busquedaBiblioteca.trim().isEmpty &&
                     !_bibliotecaExpandida &&
@@ -574,12 +575,21 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
                       value: seleccionado,
                       onChanged: (_) => _toggleJuego(juego),
                       activeColor: SteamColors.blue,
-                      title: Text(
-                        juego['nombre'] ?? 'Juego',
-                        style: const TextStyle(
-                          color: SteamColors.light,
-                          fontSize: 13,
-                        ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              juego['nombre'] ?? 'Juego',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: SteamColors.light,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          BadgeOrigenJuego(esSteam: juego['origen'] == 'steam'),
+                        ],
                       ),
                       subtitle: Text(
                         '${juego['horas'] ?? 0} h jugadas',

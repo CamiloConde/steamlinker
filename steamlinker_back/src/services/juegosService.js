@@ -35,4 +35,22 @@ async function guardarJuego({ appid, nombre, headerimg, capsuleimg }) {
   }
 }
 
-module.exports = { guardarJuego };
+/**
+ * Origen real de un juego en la biblioteca del usuario ('steam' si Steam
+ * lo confirma, 'manual' si lo agregó a mano o no está en su biblioteca
+ * en absoluto). Se consulta acá -- no se confía en lo que mande el
+ * cliente -- para que un usuario no pueda marcar como "verificado" un
+ * juego que no es. Fuente de verdad real: `usuarios_juegos.origen_usujg`.
+ * @param {number} idUsu
+ * @param {number} appid
+ * @returns {Promise<'steam'|'manual'>}
+ */
+async function obtenerOrigenJuego(idUsu, appid) {
+  const resultado = await pool.query(
+    `SELECT origen_usujg FROM usuarios_juegos WHERE id_usu = $1 AND appid = $2`,
+    [idUsu, appid]
+  );
+  return resultado.rows[0]?.origen_usujg === "steam" ? "steam" : "manual";
+}
+
+module.exports = { guardarJuego, obtenerOrigenJuego };
