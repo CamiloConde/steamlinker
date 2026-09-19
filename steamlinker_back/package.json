@@ -1,7 +1,7 @@
 {
   "name": "steamlinker-backend",
   "version": "1.0.0",
-  "description": "Backend de Steamlinker - Node.js + Express + Steam API",
+  "description": "Backend de SteamMatch - Node.js + Express + Steam API",
   "main": "src/index.js",
   "scripts": {
     "migrate": "node run_migration.js",

@@ -2176,13 +2176,23 @@ real.
      Steamlinker.'` en `perfil.js` (lo devuelve la API y se muestra tal
      cual en la UI), el `<title>` del panel de admin, y el placeholder
      del campo de email del login de admin.
-   - **Bajo esfuerzo, cosmético, sin apuro** (nombres de clases/logs que
-     nadie fuera del código ve): `SteamlinkerApp`/`_SteamlinkerAppState`
-     en `main.dart`, comentarios y `console.log`/`debugPrint` con
-     "Steamlinker" en `main.dart`/`index.js`/varias rutas del backend,
-     el nombre del archivo CSV que descarga el admin
-     (`steamlinker-usuarios.csv`). Se puede hacer en una pasada rápida
-     cuando haya tiempo — no urge porque nadie fuera del código los ve.
+   - [x] **RESUELTO — pasada rápida hecha.** `SteamlinkerApp` →
+     `SteamMatchApp` (y `_SteamlinkerAppState` → `_SteamMatchAppState`)
+     en `main.dart` + `test/widget_test.dart`; comentarios y
+     `console.log`/`debugPrint` con "Steamlinker" en
+     `main.dart`/`index.js`/`games.js`; CSV del admin ya renombrado a
+     `steammatch-usuarios.csv` (ronda anterior); título del `README.md`
+     raíz (`# Steamlinker` → `# SteamMatch`, la mención a la carpeta
+     real `Steamlinker BD/` se dejó igual porque describe un path que
+     sigue existiendo); `description` de `steamlinker_back/package.json`.
+     También se encontraron y corrigieron 2 lugares genuinamente
+     visibles para un usuario que no estaban en el radar original: el
+     nombre de la app bajo el ícono en **iOS** (`CFBundleDisplayName`
+     en `Info.plist`) y en **Android** (`android:label` en
+     `AndroidManifest.xml`) seguían diciendo "Steamlinker" -- sería lo
+     primero que vería cualquiera si algún día se compila para móvil.
+     `flutter analyze` limpio, `flutter test test/widget_test.dart`
+     pasa, 42/42 tests de backend, backend real reiniciado sin errores.
    - **NO recomiendo tocar, mi criterio**: el nombre de las carpetas
      (`steamlinker_back`/`steamlinker_flutter`), el `name` en
      `pubspec.yaml`/`package.json` (solo 2 archivos de test usan

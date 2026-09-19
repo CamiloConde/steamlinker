@@ -1,4 +1,4 @@
-// Punto de entrada del servidor Steamlinker
+// Punto de entrada del servidor SteamMatch
 
 const os = require('os');
 const app = require('./app');
@@ -19,7 +19,7 @@ async function start() {
 
     const server = app.listen(PORT, host, () => {
         const env = process.env.NODE_ENV || 'development';
-        console.log(`Steamlinker API en http://localhost:${PORT} (${env})`);
+        console.log(`SteamMatch API en http://localhost:${PORT} (${env})`);
         if (isProduction() && process.env.CORS_ORIGINS) {
             console.log('CORS permitidos:', process.env.CORS_ORIGINS);
         } else if (!isProduction()) {

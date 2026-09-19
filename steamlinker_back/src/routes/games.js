@@ -46,7 +46,7 @@ router.get("/library", requireAuth, async (req, res) => {
 /**
  * GET /games/library/:steamid
  * Devuelve la biblioteca de cualquier usuario por su steamid.
- * Útil para ver el perfil de otro usuario en Steamlinker.
+ * Útil para ver el perfil de otro usuario en SteamMatch.
  */
 router.get("/library/:steamid", requireAuth, async (req, res) => {
   try {

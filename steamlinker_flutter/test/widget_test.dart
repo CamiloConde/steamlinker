@@ -9,7 +9,7 @@ void main() {
   });
 
   testWidgets('Muestra pantalla de login', (WidgetTester tester) async {
-    await tester.pumpWidget(const SteamlinkerApp());
+    await tester.pumpWidget(const SteamMatchApp());
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 

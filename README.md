@@ -1,4 +1,4 @@
-# Steamlinker
+# SteamMatch
 
 A web application that helps Steam users find and connect with other players to form or join Family Sharing groups - making the process easier, more informed, and more organized.
 

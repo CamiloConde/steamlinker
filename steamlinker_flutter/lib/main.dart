@@ -1,4 +1,4 @@
-// Punto de entrada de la aplicacion Steamlinker
+// Punto de entrada de la aplicacion SteamMatch
 // Configura providers, rutas y tema visual
 
 import 'package:flutter/foundation.dart';
@@ -27,19 +27,19 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ApiClient.init();
   if (kDebugMode || kProfileMode) {
-    debugPrint('Steamlinker → API: ${AppConfig.apiBaseUrl}');
+    debugPrint('SteamMatch → API: ${AppConfig.apiBaseUrl}');
   }
-  runApp(const SteamlinkerApp());
+  runApp(const SteamMatchApp());
 }
 
-class SteamlinkerApp extends StatefulWidget {
-  const SteamlinkerApp({super.key});
+class SteamMatchApp extends StatefulWidget {
+  const SteamMatchApp({super.key});
 
   @override
-  State<SteamlinkerApp> createState() => _SteamlinkerAppState();
+  State<SteamMatchApp> createState() => _SteamMatchAppState();
 }
 
-class _SteamlinkerAppState extends State<SteamlinkerApp> {
+class _SteamMatchAppState extends State<SteamMatchApp> {
   late final AuthProvider _auth;
   late final GoRouter _router;
   late final LocaleProvider _locale;
