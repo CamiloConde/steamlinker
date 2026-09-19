@@ -2,14 +2,29 @@
 // Permite crear, listar, filtrar y cerrar publicaciones
 
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const { crearNotificacion, usernameDe } = require('../services/notificacionesService');
+const { guardarJuego } = require('../services/juegosService');
 const { tieneSteamVinculado, TIPOS_REQUIEREN_STEAM } = require('../utils/verificacion');
 
 const router = express.Router();
 
 const TIPOS_VALIDOS = ['busco_familia', 'busco_miembros', 'busco_companero', 'otro'];
+
+// GET /buscar no exige sesión (se puede ver la lista sin loguearse), pero
+// si llega un token válido lo usamos para calcular "juegos en común" --
+// mismo patrón que contacto.js.
+function usuarioOpcional(req) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return null;
+    try {
+        return jwt.verify(token, process.env.JWT_SECRET).id ?? null;
+    } catch {
+        return null;
+    }
+}
 
 // POST /publicaciones/crear
 // Crea una nueva publicacion con sus juegos asociados
@@ -59,12 +74,12 @@ router.post('/crear', verificarToken, async (req, res) => {
         if (juegos && juegos.length > 0) {
             for (const juego of juegos) {
                 // Guardar el juego si no existe
-                await pool.query(
-                    `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
-                     VALUES ($1, $2, $3, $4)
-                     ON CONFLICT (appid) DO NOTHING`,
-                    [juego.appid, juego.nombre, juego.headerimg || null, juego.capsuleimg || null]
-                );
+                await guardarJuego({
+                    appid: juego.appid,
+                    nombre: juego.nombre,
+                    headerimg: juego.headerimg,
+                    capsuleimg: juego.capsuleimg,
+                });
 
                 // Asociar el juego a la publicacion
                 await pool.query(
@@ -86,6 +101,7 @@ router.post('/crear', verificarToken, async (req, res) => {
 // Parametros: tipo (uno o varios separados por coma, ej "busco_familia,busco_miembros"), pais, appid, orden (recientes | reputacion)
 router.get('/buscar', async (req, res) => {
     const { tipo, pais, appid, orden } = req.query;
+    const viewerId = usuarioOpcional(req);
 
     try {
         // Construir la consulta dinamicamente segun los filtros
@@ -132,11 +148,16 @@ router.get('/buscar', async (req, res) => {
 
         const resultado = await pool.query(consulta, parametros);
 
-        // Traer los juegos y cupos ocupados de cada publicacion
+        // Traer los juegos y cupos ocupados de cada publicacion. "Juegos en
+        // común" solo se calcula si hay un usuario logueado viendo la lista
+        // (necesitamos su biblioteca para comparar) y compara contra el
+        // autor de la publicación, no contra los juegos asociados a ella --
+        // mismo criterio que /perfil/descubrir (solo biblioteca verificada
+        // de Steam en ambos lados, para no inflar coincidencias falsas).
         const publicaciones = await Promise.all(
             resultado.rows.map(async (pub) => {
                 const juegos = await pool.query(
-                    `SELECT j.appid, j.nom_jg, j.headerimg_jg
+                    `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.generos_jg
                      FROM publicacion_juegos pj
                      JOIN juegos j ON pj.appid = j.appid
                      WHERE pj.id_publi = $1`,
@@ -147,10 +168,29 @@ router.get('/buscar', async (req, res) => {
                      WHERE id_publi = $1 AND estado_match = 'Aceptada'`,
                     [pub.id_publi]
                 );
+
+                let juegosEnComun = null;
+                let juegosComunesMuestra = null;
+                if (viewerId != null && viewerId !== pub.id_usu) {
+                    const comunes = await pool.query(
+                        `SELECT j.appid, j.nom_jg, j.headerimg_jg
+                         FROM usuarios_juegos uj1
+                         JOIN usuarios_juegos uj2 ON uj1.appid = uj2.appid
+                         JOIN juegos j ON j.appid = uj1.appid
+                         WHERE uj1.id_usu = $1 AND uj2.id_usu = $2
+                           AND uj1.origen_usujg = 'steam' AND uj2.origen_usujg = 'steam'`,
+                        [viewerId, pub.id_usu]
+                    );
+                    juegosEnComun = comunes.rows.length;
+                    juegosComunesMuestra = comunes.rows.slice(0, 3);
+                }
+
                 return {
                     ...pub,
                     juegos: juegos.rows,
                     cupos_ocupados: ocupados.rows[0].n,
+                    juegos_en_comun: juegosEnComun,
+                    juegos_comunes_muestra: juegosComunesMuestra,
                 };
             })
         );
@@ -309,7 +349,7 @@ router.get('/:id', async (req, res) => {
         }
 
         const juegos = await pool.query(
-            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg
+            `SELECT j.appid, j.nom_jg, j.headerimg_jg, j.capsuleimg_jg, j.generos_jg
              FROM publicacion_juegos pj
              JOIN juegos j ON pj.appid = j.appid
              WHERE pj.id_publi = $1`,
@@ -424,12 +464,12 @@ router.put('/:id/editar', verificarToken, async (req, res) => {
         if (juegos !== undefined) {
             await pool.query('DELETE FROM publicacion_juegos WHERE id_publi = $1', [id]);
             for (const juego of juegos) {
-                await pool.query(
-                    `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
-                     VALUES ($1, $2, $3, $4)
-                     ON CONFLICT (appid) DO NOTHING`,
-                    [juego.appid, juego.nombre, juego.headerimg || null, juego.capsuleimg || null]
-                );
+                await guardarJuego({
+                    appid: juego.appid,
+                    nombre: juego.nombre,
+                    headerimg: juego.headerimg,
+                    capsuleimg: juego.capsuleimg,
+                });
                 await pool.query(
                     `INSERT INTO publicacion_juegos (id_publi, appid) VALUES ($1, $2)`,
                     [id, juego.appid]

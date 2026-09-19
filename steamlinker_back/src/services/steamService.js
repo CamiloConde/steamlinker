@@ -161,6 +161,33 @@ async function getCommonGames(steamidA, steamidB) {
   };
 }
 
+// ── 3.5 GÉNEROS DE UN JUEGO ──────────────────────────────────────
+
+/**
+ * Consulta los géneros (Acción, Co-op, RPG, ...) de un juego en la Steam
+ * Store API pública (appdetails). Best-effort a propósito: nunca lanza --
+ * si Steam falla, tarda, o no tiene el dato, devuelve null y quien llama
+ * sigue de largo. No se usa en importaciones masivas de biblioteca (podría
+ * ser cientos de juegos y esta API es fácil de rate-limitear en llamadas
+ * seguidas) -- solo para juegos agregados/asociados de a uno.
+ * @param {number} appid
+ * @returns {Promise<string[]|null>}
+ */
+async function obtenerGeneros(appid) {
+  try {
+    const { data } = await axios.get(`https://store.steampowered.com/api/appdetails`, {
+      params: { appids: appid, l: "spanish" },
+      timeout: 4000,
+    });
+    const entrada = data?.[appid];
+    if (!entrada?.success || !Array.isArray(entrada.data?.genres)) return null;
+    const generos = entrada.data.genres.map((g) => g.description).filter(Boolean);
+    return generos.length > 0 ? generos.slice(0, 5) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ── 4. LOGROS DE UN JUEGO ────────────────────────────────────────
 
 /**
@@ -197,4 +224,5 @@ module.exports = {
   getCommonGames,
   getPlayerAchievements,
   gameHeaderImg,
+  obtenerGeneros,
 };

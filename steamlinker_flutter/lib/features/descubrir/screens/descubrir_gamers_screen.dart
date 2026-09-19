@@ -7,6 +7,7 @@ import '../../../theme/colors.dart';
 import '../../../theme/radii.dart';
 import '../../../widgets/desktop_body_width.dart';
 import '../../../widgets/drop_field.dart';
+import '../../../widgets/mini_caratula.dart';
 import '../../../widgets/pais_selector_field.dart';
 import '../../../widgets/scroll_to_top_fab.dart';
 import '../../../widgets/steam_app_bar.dart';
@@ -994,7 +995,7 @@ class _TarjetaGamer extends StatelessWidget {
                     child: Row(
                       children: [
                         for (final j in comunes) ...[
-                          _MiniCaratula(
+                          MiniCaratula(
                             headerimg: j['headerimg_jg'] as String?,
                             nombre: j['nom_jg'] as String?,
                           ),
@@ -1048,7 +1049,7 @@ class _TarjetaGamer extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      _MiniCaratula(
+                      MiniCaratula(
                         headerimg: juegoReciente['headerimg_jg'] as String?,
                         nombre: juegoReciente['nom_jg'] as String?,
                       ),
@@ -1079,43 +1080,6 @@ class _TarjetaGamer extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _MiniCaratula extends StatelessWidget {
-  final String? headerimg;
-  final String? nombre;
-
-  const _MiniCaratula({required this.headerimg, this.nombre});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      image: true,
-      label: 'Carátula de ${nombre ?? 'juego'}',
-      child: Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: SteamColors.bgInput,
-          image: headerimg != null && headerimg!.isNotEmpty
-              ? DecorationImage(
-                  image: NetworkImage(headerimg!),
-                  fit: BoxFit.cover,
-                )
-              : null,
-          border: Border.all(color: SteamColors.border),
-        ),
-        child: headerimg == null || headerimg!.isEmpty
-            ? const Icon(
-                Icons.videogame_asset_outlined,
-                size: 13,
-                color: SteamColors.muted,
-              )
-            : null,
       ),
     );
   }

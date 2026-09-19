@@ -4,6 +4,7 @@ import '../core/constants/publicacion_constants.dart';
 import '../core/utils/relacion_helper.dart';
 import '../theme/colors.dart';
 import '../theme/radii.dart';
+import 'mini_caratula.dart';
 import 'relacion_status_chip.dart';
 
 class PublicacionCard extends StatelessWidget {
@@ -35,6 +36,16 @@ class PublicacionCard extends StatelessWidget {
     final portada = juegos.isNotEmpty
         ? juegos.first['headerimg_jg'] as String?
         : null;
+    final generos = juegos.isNotEmpty
+        ? ((juegos.first['generos_jg'] as List<dynamic>?) ?? [])
+              .map((g) => g.toString())
+              .toList()
+        : <String>[];
+    final enComun = publicacion['juegos_en_comun'] as int?;
+    final comunes =
+        ((publicacion['juegos_comunes_muestra'] as List<dynamic>?) ?? [])
+            .map((j) => Map<String, dynamic>.from(j as Map))
+            .toList();
 
     return Material(
       color: Colors.transparent,
@@ -208,6 +219,36 @@ class PublicacionCard extends StatelessWidget {
                   ),
                 ),
               ],
+              if (generos.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: generos.take(4).map((genero) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: SteamColors.purple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          genero,
+                          style: const TextStyle(
+                            color: SteamColors.purple,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               // ── Portada del juego (como un post con imagen) ────────
               if (portada != null && portada.isNotEmpty)
@@ -250,6 +291,37 @@ class PublicacionCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              if (enComun != null) ...[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                  child: Row(
+                    children: [
+                      for (final j in comunes) ...[
+                        MiniCaratula(
+                          headerimg: j['headerimg_jg'] as String?,
+                          nombre: j['nom_jg'] as String?,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      if (comunes.isNotEmpty) const SizedBox(width: 4),
+                      Text(
+                        enComun > 0
+                            ? '$enComun juego${enComun == 1 ? '' : 's'} en común'
+                            : 'Sin juegos en común',
+                        style: TextStyle(
+                          color: enComun > 0
+                              ? SteamColors.teal
+                              : SteamColors.muted,
+                          fontSize: 11.5,
+                          fontWeight: enComun > 0
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               // ── Pie: país + juegos + acción ─────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),

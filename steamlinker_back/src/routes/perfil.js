@@ -7,6 +7,7 @@ const axios = require('axios');
 const pool = require('../db');
 const { verificarToken } = require('./auth');
 const steamService = require('../services/steamService');
+const { guardarJuego } = require('../services/juegosService');
 
 const router = express.Router();
 
@@ -560,12 +561,7 @@ router.post('/juegos/agregar', verificarToken, async (req, res) => {
 
     try {
         // Insertar el juego en la tabla juegos si no existe todavia
-        await pool.query(
-            `INSERT INTO juegos (appid, nom_jg, headerimg_jg, capsuleimg_jg)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (appid) DO NOTHING`,
-            [appid, nombre, headerimg || null, capsuleimg || null]
-        );
+        await guardarJuego({ appid, nombre, headerimg, capsuleimg });
 
         // Agregar el juego al perfil del usuario. El origen solo se marca
         // 'manual' en el INSERT inicial -- si el juego ya estaba marcado

@@ -2024,22 +2024,50 @@ real.
    regenerados, panel de admin rebrandeado). Se puede cambiar más
    adelante si el usuario decide otro concepto.
 4. **Pulido menor pendiente** (el usuario dijo "cuando puedas", sin
-   prisa — revisado el alcance real, es más grande de lo que parecía):
-   - **"Juegos en común" en `PublicacionCard`**: NO es solo un cambio de
-     UI. `/perfil/descubrir` ya calcula esto server-side para las
-     tarjetas de Descubrir (`juegos_en_comun`/`juegos_comunes_muestra`),
-     pero el endpoint que alimenta Publicaciones no trae ese dato para
-     el autor de cada publicación — hace falta agregarlo ahí primero
-     (backend) antes de poder mostrarlo en la tarjeta (frontend). Sin
-     ese campo, no hay con qué pintar el indicador.
-   - **Tags de género (Soulslike/Co-op/RRG/...)**: tampoco es solo UI —
-     la tabla `juegos` no guarda género/tags en absoluto hoy (columnas:
-     `appid, nom_jg, headerimg_jg, capsuleimg_jg`). Requeriría traer esa
-     info de la Steam Store API al importar/agregar un juego y guardarla,
-     antes de poder mostrarla en ningún lado.
+   prisa):
+   - [x] **RESUELTO — "Juegos en común" en `PublicacionCard` + tags de
+     género.** Ambos requerían trabajo real de backend, ya hecho:
+     - `GET /publicaciones/buscar` ahora calcula `juegos_en_comun` /
+       `juegos_comunes_muestra` por publicación, comparando la
+       biblioteca verificada (origen Steam) del autor contra la de
+       quien mira -- mismo criterio que `/perfil/descubrir` (no infla
+       coincidencias con juegos agregados a mano). La ruta no exige
+       sesión (se puede ver la lista sin loguearse), así que se agregó
+       un `usuarioOpcional()` que decodifica el token si llega pero no
+       lo exige (mismo patrón ya usado en `contacto.js`) -- sin token,
+       ambos campos vienen `null` (no se puede comparar sin saber quién
+       mira). Cubierto por 2 tests nuevos en
+       `tests/publicaciones.buscar.test.js`, más verificado en vivo
+       contra el servidor real corriendo (dos cuentas de prueba, un
+       juego verificado en común, `juegos_en_comun: 1` confirmado por
+       la API real).
+     - `juegos.generos_jg TEXT[]` (migración `010_add_generos_juegos.sql`)
+       -- se llena **de a poco**, no en bloque: nuevo servicio
+       compartido `services/juegosService.js` (`guardarJuego()`)
+       reemplaza los 4 `INSERT INTO juegos ... ON CONFLICT DO NOTHING`
+       que estaban duplicados por toda la app (crear publicación,
+       editar publicación, agregar juego a perfil). Solo la PRIMERA
+       vez que se ve un appid nuevo, dispara en segundo plano (sin
+       esperar la respuesta) una consulta a la Steam Store API
+       (`appdetails`, nueva función `steamService.obtenerGeneros()`)
+       para traer sus géneros -- best-effort a propósito: nunca
+       bloquea ni revienta la acción real del usuario si Steam falla o
+       tarda. **Deliberadamente NO se usa en la importación masiva de
+       biblioteca** (`importarBibliotecaSteam`, puede ser cientos de
+       juegos de una) -- ahí se sigue insertando sin géneros, para no
+       pegarle a la API de Steam con llamadas seguidas y arriesgar
+       rate-limiting; esos juegos se backfillean solos, orgánicamente,
+       si más adelante alguien los agrega/asocia de a uno. Verificado
+       en vivo contra la Steam Store API real (Dota 2, appid 570 →
+       `['Acción', 'Estrategia', 'Free to Play']` en unos segundos).
+       `PublicacionCard` muestra hasta 4 tags del primer juego de la
+       publicación, como chips morados.
+     - 46/46 tests de backend, `flutter analyze` limpio,
+       `flutter test test/widget_test.dart` pasa.
    - Revisar si el stat "FAMILIA" del grid de Perfil necesita el mismo
      tipo de aclaración que se le hizo a "TU ESTADO" en Inicio (bajo
-     esfuerzo real, sí se puede hacer directo cuando se retome).
+     esfuerzo real, sí se puede hacer directo cuando se retome -- sigue
+     pendiente, no se tocó esta ronda).
 5. Nivel 1: **rotación/revocación de JWT — hecho esta ronda, Nivel 1
    queda cerrado del todo.** Antes el JWT era el único factor: firmado,
    sin ningún registro del lado del servidor, válido hasta 30 días sin
